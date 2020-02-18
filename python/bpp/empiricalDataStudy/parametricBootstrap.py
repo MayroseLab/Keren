@@ -175,20 +175,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
     description='Creates simulations based on inferred parameters and executes inference program on them. This pipeline is comparible both with RELAX and with TraitRELAX')
     parser.add_argument('--program_path', '-p', help='path to the program file', required=False, default="/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/traitrelax")
-    parser.add_argument('--input_path', '-i', help='path ot the parameter file given as input to the program to create the inference result. Form here, we will extract the initial parameters for the parameter files of the simulations', required=True)
-    parser.add_argument('--inference_path', '-r', help='path ot the output file of the program on the data', required=True)
+    parser.add_argument('--input_path', '-i', help='path to the parameter file given as input to the program to create the inference result. Form here, we will extract the initial parameters for the parameter files of the simulations', required=True)
+    parser.add_argument('--inference_path', '-r', help='path to the output file of the program on the data', required=True)
     parser.add_argument('--simulations_dir', '-s', help='directory to create simulations environment in', required=True)
-    parser.add_argument('--data_path', '-d', help='path ot the sequence alignment of the data', required=True)
-    parser.add_argument('--tree_path', '-t', help='path ot the tree path of the data in data_path', required=True)
+    parser.add_argument('--data_path', '-d', help='path to the sequence alignment of the data', required=True)
+    parser.add_argument('--tree_path', '-t', help='path to the tree path of the data in data_path', required=True)
     parser.add_argument('--history_path', '-hist', help='path to the labeled history. use in case of parametric bootstrapping on RELAX', required=False, default="")
     parser.add_argument('--bootstrap_on_char_only', '-c', help='boolean indicating weather only character data should be simulated or also sequence data', required=False, default=False)
     parser.add_argument('--set_advanced_parameters', '-sc', help='set argument in the parameter files that allows scaling of the tree by sequence model', required=False, default=True)
     parser.add_argument('--num_of_replicates', '-rep', help='number of replicates to simulate and infer results on', required=False, default=200)
     parser.add_argument('--queue', '-q', help='name of the queue to send inference jobs to', required=False, default="itaym1")
     parser.add_argument('--priority', '-pr', help='priority of inference jobs', required=False, default="0")
-    parser.add_argument('--without_trait_simulations', '-nt', help='boolean indicating weather trait data sohuld be simulated or not', required=False, default=True)
+    parser.add_argument('--without_trait_simulations', '-nt', help='boolean indicating weather trait data should be simulated or not', required=False, default=True)
     parser.add_argument('--character_data_path', '-cd', help='path to the character data file to be given as input to traitrelax parameter file in case trait data is not simulated', required=False, default="")
-    paramer
+    parser.add_argument('--run_inference', '-ri', help='indicator of weather inference should be executed now or later', required=False, default=False)
 
     args = parser.parse_args()
     program_path = args.program_path
@@ -205,6 +205,7 @@ if __name__ == '__main__':
     priority = args.priority
     without_trait_simulations = bool(int(args.without_trait_simulations))
     character_data_path = args.character_data_path
+    run_inference = bool(int(args.run_inference))
 
     # extract the program name from the program path
     method = "relax"
@@ -259,7 +260,6 @@ if __name__ == '__main__':
         cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/simulator/TraitRELAXSimulator.py -o " + simulations_dir + "data/ -t " + tree_path + " -mu " + inferred_parameters["mu"] + " -pi0 " + inferred_parameters["pi0"] + " -kappa " + inferred_parameters["kappa"] + " -omega0 " + inferred_parameters["omega0"] + " -omega1 " + inferred_parameters["omega1"] + " -omega2 " + inferred_parameters["omega2"] + " -p0 " + inferred_parameters["p0"] + " -p1 " + inferred_parameters["p1"] + " -k 1 -imu " + initial_parameters["mu"] + " -ipi0 " + initial_parameters["pi0"] + " -ikappa " + initial_parameters["kappa"] + " -iomega0 " + initial_parameters["omega0"] + " -iomega1 "+ initial_parameters["omega1"] + " -iomega2 " + initial_parameters["omega2"] + " -ip0 " + initial_parameters["p0"] + " -ip1 " + initial_parameters["p1"] + " -ik " + initial_parameters["k"] + " -al " + str(alignment_length) + " -rep " + str(num_of_replicates) + " -n1t " + inferred_parameters["1_Full.theta"] + " -in1t " + initial_parameters["1_Full.theta"] + " -n1t1 " + inferred_parameters["1_Full.theta1"] + " -in1t1 " + initial_parameters["1_Full.theta1"] + " -n1t2 " + inferred_parameters["1_Full.theta2"] + " -in1t2 " + initial_parameters["1_Full.theta2"] + " -n2t " + inferred_parameters["2_Full.theta"] + " -in2t " + initial_parameters["2_Full.theta"] + " -n2t1 " + inferred_parameters["2_Full.theta1"] + " -in2t1 " + initial_parameters["2_Full.theta1"] + " -n2t2 " + inferred_parameters["2_Full.theta2"] + " -in2t2 " + initial_parameters["2_Full.theta2"] + " -n3t " + inferred_parameters["3_Full.theta"] + " -in3t " + initial_parameters["3_Full.theta"] + " -n3t1 " + inferred_parameters["3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + inferred_parameters["3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"]
     else: # use relax simulator
         cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/simulator/RELAXSimulator.py -o " + simulations_dir + "data/ -t " + history_path + " -kappa " + inferred_parameters["kappa"] + " -omega0 " + inferred_parameters["omega0"] + " -omega1 " + inferred_parameters["omega1"] + " -omega2 " + inferred_parameters["omega2"] + " -p0 " + inferred_parameters["p0"] + " -p1 " + inferred_parameters["p1"] + " -k 1 -ikappa " + initial_parameters["kappa"] + " -iomega0 " + initial_parameters["omega0"] + " -iomega1 " + initial_parameters["omega1"] + " -iomega2 " + initial_parameters["omega2"] + " -ip0 " + initial_parameters["p0"] + " -ip1 " + initial_parameters["p1"] + " -ik " + initial_parameters["k"] + " -al " + str(alignment_length) + " -rep " + str(num_of_replicates) + " -n1t " + inferred_parameters["1_Full.theta"] + " -in1t " + initial_parameters["1_Full.theta"] + " -n1t1 " + inferred_parameters["1_Full.theta1"] + " -in1t1 " + initial_parameters["1_Full.theta1"] + " -n1t2 " + inferred_parameters["1_Full.theta2"] + " -in1t2 " + initial_parameters["1_Full.theta2"] + " -n2t " + inferred_parameters["2_Full.theta"] + " -in2t " + initial_parameters["2_Full.theta"] + " -n2t1 " + inferred_parameters["2_Full.theta1"] + " -in2t1 " + initial_parameters["2_Full.theta1"] + " -n2t2 " + inferred_parameters["2_Full.theta2"] + " -in2t2 " + initial_parameters["2_Full.theta2"] + " -n3t " + inferred_parameters["3_Full.theta"] + " -in3t " + initial_parameters["3_Full.theta"] + " -n3t1 " + inferred_parameters["3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + inferred_parameters["3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"]
-    print("cmd: ", cmd)
     res = os.system(cmd)
 
     # add scaling to the parameter files, if needed
@@ -280,4 +280,8 @@ if __name__ == '__main__':
     # submit the jobs to execute the program on the simulations
     parameters_dir = simulations_dir + "data/" + method + "_param/"
     cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/runBppProgram.py -pp " + program_path + " -pd " + parameters_dir + " -jd " + simulations_dir + "jobs/" + " -err " + simulations_dir + "output/" + " -q " + queue + " -rn " + str(num_of_replicates)
-    #res = os.system(cmd)
+    if run_inference:
+        res = os.system(cmd)
+    else:
+        with open(simulations_dir+"inference_ exec_cmd.txt","w") as outfile:
+            outfile.write(cmd)
