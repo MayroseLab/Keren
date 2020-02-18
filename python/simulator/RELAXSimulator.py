@@ -14,6 +14,14 @@ python "/groups/itay_mayrose/halabikeren/myScripts/python/simulator/removeSpaces
 '''
 
 
+def remove_spaces(filepath):
+    with open(filepath, "r") as input:
+        file_content = input.read()
+        file_content = file_content.replace(" ", "")
+    with open(filepath, "w") as output:
+        output.write(file_content)
+
+
 def fix_tree_format(tree_path):
     tree = Tree(tree_path, format=1)
     tree_str = tree.write(outfile=None, format=1)
@@ -25,6 +33,7 @@ def fix_tree_format(tree_path):
     with open(tree_path, "w") as tree_file:
         tree_file.write(tree_str)
 
+
 def fix_tree_str_format(tree_str):
     bad_format_numbers_regex = re.compile(":(\d*\.?\d*e-\d*)", re.MULTILINE | re.DOTALL)
     for match in bad_format_numbers_regex.finditer(tree_str):
@@ -33,14 +42,70 @@ def fix_tree_str_format(tree_str):
         tree_str = tree_str.replace(bad_format, good_format)
     return tree_str
 
+
+def compute_codon_frequencies(nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta, nuc2_theta1, nuc2_theta2, nuc3_theta,
+                              nuc3_theta1, nuc3_theta2):
+    codon_to_frequency = dict()
+    nucleotides = ["A", "C", "G", "T"]
+
+    # / *codon frequencies parameterization using F3X4:
+    # for each _Full.theta, corresponding to a a codon position over {0, 1, 2}:
+    #     getFreq_(0) = theta1 * (1. - theta);
+    # getFreq_(1) = (1 - theta2) * theta;
+    # getFreq_(2) = theta2 * theta;
+    # getFreq_(3) = (1 - theta1) * (1. - theta); * /
+
+    pos_to_frequencies = []
+    pos_to_frequencies.append(dict())
+    pos_to_frequencies[0]["A"] = nuc1_theta1 * (1 - nuc1_theta)
+    pos_to_frequencies[0]["C"] = nuc1_theta * (1 - nuc1_theta2)
+    pos_to_frequencies[0]["G"] = nuc1_theta2 * nuc1_theta
+    pos_to_frequencies[0]["T"] = (1 - nuc1_theta1) * (1 - nuc1_theta)
+
+    pos_to_frequencies.append(dict())
+    pos_to_frequencies[1]["A"] = nuc2_theta1 * (1 - nuc2_theta)
+    pos_to_frequencies[1]["C"] = nuc2_theta * (1 - nuc2_theta2)
+    pos_to_frequencies[1]["G"] = nuc2_theta2 * nuc2_theta
+    pos_to_frequencies[1]["T"] = (1 - nuc2_theta1) * (1 - nuc2_theta)
+
+    pos_to_frequencies.append(dict())
+    pos_to_frequencies[2]["A"] = nuc3_theta * (1 - nuc3_theta)
+    pos_to_frequencies[2]["C"] = nuc3_theta * (1 - nuc3_theta2)
+    pos_to_frequencies[2]["G"] = nuc3_theta2 * nuc3_theta
+    pos_to_frequencies[2]["T"] = (1 - nuc3_theta1) * (1 - nuc3_theta)
+
+    # compute frequencies of stop codons and normalize the other frequencies by the left sum
+    stop_codons = ["TAG", "TAA", "TGA"]
+    stop_codons_frequencies = 0
+    for codon in stop_codons:
+        stop_codons_frequencies += pos_to_frequencies[0][codon[0]] * pos_to_frequencies[1][codon[1]] * \
+                                   pos_to_frequencies[2][codon[2]]
+
+    for i in nucleotides:
+        freq1 = pos_to_frequencies[0][i]
+        for j in nucleotides:
+            freq2 = pos_to_frequencies[0][j]
+            for k in nucleotides:
+                freq3 = pos_to_frequencies[0][k]
+                if i + j + k in stop_codons:
+                    codon_to_frequency[i + j + k] = 0
+                else:
+                    codon_to_frequency[i + j + k] = freq1 * freq2 * freq3 / (1 - stop_codons_frequencies)
+
+    return codon_to_frequency
+
+
+# indelible's branch-site simulation feature does not allow selective regime to swtich upon transitions between bramch classes, just like in our implementation
+# one can force selective regimes transitions along the tree using a pre-given labeling, as can be seem at the bottom of the documentation in:
+# http://abacus.gene.ucl.ac.uk/software/indelible/tutorial/branchsite.shtml
 def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter,
-                           true_history_path, output_dir, num_of_replicates, aln_len):
+                           true_history_path, output_dir, num_of_replicates, aln_len, nuc1_theta, nuc1_theta1,
+                           nuc1_theta2, nuc2_theta, nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2):
     # prepare directory for simulation output
-    sequence_output_dir = output_dir  # _kappa_" + str(kappa) + "_omega0_" + str(omega0) + "_omega1_" + str(omega1) + "_omega2_" + str(omega2) + "_theta1_" + str(omega0_weight) + "_theta2_" + str(omega1_weight/(1-omega0_weight)) + "/"
+    sequence_output_dir = output_dir + "sequence_data/"  # _kappa_" + str(kappa) + "_omega0_" + str(omega0) + "_omega1_" + str(omega1) + "_omega2_" + str(omega2) + "_theta1_" + str(omega0_weight) + "_theta2_" + str(omega1_weight/(1-omega0_weight)) + "/"
     if not os.path.exists(sequence_output_dir):
         res = os.system("mkdir -p " + sequence_output_dir)
-    control_file_path = output_dir + "control.txt"
-    bpp_labels_path = output_dir + "labels.bpp"
+    control_file_path = sequence_output_dir + "control.txt"
 
     # read the character history and derive from it a tree and a labeling in INDELible control file compatible format
     true_history = Tree(true_history_path, format=1)
@@ -96,10 +161,11 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
     root_son = root.get_children()[0]
     son_label = node_to_label[root_son.name]
     tree_labels_str = tree_labels_str.replace(";", "#" + son_label + ";")
-    # write the labels into the labels path
-    with open(bpp_labels_path, "w") as bpp_labels_file:
-        bpp_labels_file.write(bpp_bg_labels_str[:-1] + "\n")
-        bpp_labels_file.write(bpp_fg_labels_str[:-1])
+    labels_str = bpp_bg_labels_str[:-1] + "\n" + bpp_fg_labels_str[:-1]
+
+    # compute codon frequencies
+    codon_to_frequency = compute_codon_frequencies(nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta, nuc2_theta1,
+                                                   nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2)
 
     # create control file
     control_file_template = '''[TYPE] CODON 1                    
@@ -116,7 +182,26 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
                    // Kap p0  p1  w0  w1  w2     (p2=1-p1-p0=0.5) 
 [MODEL] BG [submodel] <kappa> <omega0_weight> <omega1_weight> <bg_omega0> <bg_omega1> <bg_omega2>
 [MODEL] FG [submodel] <kappa> <omega0_weight> <omega1_weight> <fg_omega0> <fg_omega1> <fg_omega2>
+    [statefreq]  
+          <TTT_freq> <TTC_freq> <TTA_freq> <TTG_freq>    //  TTT  TTC  TTA  TTG
+          <TCT_freq> <TCC_freq> <TCA_freq> <TCG_freq>    //  TCT  TCC  TCA  TCG 
+          <TAT_freq> <TAC_freq> <TAA_freq> <TAG_freq>    //  TAT  TAC  TAA  TAG
+          <TGT_freq> <TGC_freq> <TGA_freq> <TGG_freq>    //  TGT  TGC  TGA  TGG
 
+          <CTT_freq> <CTC_freq> <CTA_freq> <CTG_freq>    //  CTT  CTC  CTA  CTG 
+          <CCT_freq> <CCC_freq> <CCA_freq> <CCG_freq>    //  CCT  CCC  CCA  CCG 
+          <CAT_freq> <CAC_freq> <CAA_freq> <CAG_freq>    //  CAT  CAC  CAA  CAG 
+          <CGT_freq> <CGC_freq> <CGA_freq> <CGG_freq>    //  CGT  CGC  CGA  CGG 
+
+          <ATT_freq> <ATC_freq> <ATA_freq> <ATG_freq>    //  ATT  ATC  ATA  ATG  
+          <ACT_freq> <ACC_freq> <ACA_freq> <ACG_freq>    //  ACT  ACC  ACA  ACG  
+          <AAT_freq> <AAC_freq> <AAA_freq> <AAG_freq>    //  AAT  AAC  AAA  AAG  
+          <AGT_freq> <AGC_freq> <AGA_freq> <AGG_freq>    //  AGT  AGC  AGA  AGG 
+
+          <GTT_freq> <GTC_freq> <GTA_freq> <GTG_freq>    //  GTT  GTC  GTA  GTG 
+          <GCT_freq> <GCC_freq> <GCA_freq> <GCG_freq>    //  GCT  GCC  GCA  GCG  
+          <GAT_freq> <GAC_freq> <GAA_freq> <GAG_freq>    //  GAT  GAC  GAA  GAG  
+          <GGT_freq> <GGC_freq> <GGA_freq> <GGG_freq>    //  GGT  GGC  GGA  GGG
   /* 
      Like before, to get a correctly formatted [BRANCHES] block from a [TREE] block
      simply cut and paste the tree and change the branch lengths to model names.
@@ -133,27 +218,311 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
 [PARTITIONS] Pname  [t1 b1 <aln_len>]    // tree t1, branchclass b1, root length 1000
 
 [EVOLVE]     Pname  <num_of_replicates>  sequence_data  // 10 replicates generated from partition Pname'''
-    control_file_content = control_file_template.replace("<kappa>", str(kappa))
-    control_file_content = control_file_content.replace("<bg_omega0>", str(omega0))
-    control_file_content = control_file_content.replace("<bg_omega1>", str(omega1))
-    control_file_content = control_file_content.replace("<bg_omega2>", str(omega2))
-    control_file_content = control_file_content.replace("<omega0_weight>", str(omega0_weight))
-    control_file_content = control_file_content.replace("<omega1_weight>", str(omega1_weight))
-    control_file_content = control_file_content.replace("<fg_omega0>", str(omega0 ** selection_intensity_parameter))
-    control_file_content = control_file_content.replace("<fg_omega1>", str(omega1 ** selection_intensity_parameter))
-    control_file_content = control_file_content.replace("<fg_omega2>", str(omega2 ** selection_intensity_parameter))
+    control_file_content = control_file_template.replace("<kappa>", str("%.15f" % kappa))
+    control_file_content = control_file_content.replace("<bg_omega0>", str("%.15f" % omega0))
+    control_file_content = control_file_content.replace("<bg_omega1>", str("%.15f" % omega1))
+    control_file_content = control_file_content.replace("<bg_omega2>", str("%.15f" % omega2))
+    control_file_content = control_file_content.replace("<omega0_weight>", str("%.15f" % omega0_weight))
+    control_file_content = control_file_content.replace("<omega1_weight>", str("%.15f" % omega1_weight))
+    control_file_content = control_file_content.replace("<fg_omega0>",
+                                                        str("%.15f" % omega0 ** selection_intensity_parameter))
+    control_file_content = control_file_content.replace("<fg_omega1>",
+                                                        str("%.15f" % omega1 ** selection_intensity_parameter))
+    control_file_content = control_file_content.replace("<fg_omega2>",
+                                                        str("%.15f" % omega2 ** selection_intensity_parameter))
     control_file_content = control_file_content.replace("<tree_str>", tree_str)
     control_file_content = control_file_content.replace("<tree_labels_str>", tree_labels_str)
     control_file_content = control_file_content.replace("<num_of_replicates>", str(num_of_replicates))
     control_file_content = control_file_content.replace("<aln_len>", str(aln_len))
+    control_file_content = control_file_content.replace("<TTT_freq>", str(codon_to_frequency["TTT"]))
+    control_file_content = control_file_content.replace("<TTC_freq>", str(codon_to_frequency["TTC"]))
+    control_file_content = control_file_content.replace("<TTA_freq>", str(codon_to_frequency["TTA"]))
+    control_file_content = control_file_content.replace("<TTG_freq>", str(codon_to_frequency["TTG"]))
+    control_file_content = control_file_content.replace("<TCT_freq>", str(codon_to_frequency["TCT"]))
+    control_file_content = control_file_content.replace("<TCC_freq>", str(codon_to_frequency["TCC"]))
+    control_file_content = control_file_content.replace("<TCA_freq>", str(codon_to_frequency["TCA"]))
+    control_file_content = control_file_content.replace("<TCG_freq>", str(codon_to_frequency["TCG"]))
+    control_file_content = control_file_content.replace("<TAT_freq>", str(codon_to_frequency["TAT"]))
+    control_file_content = control_file_content.replace("<TAC_freq>", str(codon_to_frequency["TAC"]))
+    control_file_content = control_file_content.replace("<TAA_freq>", str(codon_to_frequency["TAA"]))
+    control_file_content = control_file_content.replace("<TAG_freq>", str(codon_to_frequency["TAG"]))
+    control_file_content = control_file_content.replace("<TGT_freq>", str(codon_to_frequency["TGT"]))
+    control_file_content = control_file_content.replace("<TGC_freq>", str(codon_to_frequency["TGC"]))
+    control_file_content = control_file_content.replace("<TGA_freq>", str(codon_to_frequency["TGA"]))
+    control_file_content = control_file_content.replace("<TGG_freq>", str(codon_to_frequency["TGG"]))
+    control_file_content = control_file_content.replace("<CTT_freq>", str(codon_to_frequency["CTT"]))
+    control_file_content = control_file_content.replace("<CTC_freq>", str(codon_to_frequency["CTC"]))
+    control_file_content = control_file_content.replace("<CTA_freq>", str(codon_to_frequency["CTA"]))
+    control_file_content = control_file_content.replace("<CTG_freq>", str(codon_to_frequency["CTG"]))
+    control_file_content = control_file_content.replace("<CCT_freq>", str(codon_to_frequency["CCT"]))
+    control_file_content = control_file_content.replace("<CCC_freq>", str(codon_to_frequency["CCC"]))
+    control_file_content = control_file_content.replace("<CCA_freq>", str(codon_to_frequency["CCA"]))
+    control_file_content = control_file_content.replace("<CCG_freq>", str(codon_to_frequency["CCG"]))
+    control_file_content = control_file_content.replace("<CAT_freq>", str(codon_to_frequency["CAT"]))
+    control_file_content = control_file_content.replace("<CAC_freq>", str(codon_to_frequency["CAC"]))
+    control_file_content = control_file_content.replace("<CAA_freq>", str(codon_to_frequency["CAA"]))
+    control_file_content = control_file_content.replace("<CAG_freq>", str(codon_to_frequency["CAG"]))
+    control_file_content = control_file_content.replace("<CGT_freq>", str(codon_to_frequency["CGT"]))
+    control_file_content = control_file_content.replace("<CGC_freq>", str(codon_to_frequency["CGC"]))
+    control_file_content = control_file_content.replace("<CGA_freq>", str(codon_to_frequency["CGA"]))
+    control_file_content = control_file_content.replace("<CGG_freq>", str(codon_to_frequency["CGG"]))
+    control_file_content = control_file_content.replace("<ATT_freq>", str(codon_to_frequency["ATT"]))
+    control_file_content = control_file_content.replace("<ATC_freq>", str(codon_to_frequency["ATC"]))
+    control_file_content = control_file_content.replace("<ATA_freq>", str(codon_to_frequency["ATA"]))
+    control_file_content = control_file_content.replace("<ATG_freq>", str(codon_to_frequency["ATG"]))
+    control_file_content = control_file_content.replace("<ACT_freq>", str(codon_to_frequency["ACT"]))
+    control_file_content = control_file_content.replace("<ACC_freq>", str(codon_to_frequency["ACC"]))
+    control_file_content = control_file_content.replace("<ACA_freq>", str(codon_to_frequency["ACA"]))
+    control_file_content = control_file_content.replace("<ACG_freq>", str(codon_to_frequency["ACG"]))
+    control_file_content = control_file_content.replace("<AAT_freq>", str(codon_to_frequency["AAT"]))
+    control_file_content = control_file_content.replace("<AAC_freq>", str(codon_to_frequency["AAC"]))
+    control_file_content = control_file_content.replace("<AAA_freq>", str(codon_to_frequency["AAA"]))
+    control_file_content = control_file_content.replace("<AAG_freq>", str(codon_to_frequency["AAG"]))
+    control_file_content = control_file_content.replace("<AGT_freq>", str(codon_to_frequency["AGT"]))
+    control_file_content = control_file_content.replace("<AGC_freq>", str(codon_to_frequency["AGC"]))
+    control_file_content = control_file_content.replace("<AGA_freq>", str(codon_to_frequency["AGA"]))
+    control_file_content = control_file_content.replace("<AGG_freq>", str(codon_to_frequency["AGG"]))
+    control_file_content = control_file_content.replace("<GTT_freq>", str(codon_to_frequency["GTT"]))
+    control_file_content = control_file_content.replace("<GTC_freq>", str(codon_to_frequency["GTC"]))
+    control_file_content = control_file_content.replace("<GTA_freq>", str(codon_to_frequency["GTA"]))
+    control_file_content = control_file_content.replace("<GTG_freq>", str(codon_to_frequency["GTG"]))
+    control_file_content = control_file_content.replace("<GCT_freq>", str(codon_to_frequency["GCT"]))
+    control_file_content = control_file_content.replace("<GCC_freq>", str(codon_to_frequency["GCC"]))
+    control_file_content = control_file_content.replace("<GCA_freq>", str(codon_to_frequency["GCA"]))
+    control_file_content = control_file_content.replace("<GCG_freq>", str(codon_to_frequency["GCG"]))
+    control_file_content = control_file_content.replace("<GAT_freq>", str(codon_to_frequency["GAT"]))
+    control_file_content = control_file_content.replace("<GAC_freq>", str(codon_to_frequency["GAC"]))
+    control_file_content = control_file_content.replace("<GAA_freq>", str(codon_to_frequency["GAA"]))
+    control_file_content = control_file_content.replace("<GAG_freq>", str(codon_to_frequency["GAG"]))
+    control_file_content = control_file_content.replace("<GGT_freq>", str(codon_to_frequency["GGT"]))
+    control_file_content = control_file_content.replace("<GGC_freq>", str(codon_to_frequency["GGC"]))
+    control_file_content = control_file_content.replace("<GGA_freq>", str(codon_to_frequency["GGA"]))
+    control_file_content = control_file_content.replace("<GGG_freq>", str(codon_to_frequency["GGG"]))
     with open(control_file_path, "w") as control_file:
         control_file.write(control_file_content)
 
     # execute INDELible
-    res = os.system(
-        "(echo " + control_file_path + " && cat) | /groups/itay_mayrose/halabikeren/indelible/INDELibleV1.03/src/indelible")
+    res = os.chdir(sequence_output_dir)
+    res = os.chdir(sequence_output_dir)
+    res = os.system("/groups/itay_mayrose/halabikeren/programs/indelible/INDELibleV1.03/src/indelible")
 
-    return 0
+    # check if the simulation is done, and sleep until done
+    while not os.path.exists(sequence_output_dir + "sequence_data_1.fas"):
+        sleep(3)
+
+    # remove spaces from file names and rename files
+    res = os.system("rm -r " + sequence_output_dir + "LOG.txt")
+    os.chdir(sequence_output_dir)
+    res = os.system("rm -r " + sequence_output_dir + "sequence_data_TRUE_1.fas")
+    remove_spaces(sequence_output_dir + "sequence_data_1.fas")
+
+    return sequence_output_dir + "sequence_data_1.fas", labels_str
+
+
+def set_relax_param_file(output_path, sequence_data_path, tree_path, kappa, omega0, omega1, omega2, omega0_weight,
+                         omega1_weight, selection_intensity_parameter, nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
+                         nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2, labels):
+    param_template = '''# Global variables:
+verbose = 1
+
+# ----------------------------------------------------------------------------------------
+#                                     Input alignment file
+# ----------------------------------------------------------------------------------------
+
+alphabet=Codon(letter=DNA)
+genetic_code=Standard
+input.sequence.file = <sequence_data_path>
+input.sequence.format = Fasta
+input.sequence.sites_to_use = all
+input.sequence.max_gap_allowed = 100%
+input.sequence.remove_stop_codons = yes
+
+# ----------------------------------------------------------------------------------------
+#                                     Input tree file
+# ----------------------------------------------------------------------------------------
+
+init.tree = user
+input.tree.file = <tree_path>
+input.tree.format = Newick
+init.brlen.method = Input
+
+# ----------------------------------------------------------------------------------------
+#                                    Model specification
+# ----------------------------------------------------------------------------------------
+
+model1 = RELAX(kappa=<kappa>,p=<p>,omega1=<omega1>,omega2=<omega2>,k=1,theta1=<theta1>,theta2=<theta2>,frequencies=F3X4,1_Full.theta=<nuc1_theta>,1_Full.theta1=<nuc1_theta1>, 1_Full.theta2=<nuc1_theta2>, 2_Full.theta=<nuc2_theta>,2_Full.theta1=<nuc2_theta1>, 2_Full.theta2=<nuc2_theta2>,3_Full.theta=<nuc3_theta>,3_Full.theta1=<nuc3_theta1>, 3_Full.theta2=<nuc3_theta2>)
+model2 = RELAX(kappa=RELAX.kappa_1,p=RELAX.p_1,omega1=RELAX.omega1_1,omega2=RELAX.omega2_1,theta1=RELAX.theta1_1,theta2=RELAX.theta2_1,frequencies=F3X4,1_Full.theta=RELAX.1_Full.theta_1,1_Full.theta1=RELAX.1_Full.theta1_1,1_Full.theta2=RELAX.1_Full.theta2_1,2_Full.theta=RELAX.2_Full.theta_1,2_Full.theta1=RELAX.2_Full.theta1_1,2_Full.theta2=RELAX.2_Full.theta2_1,3_Full.theta=RELAX.3_Full.theta_1,3_Full.theta1=RELAX.3_Full.theta1_1,3_Full.theta2=RELAX.3_Full.theta2_1,k=<selection_intensity_parameter>)
+nonhomogeneous = general
+nonhomogeneous.number_of_models = 2
+nonhomogeneous.stationarity = yes
+site.number_of_paths = 2
+site.path1 = model1[YN98.omega_1]&model2[YN98.omega_1]
+site.path2 = model1[YN98.omega_2]&model2[YN98.omega_2]
+rate_distribution = Constant() //Gamma(n=4, alpha=0.358)
+likelihood.recursion = simple
+likelihood.recursion_simple.compression = recursive
+
+# ----------------------------------------------------------------------------------------
+#                                    optimization parameters
+# ----------------------------------------------------------------------------------------
+
+optimization.tolerance = 0.000001
+optimization.max_number_f_eval = 10000
+optimization = FullD(derivatives=Newton,nstep=10)
+optimization.final = powell
+
+# ----------------------------------------------------------------------------------------
+#                                    branches partition
+# ----------------------------------------------------------------------------------------
+
+<labels>
+'''
+
+    # translate simulator input to bio++ parameters
+    p = omega0 / omega1
+    theta1 = omega0_weight
+    theta2 = omega1_weight / (1 - omega0_weight)
+
+    param_content = param_template.replace("<sequence_data_path>", sequence_data_path)
+    param_content = param_content.replace("<tree_path>", tree_path)
+    param_content = param_content.replace("<kappa>", str(kappa))
+    param_content = param_content.replace("<p>", str(p))
+    param_content = param_content.replace("<omega1>", str(omega1))
+    param_content = param_content.replace("<omega2>", str(omega2))
+    param_content = param_content.replace("<theta1>", str(theta1))
+    param_content = param_content.replace("<theta2>", str(theta2))
+    param_content = param_content.replace("<nuc1_theta>", str(nuc1_theta))
+    param_content = param_content.replace("<nuc1_theta1>", str(nuc1_theta1))
+    param_content = param_content.replace("<nuc1_theta2>", str(nuc1_theta2))
+    param_content = param_content.replace("<nuc2_theta>", str(nuc2_theta))
+    param_content = param_content.replace("<nuc2_theta1>", str(nuc2_theta1))
+    param_content = param_content.replace("<nuc2_theta2>", str(nuc2_theta2))
+    param_content = param_content.replace("<nuc3_theta>", str(nuc3_theta))
+    param_content = param_content.replace("<nuc3_theta1>", str(nuc3_theta1))
+    param_content = param_content.replace("<nuc3_theta2>", str(nuc3_theta2))
+    param_content = param_content.replace("<selection_intensity_parameter>", str(selection_intensity_parameter))
+    param_content = param_content.replace("<labels>", labels)
+
+    with open(output_path, "w") as output_file:
+        output_file.write(param_content)
+
+
+def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path,
+                              character_model_mu, character_model_pi0, kappa, omega0, omega1, omega2, omega0_weight,
+                              omega1_weight, selection_intensity_parameter, history_tree_path, nuc1_theta, nuc1_theta1,
+                              nuc1_theta2, nuc2_theta, nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2,
+                              labels_str):
+    param_template = '''# Global variables:
+verbose = 1
+
+# ----------------------------------------------------------------------------------------
+#                                     Input character file
+# ----------------------------------------------------------------------------------------
+
+input.character.file = <character_data_path>
+
+# ----------------------------------------------------------------------------------------
+#                                     Input alignment file
+# ----------------------------------------------------------------------------------------
+
+alphabet=Codon(letter=DNA)
+genetic_code=Standard
+input.sequence.file = <sequence_data_path>
+input.sequence.format = Fasta
+input.sequence.sites_to_use = all
+input.sequence.max_gap_allowed = 100%
+input.sequence.remove_stop_codons = yes
+
+# ----------------------------------------------------------------------------------------
+#                                     Input tree file
+# ----------------------------------------------------------------------------------------
+
+init.tree = user
+input.tree.file = <tree_path>
+input.tree.format = Newick
+init.brlen.method = Input
+
+# ----------------------------------------------------------------------------------------
+#                                     Character Model specification
+# ----------------------------------------------------------------------------------------
+
+character_model.set_initial_parameters = true
+character_model.mu = <mu>
+character_model.pi0 = <pi0>
+
+# ----------------------------------------------------------------------------------------
+#                                     Sequence Model specification
+# ----------------------------------------------------------------------------------------
+
+sequence_model.set_initial_parameters = true
+model1 = RELAX(kappa=<kappa>,p=<p>,omega1=<omega1>,omega2=<omega2>,k=1,theta1=<theta1>,theta2=<theta2>,frequencies=F3X4, 1_Full.theta=<nuc1_theta>,1_Full.theta1=<nuc1_theta1>, 1_Full.theta2=<nuc1_theta2>, 2_Full.theta=<nuc2_theta>,2_Full.theta1=<nuc2_theta1>, 2_Full.theta2=<nuc2_theta2>,3_Full.theta=<nuc3_theta>,3_Full.theta1=<nuc3_theta1>, 3_Full.theta2=<nuc3_theta2>)
+model2 = RELAX(kappa=RELAX.kappa_1,p=RELAX.p_1,omega1=RELAX.omega1_1,omega2=RELAX.omega2_1,theta1=RELAX.theta1_1,theta2=RELAX.theta2_1,frequencies=F3X4,1_Full.theta=RELAX.1_Full.theta_1,1_Full.theta1=RELAX.1_Full.theta1_1,1_Full.theta2=RELAX.1_Full.theta2_1,2_Full.theta=RELAX.2_Full.theta_1,2_Full.theta1=RELAX.2_Full.theta1_1,2_Full.theta2=RELAX.2_Full.theta2_1,3_Full.theta=RELAX.3_Full.theta_1,3_Full.theta1=RELAX.3_Full.theta1_1,3_Full.theta2=RELAX.3_Full.theta2_1,k=<selection_intensity_parameter>)
+
+# ----------------------------------------------------------------------------------------
+#                                    optimization parameters
+# ----------------------------------------------------------------------------------------
+
+optimization.tolerance = 0.000001
+optimization.max_number_f_eval = 10000
+optimization = FullD(derivatives=Newton,nstep=10)
+optimization.final = powell
+#optimization.message_handler = std
+optimization.ignore_parameters = RELAX.k_1,BrLen
+
+# ----------------------------------------------------------------------------------------
+#                                    output files data                                    
+# ----------------------------------------------------------------------------------------
+
+optimization.profiler = <log_path>
+output.tree.file = <expected_history_path>
+output.debug.dir = <debug_dir>
+output.tree.format = Newick
+true_history.tree.file = <history_tree_path>
+'''
+
+    # translate simulator input to bio++ parameters
+    if not os.path.exists(output_dir):
+        res = os.system("mkdir -p " + output_dir)
+    expected_history_path = output_dir + "expected_history.nwk"
+    debug_dir = output_dir + "histories_evaluation/"
+    if not os.path.exists(debug_dir):
+        res = os.system("mkdir -p " + debug_dir)
+    log_path = output_dir + "traitrelax_optimization.log"
+    p = omega0 / omega1
+    theta1 = omega0_weight
+    theta2 = omega1_weight / (1 - omega0_weight)
+
+    param_content = param_template.replace("<character_data_path>", character_data_path)
+    param_content = param_content.replace("<sequence_data_path>", sequence_data_path)
+    param_content = param_content.replace("<tree_path>", tree_path)
+    param_content = param_content.replace("<mu>", str(character_model_mu))
+    param_content = param_content.replace("<pi0>", str(character_model_pi0))
+    param_content = param_content.replace("<kappa>", str(kappa))
+    param_content = param_content.replace("<p>", str(p))
+    param_content = param_content.replace("<omega1>", str(omega1))
+    param_content = param_content.replace("<omega2>", str(omega2))
+    param_content = param_content.replace("<theta1>", str(theta1))
+    param_content = param_content.replace("<theta2>", str(theta2))
+    param_content = param_content.replace("<nuc1_theta>", str(nuc1_theta))
+    param_content = param_content.replace("<nuc1_theta1>", str(nuc1_theta1))
+    param_content = param_content.replace("<nuc1_theta2>", str(nuc1_theta2))
+    param_content = param_content.replace("<nuc2_theta>", str(nuc2_theta))
+    param_content = param_content.replace("<nuc2_theta1>", str(nuc2_theta1))
+    param_content = param_content.replace("<nuc2_theta2>", str(nuc2_theta2))
+    param_content = param_content.replace("<nuc3_theta>", str(nuc3_theta))
+    param_content = param_content.replace("<nuc3_theta1>", str(nuc3_theta1))
+    param_content = param_content.replace("<nuc3_theta2>", str(nuc3_theta2))
+    param_content = param_content.replace("<selection_intensity_parameter>", str(selection_intensity_parameter))
+    param_content = param_content.replace("<log_path>", log_path)
+    param_content = param_content.replace("<expected_history_path>", expected_history_path)
+    param_content = param_content.replace("<debug_dir>", debug_dir)
+    param_content = param_content.replace("<history_tree_path>", history_tree_path)
+    adjusted_labels_str = labels_str.replace("model1.nodes_id", "true_history.model1.nodes_id")
+    adjusted_labels_str = adjusted_labels_str.replace("model2.nodes_id", "true_history.model2.nodes_id")
+    param_content = param_content + adjusted_labels_str
+
+    with open(output_path, "w") as output_file:
+        output_file.write(param_content)
 
 
 if __name__ == '__main__':
@@ -184,11 +553,107 @@ if __name__ == '__main__':
                         default=100)
     parser.add_argument('--aln_len', '-al', help='number of codon positions to simulated', required=False, default=1000)
 
+    parser.add_argument('--initial_mu', '-imu',
+                        help='character substitution rate to initialize traitrelax parameters file with',
+                        required=False,
+                        default=1)
+    parser.add_argument('--initial_pi0', '-ipi0',
+                        help='character state 0 frequency to initialize traitrelax parameters file with',
+                        required=False,
+                        default=0.5)
+    parser.add_argument('--initial_kappa', '-ikappa',
+                        help='nucleotide substitution rate parameter kappa to initialize parameters file with',
+                        required=False,
+                        default=2)
+    parser.add_argument('--initial_omega0', '-iomega0',
+                        help='purifying selection omega to initialize parameters file with', required=False,
+                        default=0.1)
+    parser.add_argument('--initial_omega1', '-iomega1',
+                        help='neutral selection omega to initialize parameters file with', required=False,
+                        default=1)
+    parser.add_argument('--initial_omega2', '-iomega2',
+                        help='positive selection omega to initialize parameters file with', required=False,
+                        default=2)
+    parser.add_argument('--initial_omega0_weight', '-ip0',
+                        help='probability of purifying selection omega to initialize parameters file with',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_omega1_weight', '-ip1',
+                        help='probability of neutral selection omega to initialize parameters file with',
+                        required=False, default=0.4)
+    parser.add_argument('--initial_selection_intensity_parameter', '-ik',
+                        help='selection intensity parameter value under the alternative model to initialize parameters file with',
+                        required=False,
+                        default=0.5)
+    parser.add_argument('--character_data_path', '-cd',
+                        help='path to the character data file to be given as input to traitrelax', required=False,
+                        default="")
+    parser.add_argument('--nuc1_theta', '-n1t',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc1_theta1', '-n1t1',
+                        help='Bio++ parameter 1_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc1_theta2', '-n1t2',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc2_theta', '-n2t',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc2_theta1', '-n2t1',
+                        help='Bio++ parameter 2_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc2_theta2', '-n2t2',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc3_theta', '-n3t',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc3_theta1', '-n3t1',
+                        help='Bio++ parameter 3_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc3_theta2', '-n3t2',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+
+    parser.add_argument('--initial_nuc1_theta', '-in1t',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc1_theta1', '-in1t1',
+                        help='Bio++ parameter 1_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc1_theta2', '-in1t2',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc2_theta', '-in2t',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc2_theta1', '-in2t1',
+                        help='Bio++ parameter 2_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc2_theta2', '-in2t2',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc3_theta', '-in3t',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc3_theta1', '-in3t1',
+                        help='Bio++ parameter 3_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc3_theta2', '-in3t2',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+
     args = parser.parse_args()
     output_dir = args.output_dir
     if not os.path.exists(output_dir):
         res = os.system(
             "mkdir -p " + output_dir)  # -p allows recusive mkdir in case one of the upper directories doesn't exist
+    relax_param_dir = output_dir + "relax_param/"
+    if not os.path.exists(relax_param_dir):
+        res = os.system("mkdir -p " + relax_param_dir)
+    traitrelax_param_dir = output_dir + "traitrelax_param/"
+    if not os.path.exists(traitrelax_param_dir):
+        res = os.system("mkdir -p " + traitrelax_param_dir)
     true_history_path = args.true_history_path
     if not os.path.exists(true_history_path):
         print("tree path " + true_history_path + " does not exist")
@@ -201,10 +666,72 @@ if __name__ == '__main__':
     omega0_weight = float(args.omega0_weight)
     omega1_weight = float(args.omega1_weight)
     selection_intensity_parameter = float(args.selection_intensity_parameter)
+    initial_kappa = float(args.initial_kappa)
+    initial_omega0 = float(args.initial_omega0)
+    initial_omega1 = float(args.initial_omega1)
+    initial_omega2 = float(args.initial_omega2)
+    initial_omega0_weight = float(args.initial_omega0_weight)
+    initial_omega1_weight = float(args.initial_omega1_weight)
+    initial_selection_intensity_parameter = float(args.initial_selection_intensity_parameter)
     num_of_replicates = int(args.num_of_replicates)
     aln_len = int(args.aln_len)
+    character_data_path = args.character_data_path
+    initial_character_model_mu = float(args.initial_mu)
+    initial_character_model_pi0 = float(args.initial_pi0)
 
+    nuc1_theta = float(args.nuc1_theta)
+    nuc1_theta1 = float(args.nuc1_theta1)
+    nuc1_theta2 = float(args.nuc1_theta2)
+    nuc2_theta = float(args.nuc2_theta)
+    nuc2_theta1 = float(args.nuc2_theta1)
+    nuc2_theta2 = float(args.nuc2_theta2)
+    nuc3_theta = float(args.nuc3_theta)
+    nuc3_theta1 = float(args.nuc3_theta1)
+    nuc3_theta2 = float(args.nuc3_theta2)
 
-    # simulate sequence data
-    simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter,
-                           true_history_path, output_dir, num_of_replicates, aln_len)
+    initial_nuc1_theta = float(args.initial_nuc1_theta)
+    initial_nuc1_theta1 = float(args.initial_nuc1_theta1)
+    initial_nuc1_theta2 = float(args.initial_nuc1_theta2)
+    initial_nuc2_theta = float(args.initial_nuc2_theta)
+    initial_nuc2_theta1 = float(args.initial_nuc2_theta1)
+    initial_nuc2_theta2 = float(args.initial_nuc2_theta2)
+    initial_nuc3_theta = float(args.initial_nuc3_theta)
+    initial_nuc3_theta1 = float(args.initial_nuc3_theta1)
+    initial_nuc3_theta2 = float(args.initial_nuc3_theta2)
+
+    for rep in range(num_of_replicates):
+        tree_path = true_history_path
+        fix_tree_format(tree_path)
+        print("**** simulating replicate " + str(rep) + " ****")
+        # set simulation output directory
+        simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
+        if not os.path.exists(simulation_output_dir):
+            res = os.system("mkdir -p " + simulation_output_dir)
+        # simulate sequence data
+        sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight,
+                                                                omega1_weight, selection_intensity_parameter,
+                                                                true_history_path, simulation_output_dir, 1, aln_len,
+                                                                nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
+                                                                nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1,
+                                                                nuc3_theta2)
+        history_tree = Tree(tree_path, format=1)
+        for node in history_tree.traverse():
+            node.name = re.sub("{.*?}", "", node.name, count=0, flags=0)
+        history_tree.write(outfile=output_dir + "history_tree.nwk", format=5)
+        # set the parameters file for RELAX
+        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, output_dir + "history_tree.nwk",
+                             initial_kappa, initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
+                             initial_omega1_weight, initial_selection_intensity_parameter, initial_nuc1_theta,
+                             initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta, initial_nuc2_theta1,
+                             initial_nuc2_theta2, initial_nuc3_theta, initial_nuc3_theta1, initial_nuc3_theta2,
+                             labels_str)
+        # set parameters file for TraitRELAX
+        set_traitrelax_param_file(simulation_output_dir + "traitrelax_result/",
+                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path,
+                                  output_dir + "history_tree.nwk", character_data_path, initial_character_model_mu,
+                                  initial_character_model_pi0, initial_kappa, initial_omega0, initial_omega1,
+                                  initial_omega2, initial_omega0_weight, initial_omega1_weight,
+                                  initial_selection_intensity_parameter, output_dir + "history_tree.nwk",
+                                  initial_nuc1_theta, initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta,
+                                  initial_nuc2_theta1, initial_nuc2_theta2, initial_nuc3_theta, initial_nuc3_theta1,
+                                  initial_nuc3_theta2, labels_str)
