@@ -117,22 +117,22 @@ def extract_traitrelax_parameters(content, hypothesis, dictionary):
 
 def extract_relax_parameters(content, dictionary):
     regex_strings = {"logl": "Fitting the null model.*?Log likelihood\.*?\:\s*(-\d*\.?\d*)",
-                     "1_Full.theta": "Fitting the null model.*model 2.*?\.1_Full\.theta\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "1_Full.theta1": "Fitting the null model.*model 2.*?\.1_Full\.theta1\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "1_Full.theta2": "Fitting the null model.*model 2.*?\.1_Full\.theta2\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "2_Full.theta": "Fitting the null model.*model 2.*?\.2_Full\.theta\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "2_Full.theta1": "Fitting the null model.*model 2.*?\.2_Full\.theta1\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "2_Full.theta2": "Fitting the null model.*model 2.*?\.2_Full\.theta2\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "3_Full.theta": "Fitting the null model.*model 2.*?\.3_Full\.theta\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "3_Full.theta1": "Fitting the null model.*model 2.*?\.3_Full\.theta1\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "3_Full.theta2": "Fitting the null model.*model 2.*?\.3_Full\.theta2\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "kappa": "Fitting the null model.*model 2.*?\.kappa\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "p": "Fitting the null model.*model 2.*?\.p\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "omega1": "Fitting the null model.*model 2.*?\.omega1\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "omega2": "Fitting the null model.*model 2.*?\.omega2\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "theta1": "Fitting the null model.*model 2.*?\.theta1\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "theta2": "Fitting the null model.*model 2.*?\.theta2\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
-                     "k": "Fitting the null model.*model 2.*?\.k\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete.*?Fitting the alternative model",
+                     "1_Full.theta": "Fitting the null model.*model 2.*?\.1_Full\.theta\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "1_Full.theta1": "Fitting the null model.*model 2.*?\.1_Full\.theta1\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "1_Full.theta2": "Fitting the null model.*model 2.*?\.1_Full\.theta2\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "2_Full.theta": "Fitting the null model.*model 2.*?\.2_Full\.theta\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "2_Full.theta1": "Fitting the null model.*model 2.*?\.2_Full\.theta1\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "2_Full.theta2": "Fitting the null model.*model 2.*?\.2_Full\.theta2\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "3_Full.theta": "Fitting the null model.*model 2.*?\.3_Full\.theta\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "3_Full.theta1": "Fitting the null model.*model 2.*?\.3_Full\.theta1\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "3_Full.theta2": "Fitting the null model.*model 2.*?\.3_Full\.theta2\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "kappa": "Fitting the null model.*model 2.*?\.kappa\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "p": "Fitting the null model.*model 2.*?\.p\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "omega1": "Fitting the null model.*model 2.*?\.omega1\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "omega2": "Fitting the null model.*model 2.*?\.omega2\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "theta1": "Fitting the null model.*model 2.*?\.theta1\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "theta2": "Fitting the null model.*model 2.*?\.theta2\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
+                     "k": "Fitting the null model.*model 2.*?\.k\.*\:\s*(\d*\.?\d*).*?iterative optimization complete.*?Fitting the alternative model",
                      "scaling_factor": "Tree scaled by\.*\: \s*(\d*\.?\d*)"}
 
     null_section_regex = re.compile("Fitting the null model(.*?)Fitting the alternative model",
@@ -319,7 +319,7 @@ if __name__ == '__main__':
                   "omega1"] + " -iomega2 " + initial_parameters["omega2"] + " -ip0 " + initial_parameters[
                   "p0"] + " -ip1 " + initial_parameters["p1"] + " -ik " + initial_parameters["k"] + " -rep " + str(
             num_of_replicates) + " -s " + data_path + " -rep " + str(num_of_replicates) + " -sc " + inferred_parameters[
-                  "sc"] + " -in1t " + initial_parameters["1_Full.theta"] + " -n1t1 " + inferred_parameters[
+                  "scaling_factor"] + " -in1t " + initial_parameters["1_Full.theta"] + " -n1t1 " + inferred_parameters[
                   "1_Full.theta1"] + " -in1t1 " + initial_parameters["1_Full.theta1"] + " -n1t2 " + inferred_parameters[
                   "1_Full.theta2"] + " -in1t2 " + initial_parameters["1_Full.theta2"] + " -n2t " + inferred_parameters[
                   "2_Full.theta"] + " -in2t " + initial_parameters["2_Full.theta"] + " -n2t1 " + inferred_parameters[
@@ -348,7 +348,7 @@ if __name__ == '__main__':
                   "3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + inferred_parameters[
                   "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"] + " -imu " + initial_parameters[
                   "mu"] + " -ipi0 " + initial_parameters["pi0"] + " -cd " + character_data_path + " -sc " + \
-              inferred_parameters["sc"]
+              inferred_parameters["scaling_factor"]
     elif method == "traitrelax" and not without_trait_simulations:
         cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/simulator/TraitRELAXSimulator.py -o " + simulations_dir + "data/ -t " + tree_path + " -mu " + \
               inferred_parameters["mu"] + " -pi0 " + inferred_parameters["pi0"] + " -kappa " + inferred_parameters[
@@ -368,7 +368,7 @@ if __name__ == '__main__':
               inferred_parameters["3_Full.theta"] + " -in3t " + initial_parameters["3_Full.theta"] + " -n3t1 " + \
               inferred_parameters["3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + \
               inferred_parameters["3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"] + " -sc " + \
-              inferred_parameters["sc"] + " -in1t " + initial_parameters["1_Full.theta"] + " -n1t1 " + \
+              inferred_parameters["scaling_factor"] + " -in1t " + initial_parameters["1_Full.theta"] + " -n1t1 " + \
               inferred_parameters[
                   "1_Full.theta1"] + " -in1t1 " + initial_parameters["1_Full.theta1"] + " -n1t2 " + inferred_parameters[
                   "1_Full.theta2"] + " -in1t2 " + initial_parameters["1_Full.theta2"] + " -n2t " + inferred_parameters[
@@ -397,7 +397,7 @@ if __name__ == '__main__':
                   "3_Full.theta"] + " -in3t " + initial_parameters["3_Full.theta"] + " -n3t1 " + inferred_parameters[
                   "3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + inferred_parameters[
                   "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"] + " -sc " + inferred_parameters[
-                  "sc"]
+                  "scaling_factor"]
     res = os.system(cmd)
 
     # add scaling to the parameter files, if needed - as of 19.2.20, scaling optimization in parametric bootstrapping is disabled until the convergence issue related to scalingo ptimization is resolved
