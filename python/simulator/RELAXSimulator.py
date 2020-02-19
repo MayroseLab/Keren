@@ -34,11 +34,11 @@ def fix_tree_format(tree_path):
         tree_file.write(tree_str)
 
 
-def scale_tree(tree_path, scaling_factor=1.0):
-    tree = Tree(tree_path, format=1)
+def scale_tree(input_tree_path, output_tree_path, scaling_factor=1.0):
+    tree = Tree(input_tree_path, format=1)
     for node in tree.traverse():
         node.dist = node.dist * scaling_factor
-    tree.write(outfile=tree_path)
+    tree.write(outfile=output_tree_path, format=1)
 
 
 def fix_tree_str_format(tree_str):
@@ -715,7 +715,8 @@ if __name__ == '__main__':
     for rep in range(num_of_replicates):
         tree_path = true_history_path
         fix_tree_format(tree_path)
-        scale_tree(tree_path, scaling_factor=scaling_factor)
+        scaled_tree_path = tree_path.replace(".nwk", "_scaled_by_" + str(scaling_factor) + ".nwk")
+        scale_tree(tree_path, scaled_tree_path, scaling_factor=scaling_factor)
         print("**** simulating replicate " + str(rep) + " ****")
         # set simulation output directory
         simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
@@ -724,11 +725,11 @@ if __name__ == '__main__':
         # simulate sequence data
         sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight,
                                                                 omega1_weight, selection_intensity_parameter,
-                                                                true_history_path, simulation_output_dir, 1, aln_len,
+                                                                scaled_tree_path, simulation_output_dir, 1, aln_len,
                                                                 nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
                                                                 nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1,
                                                                 nuc3_theta2)
-        history_tree = Tree(tree_path, format=1)
+        history_tree = Tree(scaled_tree_path, format=1)
         for node in history_tree.traverse():
             node.name = re.sub("{.*?}", "", node.name, count=0, flags=0)
         history_tree.write(outfile=output_dir + "history_tree.nwk", format=5)

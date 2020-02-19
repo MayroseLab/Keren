@@ -64,13 +64,11 @@ def fix_tree_format(tree_path):
     with open(tree_path, "w") as tree_file:
         tree_file.write(tree_str)
 
-
-def scale_tree(tree_path, scaling_factor=1.0):
-    tree = Tree(tree_path, format=1)
+def scale_tree(input_tree_path, output_tree_path, scaling_factor=1.0):
+    tree = Tree(input_tree_path, format=1)
     for node in tree.traverse():
         node.dist = node.dist * scaling_factor
-    tree.write(outfile=tree_path)
-
+    tree.write(outfile=output_tree_path, format=1)
 
 def remove_spaces(filepath):
     with open(filepath, "r") as input:
@@ -87,7 +85,6 @@ def fix_tree_str_format(tree_str):
         good_format = "{:.10f}".format(float(bad_format), 10)
         tree_str = tree_str.replace(bad_format, good_format)
     return tree_str
-
 
 # don't stop until you get a simulation with both types of dats
 def simulate_character_data(character_model_mu, character_model_pi0, tree_path, output_dir):
@@ -146,7 +143,6 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
         # res=os.system("Rscript --vanilla /groups/itay_mayrose/halabikeren/myScripts/R/plot_history.R " + true_history_simmap_path + " " + true_history_visual_path)
 
     return true_history_path, character_data_path, history_tree_path
-
 
 # indelible's branch-site simulation feature does not allow selective regime to swtich upon transitions between bramch classes, just like in our implementation
 # one can force selective regimes transitions along the tree using a pre-given labeling, as can be seem at the bottom of the documentation in:
@@ -371,7 +367,6 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
 
     return sequence_output_dir + "sequence_data_1.fas", labels_str
 
-
 def set_relax_param_file(output_path, sequence_data_path, tree_path, kappa, omega0, omega1, omega2, omega0_weight,
                          omega1_weight, selection_intensity_parameter, labels):
     param_template = '''# Global variables:
@@ -448,7 +443,6 @@ optimization.final = powell
 
     with open(output_path, "w") as output_file:
         output_file.write(param_content)
-
 
 def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path,
                               character_model_mu, character_model_pi0, kappa, omega0, omega1, omega2, omega0_weight,
@@ -562,7 +556,6 @@ true_history.tree.file = <history_tree_path>
 
     with open(output_path, "w") as output_file:
         output_file.write(param_content)
-
 
 if __name__ == '__main__':
 
@@ -764,7 +757,8 @@ if __name__ == '__main__':
         if int(rep) >= num_of_replicates:
             continue
         fix_tree_format(tree_path)
-        scale_tree(tree_path, scaling_factor=scaling_factor)
+        scaled_tree_path = tree_path.replace(".nwk", "_scaled_by_" + str(scaling_factor) + ".nwk")
+        scale_tree(tree_path, scaled_tree_path, scaling_factor=scaling_factor)
         print("**** simulating replicate " + str(rep) + " ****")
         # set simulation output directory
         simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
@@ -778,17 +772,17 @@ if __name__ == '__main__':
         # simulate sequence data
         sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight,
                                                                 omega1_weight, selection_intensity_parameter,
-                                                                true_history_path, simulation_output_dir, 1, aln_len,
+                                                                scaled_tree_path, simulation_output_dir, 1, aln_len,
                                                                 nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
                                                                 nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1,
                                                                 nuc3_theta2)
         # set the parameters file for RELAX
-        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, history_tree_path, initial_kappa,
+        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path, initial_kappa,
                              initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
                              initial_omega1_weight, initial_selection_intensity_parameter, labels_str)
         # set parameters file for TraitRELAX
         set_traitrelax_param_file(simulation_output_dir + "traitrelax_result/",
-                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path, tree_path,
+                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path,
                                   character_data_path, initial_character_model_mu, initial_character_model_pi0,
                                   initial_kappa, initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
                                   initial_omega1_weight, initial_selection_intensity_parameter, history_tree_path,
