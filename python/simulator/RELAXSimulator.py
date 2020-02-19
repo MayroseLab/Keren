@@ -34,6 +34,13 @@ def fix_tree_format(tree_path):
         tree_file.write(tree_str)
 
 
+def scale_tree(tree_path, scaling_factor=1.0):
+    tree = Tree(tree_path, format=1)
+    for node in tree.traverse():
+        node.dist = node.dist * scaling_factor
+    tree.write(outfile=tree_path)
+
+
 def fix_tree_str_format(tree_str):
     bad_format_numbers_regex = re.compile(":(\d*\.?\d*e-\d*)", re.MULTILINE | re.DOTALL)
     for match in bad_format_numbers_regex.finditer(tree_str):
@@ -643,6 +650,10 @@ if __name__ == '__main__':
                         help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
                         required=False, default=0.5)
 
+    parser.add_argument('--scaling_factor', '-sc',
+                        help='scaling factor of the tree with which simulations are conducted and inference is executed',
+                        required=False, default=1)
+
     args = parser.parse_args()
     output_dir = args.output_dir
     if not os.path.exists(output_dir):
@@ -699,9 +710,12 @@ if __name__ == '__main__':
     initial_nuc3_theta1 = float(args.initial_nuc3_theta1)
     initial_nuc3_theta2 = float(args.initial_nuc3_theta2)
 
+    scaling_factor = float(args.scaling_factor)
+
     for rep in range(num_of_replicates):
         tree_path = true_history_path
         fix_tree_format(tree_path)
+        scale_tree(tree_path, scaling_factor=scaling_factor)
         print("**** simulating replicate " + str(rep) + " ****")
         # set simulation output directory
         simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
