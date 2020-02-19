@@ -8,8 +8,6 @@ import matplotlib
 plt.switch_backend('agg')
 from scipy.stats.distributions import chi2
 from matplotlib.lines import Line2D
-from mpl_toolkits.mplot3d import axes3d, Axes3D  # <-- Note the capitalization!
-import matplotlib.gridspec as gridspec
 
 sns.set_style('whitegrid')
 import math
