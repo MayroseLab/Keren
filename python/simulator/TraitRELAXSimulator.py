@@ -2,15 +2,16 @@ import argparse, os, re
 from ete3 import Tree
 from time import sleep
 
+
 def convert_history_to_simmap(tree_path, output_path):
     label_regex = re.compile("{(.*?)}")
     history = Tree(tree_path, format=1)
-    #tree_str = history.write(format=8, outfile=None) # get a string of the tree newick only with names
+    # tree_str = history.write(format=8, outfile=None) # get a string of the tree newick only with names
     visited_nodes = [history.get_tree_root()]
     for node in history.traverse("postorder"):
         if not node in visited_nodes:
             node_label = label_regex.search(node.name).group(1)
-            node_name = node.name.replace(label_regex.search(node.name).group(0),"")
+            node_name = node.name.replace(label_regex.search(node.name).group(0), "")
             node_expression = ""
             if node.is_leaf():
                 node_expression = node_expression + node_name
@@ -28,7 +29,7 @@ def convert_history_to_simmap(tree_path, output_path):
                     pass
             node_expression = node_expression + "}"
             node.name = node_expression
-            #tree_str = tree_str.replace(node.name, node_expression)
+            # tree_str = tree_str.replace(node.name, node_expression)
     # remove mapping nodes
     for node in history.traverse("postorder"):
         if "mapping" in node.name:
@@ -38,6 +39,7 @@ def convert_history_to_simmap(tree_path, output_path):
     print("tree_str: ", tree_str)
     with open(output_path, "w") as output_file:
         output_file.write(tree_str + ";")
+
 
 # writes tree with nodes names only in newick format
 def getTreeStr(root):
@@ -50,16 +52,25 @@ def getTreeStr(root):
     tree_str = tree_str[:-1] + ")" + root.name
     return tree_str
 
+
 def fix_tree_format(tree_path):
-    tree = Tree(tree_path,format=1)
-    tree_str = tree.write(outfile=None,format=1)
+    tree = Tree(tree_path, format=1)
+    tree_str = tree.write(outfile=None, format=1)
     bad_format_numbers_regex = re.compile(":(\d*\.?\d*e-\d*)", re.MULTILINE | re.DOTALL)
     for match in bad_format_numbers_regex.finditer(tree_str):
         bad_format = match.group(1)
-        good_format = "{:.10f}".format(float(bad_format),10)
+        good_format = "{:.10f}".format(float(bad_format), 10)
         tree_str = tree_str.replace(bad_format, good_format)
     with open(tree_path, "w") as tree_file:
         tree_file.write(tree_str)
+
+
+def scale_tree(tree_path, scaling_factor=1.0):
+    tree = Tree(tree_path, format=1)
+    for node in tree.traverse():
+        node.dist = node.dist * scaling_factor
+    tree.write(outfile=tree_path)
+
 
 def remove_spaces(filepath):
     with open(filepath, "r") as input:
@@ -68,17 +79,18 @@ def remove_spaces(filepath):
     with open(filepath, "w") as output:
         output.write(file_content)
 
+
 def fix_tree_str_format(tree_str):
     bad_format_numbers_regex = re.compile(":(\d*\.?\d*e-\d*)", re.MULTILINE | re.DOTALL)
     for match in bad_format_numbers_regex.finditer(tree_str):
         bad_format = match.group(1)
-        good_format = "{:.10f}".format(float(bad_format),10)
+        good_format = "{:.10f}".format(float(bad_format), 10)
         tree_str = tree_str.replace(bad_format, good_format)
     return tree_str
 
+
 # don't stop until you get a simulation with both types of dats
 def simulate_character_data(character_model_mu, character_model_pi0, tree_path, output_dir):
-
     return_res = False
     while not return_res:
         character_output_dir = output_dir + "character_data/"
@@ -98,13 +110,14 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
             char_param_file.write("character_history.tree_path = " + str(true_history_path) + "\n")
 
         # call to simulator with parameters file
-        res = os.system("/groups/itay_mayrose/halabikeren/biopp_test/bppsuite/build/bppSuite/traitsimulator param=" + character_simulation_parameters_path)
+        res = os.system(
+            "/groups/itay_mayrose/halabikeren/biopp_test/bppsuite/build/bppSuite/traitsimulator param=" + character_simulation_parameters_path)
         fix_tree_format(true_history_path)
 
         # write the tree without labels into a file
-        true_history = Tree(true_history_path,format=1)
+        true_history = Tree(true_history_path, format=1)
         for node in true_history.traverse():
-            node_name = re.sub("\{.*?\}","",node.name)
+            node_name = re.sub("\{.*?\}", "", node.name)
             node.name = node_name
         true_history.write(outfile=history_tree_path, format=5)
         true_history_str = true_history.write(outfile=None, format=5)
@@ -120,7 +133,7 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
                 availableStates.append(0)
             elif "{1}" in leaf.name:
                 availableStates.append(1)
-        print("availableStates: ", availableStates) # debug
+        print("availableStates: ", availableStates)  # debug
         if 0 in availableStates and 1 in availableStates:
             return_res = True
 
@@ -134,11 +147,13 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
 
     return true_history_path, character_data_path, history_tree_path
 
+
 # indelible's branch-site simulation feature does not allow selective regime to swtich upon transitions between bramch classes, just like in our implementation
 # one can force selective regimes transitions along the tree using a pre-given labeling, as can be seem at the bottom of the documentation in:
 # http://abacus.gene.ucl.ac.uk/software/indelible/tutorial/branchsite.shtml
 def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter,
-                           true_history_path, output_dir, num_of_replicates, aln_len):
+                           true_history_path, output_dir, num_of_replicates, aln_len, nuc1_theta, nuc1_theta1,
+                           nuc1_theta2, nuc2_theta, nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2):
     # prepare directory for simulation output
     sequence_output_dir = output_dir + "sequence_data/"  # _kappa_" + str(kappa) + "_omega0_" + str(omega0) + "_omega1_" + str(omega1) + "_omega2_" + str(omega2) + "_theta1_" + str(omega0_weight) + "_theta2_" + str(omega1_weight/(1-omega0_weight)) + "/"
     if not os.path.exists(sequence_output_dir):
@@ -201,6 +216,10 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
     tree_labels_str = tree_labels_str.replace(";", "#" + son_label + ";")
     labels_str = bpp_bg_labels_str[:-1] + "\n" + bpp_fg_labels_str[:-1]
 
+    # compute codon frequencies
+    codon_to_frequency = compute_codon_frequencies(nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta, nuc2_theta1,
+                                                   nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2)
+
     # create control file
     control_file_template = '''[TYPE] CODON 1                    
 
@@ -216,7 +235,26 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
                    // Kap p0  p1  w0  w1  w2     (p2=1-p1-p0=0.5) 
 [MODEL] BG [submodel] <kappa> <omega0_weight> <omega1_weight> <bg_omega0> <bg_omega1> <bg_omega2>
 [MODEL] FG [submodel] <kappa> <omega0_weight> <omega1_weight> <fg_omega0> <fg_omega1> <fg_omega2>
+    [statefreq]  
+          <TTT_freq> <TTC_freq> <TTA_freq> <TTG_freq>    //  TTT  TTC  TTA  TTG
+          <TCT_freq> <TCC_freq> <TCA_freq> <TCG_freq>    //  TCT  TCC  TCA  TCG 
+          <TAT_freq> <TAC_freq> <TAA_freq> <TAG_freq>    //  TAT  TAC  TAA  TAG
+          <TGT_freq> <TGC_freq> <TGA_freq> <TGG_freq>    //  TGT  TGC  TGA  TGG
 
+          <CTT_freq> <CTC_freq> <CTA_freq> <CTG_freq>    //  CTT  CTC  CTA  CTG 
+          <CCT_freq> <CCC_freq> <CCA_freq> <CCG_freq>    //  CCT  CCC  CCA  CCG 
+          <CAT_freq> <CAC_freq> <CAA_freq> <CAG_freq>    //  CAT  CAC  CAA  CAG 
+          <CGT_freq> <CGC_freq> <CGA_freq> <CGG_freq>    //  CGT  CGC  CGA  CGG 
+
+          <ATT_freq> <ATC_freq> <ATA_freq> <ATG_freq>    //  ATT  ATC  ATA  ATG  
+          <ACT_freq> <ACC_freq> <ACA_freq> <ACG_freq>    //  ACT  ACC  ACA  ACG  
+          <AAT_freq> <AAC_freq> <AAA_freq> <AAG_freq>    //  AAT  AAC  AAA  AAG  
+          <AGT_freq> <AGC_freq> <AGA_freq> <AGG_freq>    //  AGT  AGC  AGA  AGG 
+
+          <GTT_freq> <GTC_freq> <GTA_freq> <GTG_freq>    //  GTT  GTC  GTA  GTG 
+          <GCT_freq> <GCC_freq> <GCA_freq> <GCG_freq>    //  GCT  GCC  GCA  GCG  
+          <GAT_freq> <GAC_freq> <GAA_freq> <GAG_freq>    //  GAT  GAC  GAA  GAG  
+          <GGT_freq> <GGC_freq> <GGA_freq> <GGG_freq>    //  GGT  GGC  GGA  GGG
   /* 
      Like before, to get a correctly formatted [BRANCHES] block from a [TREE] block
      simply cut and paste the tree and change the branch lengths to model names.
@@ -233,26 +271,93 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
 [PARTITIONS] Pname  [t1 b1 <aln_len>]    // tree t1, branchclass b1, root length 1000
 
 [EVOLVE]     Pname  <num_of_replicates>  sequence_data  // 10 replicates generated from partition Pname'''
-    control_file_content = control_file_template.replace("<kappa>", str(kappa))
-    control_file_content = control_file_content.replace("<bg_omega0>", str(omega0))
-    control_file_content = control_file_content.replace("<bg_omega1>", str(omega1))
-    control_file_content = control_file_content.replace("<bg_omega2>", str(omega2))
-    control_file_content = control_file_content.replace("<omega0_weight>", str(omega0_weight))
-    control_file_content = control_file_content.replace("<omega1_weight>", str(omega1_weight))
-    control_file_content = control_file_content.replace("<fg_omega0>", str(omega0 ** selection_intensity_parameter))
-    control_file_content = control_file_content.replace("<fg_omega1>", str(omega1 ** selection_intensity_parameter))
-    control_file_content = control_file_content.replace("<fg_omega2>", str(omega2 ** selection_intensity_parameter))
+    control_file_content = control_file_template.replace("<kappa>", str("%.15f" % kappa))
+    control_file_content = control_file_content.replace("<bg_omega0>", str("%.15f" % omega0))
+    control_file_content = control_file_content.replace("<bg_omega1>", str("%.15f" % omega1))
+    control_file_content = control_file_content.replace("<bg_omega2>", str("%.15f" % omega2))
+    control_file_content = control_file_content.replace("<omega0_weight>", str("%.15f" % omega0_weight))
+    control_file_content = control_file_content.replace("<omega1_weight>", str("%.15f" % omega1_weight))
+    control_file_content = control_file_content.replace("<fg_omega0>",
+                                                        str("%.15f" % omega0 ** selection_intensity_parameter))
+    control_file_content = control_file_content.replace("<fg_omega1>",
+                                                        str("%.15f" % omega1 ** selection_intensity_parameter))
+    control_file_content = control_file_content.replace("<fg_omega2>",
+                                                        str("%.15f" % omega2 ** selection_intensity_parameter))
     control_file_content = control_file_content.replace("<tree_str>", tree_str)
     control_file_content = control_file_content.replace("<tree_labels_str>", tree_labels_str)
     control_file_content = control_file_content.replace("<num_of_replicates>", str(num_of_replicates))
     control_file_content = control_file_content.replace("<aln_len>", str(aln_len))
+    control_file_content = control_file_content.replace("<TTT_freq>", str(codon_to_frequency["TTT"]))
+    control_file_content = control_file_content.replace("<TTC_freq>", str(codon_to_frequency["TTC"]))
+    control_file_content = control_file_content.replace("<TTA_freq>", str(codon_to_frequency["TTA"]))
+    control_file_content = control_file_content.replace("<TTG_freq>", str(codon_to_frequency["TTG"]))
+    control_file_content = control_file_content.replace("<TCT_freq>", str(codon_to_frequency["TCT"]))
+    control_file_content = control_file_content.replace("<TCC_freq>", str(codon_to_frequency["TCC"]))
+    control_file_content = control_file_content.replace("<TCA_freq>", str(codon_to_frequency["TCA"]))
+    control_file_content = control_file_content.replace("<TCG_freq>", str(codon_to_frequency["TCG"]))
+    control_file_content = control_file_content.replace("<TAT_freq>", str(codon_to_frequency["TAT"]))
+    control_file_content = control_file_content.replace("<TAC_freq>", str(codon_to_frequency["TAC"]))
+    control_file_content = control_file_content.replace("<TAA_freq>", str(codon_to_frequency["TAA"]))
+    control_file_content = control_file_content.replace("<TAG_freq>", str(codon_to_frequency["TAG"]))
+    control_file_content = control_file_content.replace("<TGT_freq>", str(codon_to_frequency["TGT"]))
+    control_file_content = control_file_content.replace("<TGC_freq>", str(codon_to_frequency["TGC"]))
+    control_file_content = control_file_content.replace("<TGA_freq>", str(codon_to_frequency["TGA"]))
+    control_file_content = control_file_content.replace("<TGG_freq>", str(codon_to_frequency["TGG"]))
+    control_file_content = control_file_content.replace("<CTT_freq>", str(codon_to_frequency["CTT"]))
+    control_file_content = control_file_content.replace("<CTC_freq>", str(codon_to_frequency["CTC"]))
+    control_file_content = control_file_content.replace("<CTA_freq>", str(codon_to_frequency["CTA"]))
+    control_file_content = control_file_content.replace("<CTG_freq>", str(codon_to_frequency["CTG"]))
+    control_file_content = control_file_content.replace("<CCT_freq>", str(codon_to_frequency["CCT"]))
+    control_file_content = control_file_content.replace("<CCC_freq>", str(codon_to_frequency["CCC"]))
+    control_file_content = control_file_content.replace("<CCA_freq>", str(codon_to_frequency["CCA"]))
+    control_file_content = control_file_content.replace("<CCG_freq>", str(codon_to_frequency["CCG"]))
+    control_file_content = control_file_content.replace("<CAT_freq>", str(codon_to_frequency["CAT"]))
+    control_file_content = control_file_content.replace("<CAC_freq>", str(codon_to_frequency["CAC"]))
+    control_file_content = control_file_content.replace("<CAA_freq>", str(codon_to_frequency["CAA"]))
+    control_file_content = control_file_content.replace("<CAG_freq>", str(codon_to_frequency["CAG"]))
+    control_file_content = control_file_content.replace("<CGT_freq>", str(codon_to_frequency["CGT"]))
+    control_file_content = control_file_content.replace("<CGC_freq>", str(codon_to_frequency["CGC"]))
+    control_file_content = control_file_content.replace("<CGA_freq>", str(codon_to_frequency["CGA"]))
+    control_file_content = control_file_content.replace("<CGG_freq>", str(codon_to_frequency["CGG"]))
+    control_file_content = control_file_content.replace("<ATT_freq>", str(codon_to_frequency["ATT"]))
+    control_file_content = control_file_content.replace("<ATC_freq>", str(codon_to_frequency["ATC"]))
+    control_file_content = control_file_content.replace("<ATA_freq>", str(codon_to_frequency["ATA"]))
+    control_file_content = control_file_content.replace("<ATG_freq>", str(codon_to_frequency["ATG"]))
+    control_file_content = control_file_content.replace("<ACT_freq>", str(codon_to_frequency["ACT"]))
+    control_file_content = control_file_content.replace("<ACC_freq>", str(codon_to_frequency["ACC"]))
+    control_file_content = control_file_content.replace("<ACA_freq>", str(codon_to_frequency["ACA"]))
+    control_file_content = control_file_content.replace("<ACG_freq>", str(codon_to_frequency["ACG"]))
+    control_file_content = control_file_content.replace("<AAT_freq>", str(codon_to_frequency["AAT"]))
+    control_file_content = control_file_content.replace("<AAC_freq>", str(codon_to_frequency["AAC"]))
+    control_file_content = control_file_content.replace("<AAA_freq>", str(codon_to_frequency["AAA"]))
+    control_file_content = control_file_content.replace("<AAG_freq>", str(codon_to_frequency["AAG"]))
+    control_file_content = control_file_content.replace("<AGT_freq>", str(codon_to_frequency["AGT"]))
+    control_file_content = control_file_content.replace("<AGC_freq>", str(codon_to_frequency["AGC"]))
+    control_file_content = control_file_content.replace("<AGA_freq>", str(codon_to_frequency["AGA"]))
+    control_file_content = control_file_content.replace("<AGG_freq>", str(codon_to_frequency["AGG"]))
+    control_file_content = control_file_content.replace("<GTT_freq>", str(codon_to_frequency["GTT"]))
+    control_file_content = control_file_content.replace("<GTC_freq>", str(codon_to_frequency["GTC"]))
+    control_file_content = control_file_content.replace("<GTA_freq>", str(codon_to_frequency["GTA"]))
+    control_file_content = control_file_content.replace("<GTG_freq>", str(codon_to_frequency["GTG"]))
+    control_file_content = control_file_content.replace("<GCT_freq>", str(codon_to_frequency["GCT"]))
+    control_file_content = control_file_content.replace("<GCC_freq>", str(codon_to_frequency["GCC"]))
+    control_file_content = control_file_content.replace("<GCA_freq>", str(codon_to_frequency["GCA"]))
+    control_file_content = control_file_content.replace("<GCG_freq>", str(codon_to_frequency["GCG"]))
+    control_file_content = control_file_content.replace("<GAT_freq>", str(codon_to_frequency["GAT"]))
+    control_file_content = control_file_content.replace("<GAC_freq>", str(codon_to_frequency["GAC"]))
+    control_file_content = control_file_content.replace("<GAA_freq>", str(codon_to_frequency["GAA"]))
+    control_file_content = control_file_content.replace("<GAG_freq>", str(codon_to_frequency["GAG"]))
+    control_file_content = control_file_content.replace("<GGT_freq>", str(codon_to_frequency["GGT"]))
+    control_file_content = control_file_content.replace("<GGC_freq>", str(codon_to_frequency["GGC"]))
+    control_file_content = control_file_content.replace("<GGA_freq>", str(codon_to_frequency["GGA"]))
+    control_file_content = control_file_content.replace("<GGG_freq>", str(codon_to_frequency["GGG"]))
     with open(control_file_path, "w") as control_file:
         control_file.write(control_file_content)
 
     # execute INDELible
     res = os.chdir(sequence_output_dir)
     res = os.chdir(sequence_output_dir)
-    res = os.system("/groups/itay_mayrose/halabikeren/indelible/INDELibleV1.03/src/indelible")
+    res = os.system("/groups/itay_mayrose/halabikeren/programs/indelible/INDELibleV1.03/src/indelible")
 
     # check if the simulation is done, and sleep until done
     while not os.path.exists(sequence_output_dir + "sequence_data_1.fas"):
@@ -266,8 +371,9 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
 
     return sequence_output_dir + "sequence_data_1.fas", labels_str
 
-def set_relax_param_file(output_path, sequence_data_path, tree_path, kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter, labels):
 
+def set_relax_param_file(output_path, sequence_data_path, tree_path, kappa, omega0, omega1, omega2, omega0_weight,
+                         omega1_weight, selection_intensity_parameter, labels):
     param_template = '''# Global variables:
 verbose = 1
 
@@ -327,7 +433,7 @@ optimization.final = powell
     # translate simulator input to bio++ parameters
     p = omega0 / omega1
     theta1 = omega0_weight
-    theta2 = omega1_weight / (1-omega0_weight)
+    theta2 = omega1_weight / (1 - omega0_weight)
 
     param_content = param_template.replace("<sequence_data_path>", sequence_data_path)
     param_content = param_content.replace("<tree_path>", tree_path)
@@ -344,7 +450,9 @@ optimization.final = powell
         output_file.write(param_content)
 
 
-def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path, character_model_mu, character_model_pi0, kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter, history_tree_path, labels_str):
+def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path,
+                              character_model_mu, character_model_pi0, kappa, omega0, omega1, omega2, omega0_weight,
+                              omega1_weight, selection_intensity_parameter, history_tree_path, labels_str):
     param_template = '''# Global variables:
 verbose = 1
 
@@ -429,7 +537,7 @@ true_history.tree.file = <history_tree_path>
     log_path = output_dir + "traitrelax_optimization.log"
     p = omega0 / omega1
     theta1 = omega0_weight
-    theta2 = omega1_weight / (1-omega0_weight)
+    theta2 = omega1_weight / (1 - omega0_weight)
 
     param_content = param_template.replace("<character_data_path>", character_data_path)
     param_content = param_content.replace("<sequence_data_path>", sequence_data_path)
@@ -456,35 +564,140 @@ true_history.tree.file = <history_tree_path>
         output_file.write(param_content)
 
 
-
 if __name__ == '__main__':
 
     # process input from command line
-    parser = argparse.ArgumentParser(description='simulates alignments and character history under the TraitRELAX null and alternative models using Bio++ and INDELible')
+    parser = argparse.ArgumentParser(
+        description='simulates alignments and character history under the TraitRELAX null and alternative models using Bio++ and INDELible')
     parser.add_argument('--output_dir', '-o', help='directory that holds the simulation output',
                         required=True)
     # parser.add_argument('--tree_path', '-t', help='path to the input tree to simulate data over',
     #                     required=True)
     parser.add_argument('--tree_dir', '-t', help='path to the hold the simulated input trees',
-                                             required=True)
-    parser.add_argument('--character_model_mu', '-mu', help='character substitution rate to simulate with', required=False, default=10.)
-    parser.add_argument('--character_model_pi0', '-pi0', help='character state 0 frequency ot simulate with', required=False, default=0.5)
+                        required=True)
+    parser.add_argument('--character_model_mu', '-mu', help='character substitution rate to simulate with',
+                        required=False, default=10.)
+    parser.add_argument('--character_model_pi0', '-pi0', help='character state 0 frequency ot simulate with',
+                        required=False, default=0.5)
     parser.add_argument('--kappa', '-kappa', help='nucleotide substitution rate parameter kappa', required=False,
                         default=1)
-    parser.add_argument('--omega0', '-omega0', help='purifying selection omega to simulate with', required=False, default=0.1)
-    parser.add_argument('--omega1', '-omega1', help='neutral selection omega to simulate with', required=False, default=1)
-    parser.add_argument('--omega2', '-omega2', help='positive selection omega to simulate with', required=False, default=2)
-    parser.add_argument('--omega0_weight', '-p0', help='probability of purifying selection omega to simulate with', required=False, default=0.5)
+    parser.add_argument('--omega0', '-omega0', help='purifying selection omega to simulate with', required=False,
+                        default=0.1)
+    parser.add_argument('--omega1', '-omega1', help='neutral selection omega to simulate with', required=False,
+                        default=1)
+    parser.add_argument('--omega2', '-omega2', help='positive selection omega to simulate with', required=False,
+                        default=2)
+    parser.add_argument('--omega0_weight', '-p0', help='probability of purifying selection omega to simulate with',
+                        required=False, default=0.5)
     parser.add_argument('--omega1_weight', '-p1', help='probability of neutral selection omega to simulate with',
                         required=False, default=0.4)
-    parser.add_argument('--selection_intensity_parameter', '-k', help='selection intensity parameter value under the alternative model', required=False, default=0.5)
-    parser.add_argument('--num_of_replicates', '-rep', help="number of codon MSAs to simulate", required=False, default=30)
+    parser.add_argument('--selection_intensity_parameter', '-k',
+                        help='selection intensity parameter value under the alternative model', required=False,
+                        default=0.5)
+    parser.add_argument('--num_of_replicates', '-rep', help="number of codon MSAs to simulate", required=False,
+                        default=30)
     parser.add_argument('--aln_len', '-al', help='number of codon positions to simulated', required=False, default=1000)
+
+    parser.add_argument('--scaling_factor', '-sc',
+                        help='scaling factor of the tree with which simulations are conducted and inference is executed',
+                        required=False, default=1)
+
+    parser.add_argument('--initial_mu', '-imu',
+                        help='character substitution rate to initialize traitrelax parameters file with',
+                        required=False,
+                        default=1)
+    parser.add_argument('--initial_pi0', '-ipi0',
+                        help='character state 0 frequency to initialize traitrelax parameters file with',
+                        required=False,
+                        default=0.5)
+    parser.add_argument('--initial_kappa', '-ikappa',
+                        help='nucleotide substitution rate parameter kappa to initialize parameters file with',
+                        required=False,
+                        default=2)
+    parser.add_argument('--initial_omega0', '-iomega0',
+                        help='purifying selection omega to initialize parameters file with', required=False,
+                        default=0.1)
+    parser.add_argument('--initial_omega1', '-iomega1',
+                        help='neutral selection omega to initialize parameters file with', required=False,
+                        default=1)
+    parser.add_argument('--initial_omega2', '-iomega2',
+                        help='positive selection omega to initialize parameters file with', required=False,
+                        default=2)
+    parser.add_argument('--initial_omega0_weight', '-ip0',
+                        help='probability of purifying selection omega to initialize parameters file with',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_omega1_weight', '-ip1',
+                        help='probability of neutral selection omega to initialize parameters file with',
+                        required=False, default=0.4)
+    parser.add_argument('--initial_selection_intensity_parameter', '-ik',
+                        help='selection intensity parameter value under the alternative model to initialize parameters file with',
+                        required=False,
+                        default=0.5)
+
+    parser.add_argument('--character_data_path', '-cd',
+                        help='path to the character data file to be given as input to traitrelax', required=False,
+                        default="")
+    parser.add_argument('--nuc1_theta', '-n1t',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc1_theta1', '-n1t1',
+                        help='Bio++ parameter 1_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc1_theta2', '-n1t2',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc2_theta', '-n2t',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc2_theta1', '-n2t1',
+                        help='Bio++ parameter 2_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc2_theta2', '-n2t2',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc3_theta', '-n3t',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc3_theta1', '-n3t1',
+                        help='Bio++ parameter 3_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--nuc3_theta2', '-n3t2',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+
+    parser.add_argument('--initial_nuc1_theta', '-in1t',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc1_theta1', '-in1t1',
+                        help='Bio++ parameter 1_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc1_theta2', '-in1t2',
+                        help='Bio++ parameter 1_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc2_theta', '-in2t',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc2_theta1', '-in2t1',
+                        help='Bio++ parameter 2_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc2_theta2', '-in2t2',
+                        help='Bio++ parameter 2_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc3_theta', '-in3t',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc3_theta1', '-in3t1',
+                        help='Bio++ parameter 3_Full.theta1 from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
+    parser.add_argument('--initial_nuc3_theta2', '-in3t2',
+                        help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
+                        required=False, default=0.5)
 
     args = parser.parse_args()
     output_dir = args.output_dir
     if not os.path.exists(output_dir):
-        res = os.system("mkdir -p " + output_dir) # -p allows recusive mkdir in case one of the upper directories doesn't exist
+        res = os.system(
+            "mkdir -p " + output_dir)  # -p allows recusive mkdir in case one of the upper directories doesn't exist
     relax_param_dir = output_dir + "relax_param/"
     if not os.path.exists(relax_param_dir):
         res = os.system("mkdir -p " + relax_param_dir)
@@ -509,6 +722,39 @@ if __name__ == '__main__':
     omega1_weight = float(args.omega1_weight)
     selection_intensity_parameter = float(args.selection_intensity_parameter)
     aln_len = int(args.aln_len)
+
+    initial_kappa = float(args.initial_kappa)
+    initial_omega0 = float(args.initial_omega0)
+    initial_omega1 = float(args.initial_omega1)
+    initial_omega2 = float(args.initial_omega2)
+    initial_omega0_weight = float(args.initial_omega0_weight)
+    initial_omega1_weight = float(args.initial_omega1_weight)
+    initial_selection_intensity_parameter = float(args.initial_selection_intensity_parameter)
+    initial_character_model_mu = float(args.initial_mu)
+    initial_character_model_pi0 = float(args.initial_pi0)
+
+    nuc1_theta = float(args.nuc1_theta)
+    nuc1_theta1 = float(args.nuc1_theta1)
+    nuc1_theta2 = float(args.nuc1_theta2)
+    nuc2_theta = float(args.nuc2_theta)
+    nuc2_theta1 = float(args.nuc2_theta1)
+    nuc2_theta2 = float(args.nuc2_theta2)
+    nuc3_theta = float(args.nuc3_theta)
+    nuc3_theta1 = float(args.nuc3_theta1)
+    nuc3_theta2 = float(args.nuc3_theta2)
+
+    initial_nuc1_theta = float(args.initial_nuc1_theta)
+    initial_nuc1_theta1 = float(args.initial_nuc1_theta1)
+    initial_nuc1_theta2 = float(args.initial_nuc1_theta2)
+    initial_nuc2_theta = float(args.initial_nuc2_theta)
+    initial_nuc2_theta1 = float(args.initial_nuc2_theta1)
+    initial_nuc2_theta2 = float(args.initial_nuc2_theta2)
+    initial_nuc3_theta = float(args.initial_nuc3_theta)
+    initial_nuc3_theta1 = float(args.initial_nuc3_theta1)
+    initial_nuc3_theta2 = float(args.initial_nuc3_theta2)
+
+    scaling_factor = float(args.scaling_factor)
+
     rep_regex = re.compile("(\d*).nwk", re.MULTILINE | re.DOTALL)
     for tree_filepath in os.listdir(trees_dir):
         tree_path = trees_dir + tree_filepath
@@ -518,16 +764,32 @@ if __name__ == '__main__':
         if int(rep) >= num_of_replicates:
             continue
         fix_tree_format(tree_path)
+        scale_tree(tree_path, scaling_factor=scaling_factor)
         print("**** simulating replicate " + str(rep) + " ****")
         # set simulation output directory
         simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
         if not os.path.exists(simulation_output_dir):
             res = os.system("mkdir -p " + simulation_output_dir)
         # simulate character data
-        true_history_path, character_data_path, history_tree_path = simulate_character_data(character_model_mu, character_model_pi0, tree_path, simulation_output_dir)
+        true_history_path, character_data_path, history_tree_path = simulate_character_data(character_model_mu,
+                                                                                            character_model_pi0,
+                                                                                            tree_path,
+                                                                                            simulation_output_dir)
         # simulate sequence data
-        sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter, true_history_path, simulation_output_dir, 1, aln_len)
+        sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight,
+                                                                omega1_weight, selection_intensity_parameter,
+                                                                true_history_path, simulation_output_dir, 1, aln_len,
+                                                                nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
+                                                                nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1,
+                                                                nuc3_theta2)
         # set the parameters file for RELAX
-        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, history_tree_path, kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter, labels_str)
+        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, history_tree_path, initial_kappa,
+                             initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
+                             initial_omega1_weight, initial_selection_intensity_parameter, labels_str)
         # set parameters file for TraitRELAX
-        set_traitrelax_param_file(simulation_output_dir+"traitrelax_result/", traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path, tree_path, character_data_path, character_model_mu, character_model_pi0, kappa, omega0, omega1, omega2, omega0_weight, omega1_weight, selection_intensity_parameter, history_tree_path, labels_str)
+        set_traitrelax_param_file(simulation_output_dir + "traitrelax_result/",
+                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path, tree_path,
+                                  character_data_path, initial_character_model_mu, initial_character_model_pi0,
+                                  initial_kappa, initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
+                                  initial_omega1_weight, initial_selection_intensity_parameter, history_tree_path,
+                                  labels_str)
