@@ -4,14 +4,13 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import matplotlib
-
 plt.switch_backend('agg')
 from scipy.stats.distributions import chi2
 from matplotlib.lines import Line2D
-
 sns.set_style('whitegrid')
 import math
-from matplotlib.ticker import FormatStrFormatter, FuncFormatter, MaxNLocator
+from matplotlib.ticker import FormatStrFormatter, FuncFormatter
+from mpl_toolkits.mplot3d import Axes3D
 
 # hardcoded data
 colors = ["lightgrey", "grey", "k"]
@@ -320,8 +319,8 @@ def extract_RELAX_data(input_dir, tbl, mu, pi0, taxa_num, positions_num, k):
                                       "null_logl": null_logl_regex,
                                       "alternative_logl": alternative_logl_regex_str}
     simulated_parameter_regex_str = "Parsing file\s*.*[_|\/]PARAMETER_(\d*\.*\d*).*?for options"
-    null_parameter_regex_str = "Fitting the null model.*?model 2.*?.RELAX.PARAMETER\.*\:\s*(\d*\.?\d*)"
-    alternative_parameter_regex_str = "Fitting the alternative model.*?model 2.*?.RELAX.PARAMETER\.*\:\s*(\d*\.?\d*)"
+    null_parameter_regex_str = "Fitting the null model.*?iterative.*?model 2.*?.RELAX.PARAMETER\.*\:\s*(\d*\.?\d*)"
+    alternative_parameter_regex_str = "Fitting the alternative model.*?iterative.*?model 2.*?.RELAX.PARAMETER\.*\:\s*(\d*\.?\d*)"
     # intialize dataframe
     colnames = ["tbl", "mu", "taxa_num", "pi0", "positions_num", "k"]  # keren - 4.7.19
     colnames = colnames + list(non_parametric_regex_t_colname.keys())
@@ -511,19 +510,18 @@ def plot_power_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTr
             ax.set_xlabel(r"$k$", fontdict={'size': 30})
             ax.set_ylabel("Null rejected", fontdict={'size': 30})
 
-    vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
-    ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
-    ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
-    ax.set_ylim(0, 1)
-    ax.set_xticks(k_values_options)
-
     if add_fpr_line:
-        ax.axhline(y=0.05, color='red', linestyle='dashed', label="5%")
+        ax.axhline(y=0.05, color='red', linestyle='dashed', label="Required FPR")
 
     if add_legend:
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, labels, loc='upper center', prop={'size': 30}, frameon=False)
 
+    vals = [0, 0.05, 0.2, 0.4, 0.6, 0.8, 1]
+    ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
+    ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
+    # ax.set_ylim(0, 1)
+    ax.set_xticks(k_values_options)
 
 # plot info: fixed to tbl=4, pi0=0.5, mu=8, taxa_num=32, codons=300
 # x axis: simulated value of k
@@ -561,7 +559,7 @@ def plot_power_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, Empir
     vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
     ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
     ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
-    ax.set_ylim(0, 1)
+    # ax.set_ylim(0, 1)
     ax.set_xticks(k_values_options)
 
     if add_legend:
@@ -574,7 +572,7 @@ def plot_power_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, Empir
 # y axis: power
 # 2 curves: one for TraitRELAX standard execution (full), another for TraitRELAX given the true history (dashed)
 def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-                     EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalRELAXMPLRTThesholds, title):
+                     EmpiricalRELAXLRThresholds, title):
     # gather the data
     tbl = 4
     pi0 = 0.5
@@ -587,29 +585,24 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
     mu_local_options = [1, 2, 4, 8, 16]
 
     ax.set_xticks(mu_local_options)
-    ax.set_ylim(0, 1)
+    # ax.set_ylim(0, 1)
     vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
     ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
 
     for mu in mu_local_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
         given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
-        given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
         LR_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
         sig_fraction_standard_execution.append(
             standard_df[standard_df.LR >= LR_threshold].shape[0] / standard_df.shape[0])
         LR_threshold = EmpiricalRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
         sig_fraction_given_true_history.append(
             given_true_history_df[given_true_history_df.LR >= LR_threshold].shape[0] / given_true_history_df.shape[0])
-        LR_threshold = EmpiricalRELAXMPLRTThesholds[(tbl, mu, pi0, taxa_num, positions_num)]
-        sig_fraction_given_mp_history.append(
-            given_mp_history_df[given_mp_history_df.LR >= LR_threshold].shape[0] / given_mp_history_df.shape[0])
 
     ax.grid(False)
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
-    # ax.plot(mu_local_options, sig_fraction_given_mp_history, linestyle=":", color='black', label="RELAX with maximum parsimony partition", lw=2.5)
     ax.plot(mu_local_options, sig_fraction_given_true_history, color=colors[codon_positions_num_options.index(300)],
-            label="RELAX with true history", linestyle='dotted', marker=markers[taxa_num_options.index(32)], lw=2.5,
+            label="RELAX with\ntrue history", linestyle='dotted', marker=markers[taxa_num_options.index(32)], lw=2.5,
             markersize=16)
     ax.plot(mu_local_options, sig_fraction_standard_execution, label="TraitRELAX",
             color=colors[codon_positions_num_options.index(300)], linestyle='dashed',
@@ -627,7 +620,7 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
 # y axis: Power
 # 2 curves: one for TraitRELAX standard execution (full), another for TraitRELAX given the true history (dashed)
 def plot_power_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-                      EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalRELAXMPLRTThesholds, title):
+                      EmpiricalRELAXLRThresholds, title):
     # gather the data
     pi0 = 0.5
     taxa_num = 32
@@ -643,7 +636,6 @@ def plot_power_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, 
         mu = tbl_to_mu[tbl]
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
         given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
-        given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
         try:
             LR_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
             sig_fraction_standard_execution.append(
@@ -659,18 +651,12 @@ def plot_power_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, 
         except:
             print("No RELAX data given true history is available for total branches lengths: ", tbl)
             sig_fraction_given_true_history.append(float('nan'))
-        try:
-            LR_threshold = EmpiricalRELAXMPLRTThesholds[(tbl, mu, pi0, taxa_num, positions_num)]
-            sig_fraction_given_mp_history.append(
-                given_mp_history_df[given_mp_history_df.LR >= LR_threshold].shape[0] / given_mp_history_df.shape[0])
-        except Exception as e:
-            print("No RELAX data given MP history is available for total branches lengths: ", tbl)
-            sig_fraction_given_mp_history.append(float('nan'))
 
-    # ax.plot(tbl_options, sig_fraction_given_mp_history, linestyle=":", color='black', label="RELAX with maximum parsimony partition", lw=2.5)
-    ax.plot(tbl_options, sig_fraction_given_true_history, linestyle="--", color='black',
+    ax.plot(tbl_options, sig_fraction_given_true_history, linestyle='dotted', color='black',
             label="RELAX with true history", lw=2.5)
     ax.plot(tbl_options, sig_fraction_standard_execution, label="TraitRELAX", linestyle='dashed', color='black', lw=2.5)
+
+    ax.plot([],[], linestyle='dashed', color='red', label="Theoretical threshold")
 
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
     ax.set_xticks(tbl_options)
@@ -687,8 +673,7 @@ def plot_power_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, 
 # x axis: mu
 # y axis: empirical LR
 # 2 curves: one for TraitRELAX standard execution (full), another for TraitRELAX given the true history (dashed)
-def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds,
-                             EmpiricalRELAXMPLRTThesholds, title):
+def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, title):
     # gather the data
     pi0 = 0.5
     tbl = 4
@@ -711,16 +696,8 @@ def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAX
             print("no real data for combo: ", (tbl, mu, pi0, taxa_num, positions_num), " yet")
             LR_given_true_history.append(float("nan"))
             continue
-        try:
-            # divide by 2 to achieve LR threshold instead of 2*LR threshold
-            LR_given_mp_history.append(EmpiricalRELAXMPLRTThesholds[(tbl, mu, pi0, taxa_num, positions_num)] / 2)
-        except:
-            print("no real data for combo: ", (tbl, mu, pi0, taxa_num, positions_num), " yet")
-            LR_given_mp_history.append(float("nan"))
-            continue
     ax.plot(mu_local_options, LR_standard_execution, label="TraitRELAX", linestyle='dashed', color='black', lw=2.5)
-    # ax.plot(mu_local_options, LR_given_mp_history, linestyle=":", color='black', label="RELAX with maximum parsimony partition", lw=2.5)
-    ax.plot(mu_local_options, LR_given_true_history, linestyle="--", color='black', label="RELAX with true history",
+    ax.plot(mu_local_options, LR_given_true_history, linestyle='dotted', color='black', label="RELAX with true history",
             lw=2.5)
 
     ax.set_yticks([1, 2, 3, 4, 5])
@@ -728,15 +705,14 @@ def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAX
 
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
     ax.set_ylabel("Computed empirical LR threshold", fontdict={'size': 30})
-    ax.axhline(y=3.841, color='red', linestyle='dashed')
+    ax.axhline(y=3.841, color='red', linestyle='dashed', label="Theoretical threshold")
 
 
 # plot info: fixed to: pi0=0.5, taxa_num=32, codons=300, k=0.5
 # x axis: tbl
 # y axis: empirical LR
 # 2 curves: one for TraitRELAX standard execution (full), another for TraitRELAX given the true history (dashed)
-def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds,
-                              EmpiricalRELAXMPLRTThesholds, title):
+def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, title):
     # gather the data
     pi0 = 0.5
     taxa_num = 32
@@ -748,7 +724,6 @@ def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELA
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
     LR_standard_execution = []
     LR_given_true_history = []
-    LR_given_mp_history = []
     for tbl in tbl_to_mu.keys():
         # divide by 2 to achieve LR threshold instead of 2*LR threshold
         LR_standard_execution.append(
@@ -761,19 +736,11 @@ def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELA
             print("no real data for combo: ", (tbl, tbl_to_mu[tbl], pi0, taxa_num, positions_num), " yet")
             LR_given_true_history.append(float("nan"))
             continue
-        try:
-            # divide by 2 to achieve LR threshold instead of 2*LR threshold
-            LR_given_mp_history.append(
-                EmpiricalRELAXMPLRTThesholds[(tbl, tbl_to_mu[tbl], pi0, taxa_num, positions_num)] / 2)
-        except:
-            print("no real data for combo: ", (tbl, tbl_to_mu[tbl], pi0, taxa_num, positions_num), " yet")
-            LR_given_mp_history.append(float("nan"))
-            continue
 
     ax.plot(list(tbl_to_mu.keys()), LR_standard_execution, label="TraitRELAX", linestyle='dashed', color='black',
             lw=2.5)
     # ax.plot(list(tbl_to_mu.keys()), LR_given_mp_history, linestyle=":", color='black', label="RELAX with maximum parsimony partition", lw=2.5)
-    ax.plot(list(tbl_to_mu.keys()), LR_given_true_history, linestyle="--", color='black',
+    ax.plot(list(tbl_to_mu.keys()), LR_given_true_history, linestyle='dotted', color='black',
             label="RELAX with true history", lw=2.5)
 
     ax.set_xticks(tbl_options)
@@ -803,7 +770,7 @@ def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThre
     plot_power_vs_k_across_taxanum(300, axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "B\n",
                                    empirical=True, add_legend=True, plot_labels=True)
     plot_power_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-                     EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds, "C\n")
+                     EmpiricalRELAXLRThresholds, "C\n")
     # fig.text(0.95, 0.17, r"$k=0.5$", ha='center', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
@@ -837,11 +804,9 @@ def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThre
     plt.grid(False)
     fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58])
     plot_power_vs_tbl(axis[0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-                      EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds, "A\n")
-    plot_empirical_LRs_vs_tbl(axis[1], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds,
-                              EmpiricalMPRELAXLRThresholds, "B\n")
-    plot_empirical_LRs_vs_mu(axis[2], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds,
-                             EmpiricalMPRELAXLRThresholds, "C\n")
+                      EmpiricalRELAXLRThresholds, "A\n")
+    plot_empirical_LRs_vs_tbl(axis[1], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, "B\n")
+    plot_empirical_LRs_vs_mu(axis[2], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, "C\n")
     fig.subplots_adjust()
     fig.tight_layout(pad=0.5)
     plt.savefig(output_path_supp_2, bbox_inches='tight', transparent=True)
@@ -858,8 +823,7 @@ def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThre
 # a panel with plot for each taxa num
 # In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitRELAX with true history
 # in green - scatter the simulated value of k (with legend)
-def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, title, add_legend=False,
-                       include_reference=False):
+def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=False):
     # declare fixed parameters
     tbl = 4
     mu = 8
@@ -869,28 +833,19 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, tit
 
     ax.grid(False)
     rel_error_sim_vs_standard = []
-    rel_error_given_true_history_vs_standard = []
     rel_error_given_mp_history_vs_standard = []
-    mu_local_options = [1, 2, 4, 8, 16]
     for k in k_values_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
-        standard_df = standard_df.loc[(standard_df["alternative_k"] > 0)]
-        # given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
-        # given_true_history_df = given_true_history_df.loc[(given_true_history_df["alternative_k"] > 0)]
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
-        given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["alternative_k"] > 0)]
         rel_error_sim_vs_standard.append((abs(
             np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
-        # rel_error_given_true_history_vs_standard.append(abs(np.log(given_true_history_df["alternative_k"]+0.000001)-np.log(given_true_history_df["simulated_k"]+0.000001)).mean())
         rel_error_given_mp_history_vs_standard.append(abs(
             np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
                 given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
     ax.plot(k_values_options, rel_error_sim_vs_standard, color='black', linestyle="dashed", label="TraitRELAX", lw=2.5)
-    ax.plot(k_values_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
+    ax.plot(k_values_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dotted",
             label="RELAX with maximum\nparsimony partition", lw=2.5)
-    # if include_reference:
-    #     ax.plot(k_values_options, rel_error_given_true_history_vs_standard, color='black', linestyle="--" , label="RELAX with true history")
 
     ax.set_xticks(k_values_options)
     ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -921,21 +876,13 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, ti
 
     ax.grid(False)
     rel_error_sim_vs_standard = []
-    rel_error_given_true_history_vs_standard = []
     rel_error_given_mp_history_vs_standard = []
     mu_local_options = [1, 2, 4, 8, 16]
     for mu in mu_local_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        standard_df = standard_df.loc[(standard_df["alternative_k"] > 0)]
-        given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        given_true_history_df = given_true_history_df.loc[(given_true_history_df["alternative_k"] > 0)]
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["alternative_k"] > 0)]
         rel_error_sim_vs_standard.append((abs(
             np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
-        rel_error_given_true_history_vs_standard.append(abs(
-            np.log(given_true_history_df["alternative_k"] + 0.000001) - np.log(
-                given_true_history_df["simulated_k"] + 0.000001)).mean())
         rel_error_given_mp_history_vs_standard.append(abs(
             np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
                 given_mp_history_df["simulated_k"] + 0.000001)).mean())
@@ -943,9 +890,6 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, ti
     ax.plot(mu_local_options, rel_error_sim_vs_standard, color='black', label="TraitRELAX", linestyle='dashed', lw=2.5)
     ax.plot(mu_local_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
             label="RELAX with maximum\nparsimony partition", lw=2.5)
-    if include_reference:
-        ax.plot(mu_local_options, rel_error_given_true_history_vs_standard, color='black', linestyle="--",
-                label="RELAX with true history")
 
     ax.set_xticks(mu_local_options)
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
@@ -983,10 +927,6 @@ def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, t
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
         rel_error_sim_vs_standard.append((abs(
             np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
-        given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        rel_error_given_true_history_vs_standard.append((abs(
-            np.log(given_true_history_df["alternative_k"] + 0.000001) - np.log(
-                given_true_history_df["simulated_k"] + 0.000001))).mean())
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
         rel_error_given_mp_history_vs_standard.append((abs(
             np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
@@ -1372,7 +1312,7 @@ def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, gri
     ax1 = fig.add_subplot(gs[0, 0])
     plot_k_distribution_across_k_and_posnum(ax1, TraitRELAXComboToDf, "A\n")
     ax2 = fig.add_subplot(gs[0, 1])
-    plot_accuracy_vs_k(ax2, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "B\n", add_legend=True)
+    plot_accuracy_vs_k(ax2, TraitRELAXComboToDf, MPComboToDf, "B\n", add_legend=True)
     ax3 = fig.add_subplot(gs[0, 2], projection='3d')
     plot_2d_grid(ax3, grid_data_path, "C\n", 14)
     fig.text(-0.01, 0.5, "" + r"$\^k$", va='center', rotation='vertical', fontdict={'size': 30})
@@ -1470,8 +1410,6 @@ def plot_duration(TraitRELAXComboToDf, output_path):
             joint_df = pd.concat(dataframes)
             duration_data_by_taxa[taxa_num].append(joint_df["duration(hours)"].mean())
 
-    print("duration_data_by_taxa: ", duration_data_by_taxa)
-
     # plot a line for each taxa_num
     fig, axis = plt.subplots(nrows=1, ncols=1)
     plt.grid(False)
@@ -1536,8 +1474,6 @@ if __name__ == '__main__':
                                 df = pd.read_csv(input_dir + "clean_analysis.csv")
 
                             # insert the dataframe into a dictionary
-                            # print("processed combo: (tbl=", tbl, ", mu=", mu, ", pi0=", pi0,
-                            #       ", #taxa=", taxa_num, ", #pos=", codon_positions_num, ", k=", k_value, ")")
                             TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, codon_positions_num, k_value)] = df
 
                         # report theoretical and empirical results
@@ -1603,12 +1539,7 @@ if __name__ == '__main__':
                             # print("df shape: ", df.shape[0])
 
                             # insert the dataframe into a dictionary
-                            print("processed combo: (tbl=", tbl, ", mu=", mu, ", pi0=", pi0, ", #taxa=", taxa_num,
-                                  ", #pos=", codon_positions_num, ", k=", k_value, ")")
                             RELAXComboToDf[(tbl, mu, pi0, taxa_num, codon_positions_num, k_value)] = df
-                            kZeroInf = df.loc[(df["alternative_k"] == 0)]
-                            print("replicates where estimated k=0: ", list(kZeroInf["replicate"]))
-
                         # report theoretical and empirical results
                         if not skip_combo:
                             print("combo: (tbl=", tbl, ", mu=", mu, ", pi0=", pi0, ", taxa_num=", taxa_num,
@@ -1649,7 +1580,6 @@ if __name__ == '__main__':
                             # extract the results
                             if not os.path.exists(input_dir + "full_analysis.csv") or not os.path.exists(
                                             input_dir + "clean_analysis.csv"):
-                                # df, full_df = extract_RELAX_data(input_dir, tbl, mu, pi0, taxa_num, codon_positions_num, k_value)
                                 df, full_df = extract_RELAX_data(input_dir, tbl, mu, pi0, taxa_num, codon_positions_num,
                                                                  k_value)
                                 full_df.to_csv(input_dir + "full_analysis.csv")
@@ -1659,8 +1589,6 @@ if __name__ == '__main__':
                                 df = pd.read_csv(input_dir + "clean_analysis.csv")
 
                             # insert the dataframe into a dictionary
-                            print("processed combo: (tbl=", tbl, ", mu=", mu, ", pi0=", pi0,
-                                  ", #taxa=", taxa_num, ", #pos=", codon_positions_num, ", k=", k_value, ")")
                             MPComboToDf[(tbl, mu, pi0, taxa_num, codon_positions_num, k_value)] = df
 
                         # report theoretical and empirical results
@@ -1685,8 +1613,10 @@ if __name__ == '__main__':
                                   figures_dir + "power_and_fpr_assessment_for_supp_1.svg",
                                   figures_dir + "power_and_fpr_assessment_for_supp_2.svg")
 
-    # plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path,
-    #                        figures_dir + "accuracy_assessment_for_results.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_1.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_2.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_3.svg")
+    plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path,
+                           figures_dir + "accuracy_assessment_for_results.svg",
+                           figures_dir + "accuracy_assessment_for_supp_1.svg",
+                           figures_dir + "accuracy_assessment_for_supp_2.svg",
+                           figures_dir + "accuracy_assessment_for_supp_3.svg")
+
+    plot_duration(TraitRELAXComboToDf, figures_dir + "duration_analysis.svg")
