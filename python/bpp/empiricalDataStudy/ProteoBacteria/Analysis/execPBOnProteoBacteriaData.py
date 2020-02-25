@@ -8,14 +8,14 @@ if __name__ == '__main__':
     parser.add_argument('--program_path', '-p', help='path to the program file', required=False,
                         default="/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/traitrelax")
     parser.add_argument('--input_dir', '-i',
-                        help='path ot the directory with the parameter files given as input to the program to create the inference result. Form here, we will extract the initial parameters for the parameter files of the simulations',
+                        help='path to the directory with the parameter files given as input to the program to create the inference result. Form here, we will extract the initial parameters for the parameter files of the simulations',
                         required=True)
     parser.add_argument('--inference_dir', '-r', help='directory of the output files of the program on the data',
                         required=True)
     parser.add_argument('--simulations_dir', '-s', help='directory to create simulations environment in per dataset',
                         required=True)
-    parser.add_argument('--data_dir', '-d', help='path ot the sequence alignment of the data', required=True)
-    parser.add_argument('--tree_path', '-t', help='path ot the tree path of the data in data_path', required=True)
+    parser.add_argument('--data_dir', '-d', help='path to the sequence alignment of the data', required=True)
+    parser.add_argument('--tree_dir', '-t', help='directory to the tree paths of the data in data_path', required=True)
     parser.add_argument('--history_path', '-hist',
                         help='path to the labeled history. use in case of parametric bootstrapping on RELAX',
                         required=False, default="")
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     data_dir = args.data_dir
     bootstrap_on_char_only = bool(int(args.bootstrap_on_char_only))
     set_advanced_parameters = bool(int(args.set_advanced_parameters))
-    tree_path = args.tree_path
+    tree_dir = args.tree_dir
     history_path = args.history_path
     num_of_replicates = int(args.num_of_replicates)
     queue = args.queue
@@ -60,6 +60,9 @@ if __name__ == '__main__':
             with open(inference_dir + path, "r") as infile:
                 content = infile.read()
             dataset_id = dataset_id_regex.search(content).group(1)
+
+            # get tree path
+            tree_path = tree_dir + dataset_id + "/optimized_tree.nwk"
 
             # get input_path
             input_path = input_dir + dataset_id + ".bpp"
@@ -78,7 +81,7 @@ if __name__ == '__main__':
             cmd = 'python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/empiricalDataStudy/parametricBootstrap.py -s ' + dataset_simulation_dir + ' -r ' + inference_dir + path + ' -d ' + data_path + ' -t ' + tree_path + ' -hist ' + history_path + ' -i ' + input_path + ' -cd ' + character_data_path + ' -sc ' + str(
                 int(set_advanced_parameters)) + ' -rep ' + str(
                 num_of_replicates) + ' -q ' + queue + ' -p ' + program_path + ' -nt ' + str(
-                int(without_trait_simulations)) + ' -c ' + str(int(bootstrap_on_char_only))
+                int(without_trait_simulations)) + ' -c ' + str(int(bootstrap_on_char_only)) + ' -ri 0'
             res = os.system(cmd)
         except Exception as e:
             print("FAILED TO EXECUTE PARAMETERIC BOOSTRAPPING ON PATH: ", path)
