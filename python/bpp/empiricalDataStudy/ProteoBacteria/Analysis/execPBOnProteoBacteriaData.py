@@ -16,8 +16,8 @@ if __name__ == '__main__':
                         required=True)
     parser.add_argument('--data_dir', '-d', help='path to the sequence alignment of the data', required=True)
     parser.add_argument('--tree_dir', '-t', help='directory to the tree paths of the data in data_path', required=True)
-    parser.add_argument('--history_path', '-hist',
-                        help='path to the labeled history. use in case of parametric bootstrapping on RELAX',
+    parser.add_argument('--history_dir', '-hist',
+                        help='directory to the labeled histories. use in case of parametric bootstrapping on RELAX',
                         required=False, default="")
     parser.add_argument('--bootstrap_on_char_only', '-c',
                         help='boolean indicating weather only character data should be simulated or also sequence data',
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     bootstrap_on_char_only = bool(int(args.bootstrap_on_char_only))
     set_advanced_parameters = bool(int(args.set_advanced_parameters))
     tree_dir = args.tree_dir
-    history_path = args.history_path
+    history_dir = args.history_dir
     num_of_replicates = int(args.num_of_replicates)
     queue = args.queue
     priority = args.priority
@@ -63,6 +63,9 @@ if __name__ == '__main__':
 
             # get tree path
             tree_path = tree_dir + dataset_id + "/optimized_tree.nwk"
+
+            # get history path
+            history_path = history_dir + dataset_id + "/mp_history.nwk"
 
             # get input_path
             input_path = input_dir + dataset_id + ".bpp"
