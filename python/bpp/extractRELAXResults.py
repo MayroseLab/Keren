@@ -48,17 +48,17 @@ def doLRT(null_logl, alternative_logl, df=1):
 
 def extract_data_by_hypothesis(str, hypothesis, dictionary):
 
-    regex_strings = {hypothesis + "_p": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.p\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete",
-                     hypothesis + "_omega1": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.omega1\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete",
-                     hypothesis + "_omega2": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.omega2\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete",
-                     hypothesis + "_theta1": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.theta1\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete",
-                     hypothesis + "_theta2": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.theta2\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete",
-                     hypothesis + "_k": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.k\.*\:\s*(\d*\.?\d*).*?iteraive optimzation complete"}
+    regex_strings = {hypothesis + "_p": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.p\.*\:\s*(\d*\.?\d*).*?iterative optim",
+                     hypothesis + "_omega1": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.omega1\.*\:\s*(\d*\.?\d*).*?iterative optim",
+                     hypothesis + "_omega2": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.omega2\.*\:\s*(\d*\.?\d*).*?iterative optim",
+                     hypothesis + "_theta1": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.theta1\.*\:\s*(\d*\.?\d*).*?iterative optim",
+                     hypothesis + "_theta2": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.theta2\.*\:\s*(\d*\.?\d*).*?iterative optim",
+                     hypothesis + "_k": "Fitting the " + hypothesis + " model.*?model 2.*?RELAX\.k\.*\:\s*(\d*\.?\d*).*?iterative optim"}
 
     if hypothesis == "null":
         regex_strings["null_logl"] = "Fitting the null model.*Current log likelihood\.*\:\s*(-\d*\.?\d*).*?Fitting the alternative model"
     else:
-        regex_strings["alternative_logl"] = "Fitting the alternative model.*Current log likelihood\.*\:\s*(-\d*\.?\d*).*?iteraive optimzation complete"
+        regex_strings["alternative_logl"] = "Fitting the alternative model.*Current log likelihood\.*\:\s*(-\d*\.?\d*).*?iterative optim"
 
     # extract the basic field
     for field in regex_strings.keys():
