@@ -1,5 +1,6 @@
 import argparse, os, re
 from ete3 import Tree
+from time import sleep
 
 ''' how to use rhe simulator:
 # cd to the directory to create the sequence data in (because indelible will write to the directory from which the script is executed
@@ -414,11 +415,11 @@ optimization.final = powell
         output_file.write(param_content)
 
 
-def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path,
-                              character_model_mu, character_model_pi0, kappa, omega0, omega1, omega2, omega0_weight,
+def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path, kappa,
+                              omega0, omega1, omega2, omega0_weight,
                               omega1_weight, selection_intensity_parameter, history_tree_path, nuc1_theta, nuc1_theta1,
                               nuc1_theta2, nuc2_theta, nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2,
-                              labels_str):
+                              labels_str, character_model_mu=None, character_model_pi0=None):
     param_template = '''# Global variables:
 verbose = 1
 
@@ -448,14 +449,6 @@ init.tree = user
 input.tree.file = <tree_path>
 input.tree.format = Newick
 init.brlen.method = Input
-
-# ----------------------------------------------------------------------------------------
-#                                     Character Model specification
-# ----------------------------------------------------------------------------------------
-
-character_model.set_initial_parameters = true
-character_model.mu = <mu>
-character_model.pi0 = <pi0>
 
 # ----------------------------------------------------------------------------------------
 #                                     Sequence Model specification
@@ -502,8 +495,6 @@ true_history.tree.file = <history_tree_path>
     param_content = param_template.replace("<character_data_path>", character_data_path)
     param_content = param_content.replace("<sequence_data_path>", sequence_data_path)
     param_content = param_content.replace("<tree_path>", tree_path)
-    param_content = param_content.replace("<mu>", str(character_model_mu))
-    param_content = param_content.replace("<pi0>", str(character_model_pi0))
     param_content = param_content.replace("<kappa>", str(kappa))
     param_content = param_content.replace("<p>", str(p))
     param_content = param_content.replace("<omega1>", str(omega1))
@@ -527,6 +518,18 @@ true_history.tree.file = <history_tree_path>
     adjusted_labels_str = labels_str.replace("model1.nodes_id", "true_history.model1.nodes_id")
     adjusted_labels_str = adjusted_labels_str.replace("model2.nodes_id", "true_history.model2.nodes_id")
     param_content = param_content + adjusted_labels_str
+
+    if character_model_mu != None and character_model_pi0 != None:
+        param_content = param_content + '''# ----------------------------------------------------------------------------------------
+#                                     Character Model specification
+# ----------------------------------------------------------------------------------------
+
+character_model.set_initial_parameters = true
+character_model.mu = <mu>
+character_model.pi0 = <pi0>'''
+
+        param_content = param_content.replace("<mu>", str(character_model_mu))
+        param_content = param_content.replace("<pi0>", str(character_model_pi0))
 
     with open(output_path, "w") as output_file:
         output_file.write(param_content)
@@ -563,11 +566,11 @@ if __name__ == '__main__':
     parser.add_argument('--initial_mu', '-imu',
                         help='character substitution rate to initialize traitrelax parameters file with',
                         required=False,
-                        default=1)
+                        default=None)
     parser.add_argument('--initial_pi0', '-ipi0',
                         help='character state 0 frequency to initialize traitrelax parameters file with',
                         required=False,
-                        default=0.5)
+                        default=None)
     parser.add_argument('--initial_kappa', '-ikappa',
                         help='nucleotide substitution rate parameter kappa to initialize parameters file with',
                         required=False,
@@ -687,8 +690,12 @@ if __name__ == '__main__':
     num_of_replicates = int(args.num_of_replicates)
     aln_len = int(args.aln_len)
     character_data_path = args.character_data_path
-    initial_character_model_mu = float(args.initial_mu)
-    initial_character_model_pi0 = float(args.initial_pi0)
+    initial_character_model_mu = args.initial_mu
+    if initial_character_model_mu != None:
+        initial_character_model_mu = float(initial_character_model_mu)
+    initial_character_model_pi0 = args.initial_pi0
+    if initial_character_model_pi0 != None:
+        initial_character_model_pi0 = float(initial_character_model_pi0)
 
     nuc1_theta = float(args.nuc1_theta)
     nuc1_theta1 = float(args.nuc1_theta1)
@@ -743,10 +750,10 @@ if __name__ == '__main__':
         # set parameters file for TraitRELAX
         set_traitrelax_param_file(simulation_output_dir + "traitrelax_result/",
                                   traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path,
-                                  output_dir + "history_tree.nwk", character_data_path, initial_character_model_mu,
-                                  initial_character_model_pi0, initial_kappa, initial_omega0, initial_omega1,
+                                  output_dir + "history_tree.nwk", character_data_path, initial_kappa, initial_omega0, initial_omega1,
                                   initial_omega2, initial_omega0_weight, initial_omega1_weight,
                                   initial_selection_intensity_parameter, output_dir + "history_tree.nwk",
                                   initial_nuc1_theta, initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta,
                                   initial_nuc2_theta1, initial_nuc2_theta2, initial_nuc3_theta, initial_nuc3_theta1,
-                                  initial_nuc3_theta2, labels_str)
+                                  initial_nuc3_theta2, labels_str, initial_character_model_mu,
+                                  initial_character_model_pi0)

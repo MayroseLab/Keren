@@ -215,6 +215,8 @@ def get_initial_parameters(input_path, method="traitrelax"):
         try:
             parameters[field] = regex_data[field].search(content).group(1)
         except:
+            if field == "mu" or field == "pi0":
+                continue
             print("failed to extract ", field)
             print("regex: ", regex_data[field].pattern)
             print("input_path: ", input_path)
@@ -313,8 +315,7 @@ if __name__ == '__main__':
     # create simulations
     if method == "traitrelax" and bootstrap_on_char_only:  # simulate only character data, and create parameter files that use the data_path
         cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/simulator/TraitSimulator.py -o " + simulations_dir + "data/ -t " + tree_path + " -mu " + \
-              inferred_parameters["mu"] + " -pi0 " + inferred_parameters["pi0"] + " -imu " + initial_parameters[
-                  "mu"] + " -ipi0 " + initial_parameters["pi0"] + " -ikappa " + initial_parameters[
+              inferred_parameters["mu"] + " -pi0 " + inferred_parameters["pi0"]+ " -ikappa " + initial_parameters[
                   "kappa"] + " -iomega0 " + initial_parameters["omega0"] + " -iomega1 " + initial_parameters[
                   "omega1"] + " -iomega2 " + initial_parameters["omega2"] + " -ip0 " + initial_parameters[
                   "p0"] + " -ip1 " + initial_parameters["p1"] + " -ik " + initial_parameters["k"] + " -rep " + str(
@@ -327,8 +328,11 @@ if __name__ == '__main__':
                   "2_Full.theta2"] + " -in2t2 " + initial_parameters["2_Full.theta2"] + " -n3t " + inferred_parameters[
                   "3_Full.theta"] + " -in3t " + initial_parameters["3_Full.theta"] + " -n3t1 " + inferred_parameters[
                   "3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + inferred_parameters[
-                  "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"] + " -imu " + initial_parameters[
-                  "mu"] + " -ipi0 " + initial_parameters["pi0"]
+                  "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"]
+        if "mu" in initial_parameters:
+            cmd = cmd + " -imu " + initial_parameters["mu"]
+        if "pi0" in initial_parameters:
+            cmd = cmd + " -ipi0 " + initial_parameters["pi0"]
     if method == "traitrelax" and without_trait_simulations:
         cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/simulator/RELAXSimulator.py -o " + simulations_dir + "data/ -t " + history_path + " -kappa " + \
               inferred_parameters["kappa"] + " -omega0 " + inferred_parameters["omega0"] + " -omega1 " + \
@@ -346,9 +350,12 @@ if __name__ == '__main__':
                   "2_Full.theta2"] + " -in2t2 " + initial_parameters["2_Full.theta2"] + " -n3t " + inferred_parameters[
                   "3_Full.theta"] + " -in3t " + initial_parameters["3_Full.theta"] + " -n3t1 " + inferred_parameters[
                   "3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + inferred_parameters[
-                  "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"] + " -imu " + initial_parameters[
-                  "mu"] + " -ipi0 " + initial_parameters["pi0"] + " -cd " + character_data_path + " -sc " + \
+                  "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"] + " -cd " + character_data_path + " -sc " + \
               inferred_parameters["scaling_factor"]
+        if "mu" in initial_parameters:
+            cmd = cmd + " -imu " + initial_parameters["mu"]
+        if "pi0" in initial_parameters:
+            cmd = cmd + " -ipi0 " + initial_parameters["pi0"]
     elif method == "traitrelax" and not without_trait_simulations:
         cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/simulator/TraitRELAXSimulator.py -o " + simulations_dir + "data/ -t " + tree_path + " -mu " + \
               inferred_parameters["mu"] + " -pi0 " + inferred_parameters["pi0"] + " -kappa " + inferred_parameters[
@@ -377,8 +384,11 @@ if __name__ == '__main__':
                   "2_Full.theta2"] + " -in2t2 " + initial_parameters["2_Full.theta2"] + " -n3t " + inferred_parameters[
                   "3_Full.theta"] + " -in3t " + initial_parameters["3_Full.theta"] + " -n3t1 " + inferred_parameters[
                   "3_Full.theta1"] + " -in3t1 " + initial_parameters["3_Full.theta1"] + " -n3t2 " + inferred_parameters[
-                  "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"] + " -imu " + initial_parameters[
-                  "mu"] + " -ipi0 " + initial_parameters["pi0"]
+                  "3_Full.theta2"] + " -in3t2 " + initial_parameters["3_Full.theta2"]
+        if "mu" in initial_parameters:
+            cmd = cmd + " -imu " + initial_parameters["mu"]
+        if "pi0" in initial_parameters:
+            cmd = cmd + " -ipi0 " + initial_parameters["pi0"]
     else:  # use relax simulator
         cmd = "python /groups/itay_mayrose/halabikeren/myScripts/python/simulator/RELAXSimulator.py -o " + simulations_dir + "data/ -t " + history_path + " -kappa " + \
               inferred_parameters["kappa"] + " -omega0 " + inferred_parameters["omega0"] + " -omega1 " + \
