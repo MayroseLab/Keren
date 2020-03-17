@@ -28,7 +28,10 @@ if __name__ == '__main__':
             integrated_df.loc[integrated_df.dataset_id == dataset_name, 'significant_by_PB'] = "NA"
             continue
 
-        res = os.system("python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractRELAXResults.py -i " + results_dir + " -o " + results_dir + " > " + results_dir + "/mapping_job_to_dataset.log")
+        script_path = "/groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractRELAXResults.py"
+        if "TraitRELAX" in input_dir:
+            script_path = "/groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractTraitRELAXResult.py"
+        res = os.system("python " + script_path + " -i " + results_dir + " -o " + results_dir + " > " + results_dir + "/mapping_job_to_dataset.log")
         results = pd.read_csv(results_dir + "res.csv")
         LR_scores = list(results["LRT_statistic"])
         LR_scores.sort() # sort in descending order
