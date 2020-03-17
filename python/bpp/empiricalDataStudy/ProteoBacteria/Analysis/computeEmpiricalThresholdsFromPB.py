@@ -24,6 +24,8 @@ if __name__ == '__main__':
         
         dataset_name = path
 
+        print("beggining anaysis on dataset " + dataset_name)
+
         results_dir = input_dir + path + "/output/"
 
         if len(os.listdir(results_dir)) < 100:
@@ -34,7 +36,12 @@ if __name__ == '__main__':
             script_path = "/groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractRELAXResults.py"
         else:
             script_path = "/groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractTraitRELAXResult.py"
+
+        print("executing analysis of PB results on dataset " + dataset_name)
         res = os.system("python " + script_path + " -i " + results_dir + " -o " + results_dir + " > " + results_dir + "/mapping_job_to_dataset.log")
+
+        print("integrating analysis result of PB on dataset " + dataset_name)
+
         results = pd.read_csv(results_dir + "res.csv")
         LR_scores = list(results["LRT_statistic"])
         LR_scores.sort() # sort in descending order
