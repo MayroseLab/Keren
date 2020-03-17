@@ -146,6 +146,20 @@ def parse_union_tree(history_1, history_2, base_tree_path, debug=False):
 
     return united_tree
 
+# debug mapping function
+def debug_mapping(mapping, base_tree_path):
+    base_tree = Tree(base_tree_path, format=1)
+    for node in base_tree.traverse("postorder"):
+        parent = node.up
+        node_in_mapping = mapping.search_nodes(name=node.name)[0]
+        parent_in_mapping = mapping.search_nodes(name=parent.name)[0]
+        dist = node.dist
+        dist_in_mapping = node_in_mapping.get_distance(parent_in_mapping.name)
+        if dist != dist_in_mapping:
+            print("bug in stochastic mapping product at branch (", parent.name, ", ", node.name, ")")
+            print("distance in base tree: ", dist)
+            print("distance in mapping: ", dist_in_mapping)
+
 # compute the level of disagreement between the histories
 def compute_distance(history_1, history_2, base_tree_path, debug=False):
     # 4 categories: 1) A = in FG in history_1 and in history_2

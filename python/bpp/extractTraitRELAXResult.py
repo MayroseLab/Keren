@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 sns.set_style('whitegrid')
 # HARDCODED - the paraemters to extract
-colnames = ['dataset_id','null_logl','alternative_logl','null_mu','alternative_mu','null_pi0','alternative_pi0','null_kappa','alternative_kappa','null_p','alternative_p','null_omega1','alternative_omega1','null_omega2','alternative_omega2','null_theta1','alternative_theta1','null_theta2','alternative_theta2','null_k','alternative_k','null_omega0','alternative_omega0','null_p0','alternative_p0','null_p1','alternative_p1','LR','pvalue']
+colnames = ['dataset_id','null_logl','alternative_logl','null_mu','alternative_mu','null_pi0','alternative_pi0','null_kappa','alternative_kappa','null_p','alternative_p','null_omega1','alternative_omega1','null_omega2','alternative_omega2','null_theta1','alternative_theta1','null_theta2','alternative_theta2','null_k','alternative_k','null_omega0','alternative_omega0','null_p0','alternative_p0','null_p1','alternative_p1',"LRT_statistic",'pvalue']
 
 def doLRT(null_logl, alternative_logl, df=1):
     LR = 2 * (alternative_logl - null_logl)
