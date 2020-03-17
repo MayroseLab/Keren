@@ -8,11 +8,13 @@ if __name__ == '__main__':
     parser.add_argument('--input_dir', '-i', help='directory that holds the results of he parametric bootstrapping', required=True)
     parser.add_argument('--theoretical_res_path', '-t', help='pah to the analysis results of the theoretical tests', required=True)
     parser.add_argument('--output_path', '-o', help='path that will hold the results of the theoretical and empirical statistical tests', required=True)
+    parser.add_argument('--script_type', '-s', help='0 for RELAX, 1 for TraitRELAX', required=False, default=0)
 
     args = parser.parse_args()
     input_dir = args.input_dir
     theoretical_res_path = args.theoretical_res_path
     output_path = args.output_path
+    script_type = int(args.script_type)
 
     integrated_df = pd.read_csv(theoretical_res_path)
     integrated_df['significant_by_PB'] = np.zeros(integrated_df.shape[0])
@@ -28,8 +30,9 @@ if __name__ == '__main__':
             integrated_df.loc[integrated_df.dataset_id == dataset_name, 'significant_by_PB'] = "NA"
             continue
 
-        script_path = "/groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractRELAXResults.py"
-        if "TraitRELAX" in input_dir:
+        if script_type == 0:
+            script_path = "/groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractRELAXResults.py"
+        else:
             script_path = "/groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractTraitRELAXResult.py"
         res = os.system("python " + script_path + " -i " + results_dir + " -o " + results_dir + " > " + results_dir + "/mapping_job_to_dataset.log")
         results = pd.read_csv(results_dir + "res.csv")
