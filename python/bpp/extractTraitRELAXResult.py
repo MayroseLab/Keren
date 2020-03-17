@@ -66,7 +66,7 @@ def extract_traitrelax_parameters(input_path):
     dictionary["alternative_p1"] = str(float(dictionary["alternative_theta2"]) * (1 - float(dictionary["alternative_theta1"])))
 
     # LR and pvalue
-    dictionary["LR"] = 2 * (float(dictionary["alternative_logl"]) - float(dictionary["null_logl"]))
+    dictionary["LRT_statistic"] = 2 * (float(dictionary["alternative_logl"]) - float(dictionary["null_logl"]))
     dictionary["pvalue"] = chi2.sf(dictionary["LR"], 1)  # 1 degree of freedom is the diff in num of parameters between alternative and null models
 
     return dictionary
