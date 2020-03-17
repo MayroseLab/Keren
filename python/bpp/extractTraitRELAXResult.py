@@ -92,5 +92,5 @@ if __name__ == '__main__':
             data = extract_traitrelax_parameters(input_dir + input_path)
             df = df.append(data, ignore_index=True)
     # write data to output file
-    df.to_csv(output_dir+"tr_res.csv")
+    df.to_csv(output_dir+"res.csv")
 
