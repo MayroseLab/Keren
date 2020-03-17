@@ -19,9 +19,15 @@ if __name__ == '__main__':
 
 
     for path in os.listdir(input_dir):
+        
         dataset_name = path
 
         results_dir = input_dir + path + "/output/"
+
+        if len(os.listdir(results_dir)) < 100:
+            integrated_df.loc[integrated_df.dataset_id == dataset_name, 'significant_by_PB'] = "NA"
+            continue
+
         res = os.system("python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/extractRELAXResults.py -i " + results_dir + " -o " + results_dir + " > " + results_dir + "/mapping_job_to_dataset.log")
         results = pd.read_csv(results_dir + "res.csv")
         LR_scores = list(results["LRT_statistic"])
