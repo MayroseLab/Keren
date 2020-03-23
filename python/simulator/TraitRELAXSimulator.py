@@ -159,7 +159,7 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
 
         # call to simulator with parameters file
         res = os.system(
-            "/groups/itay_mayrose/halabikeren/biopp_test/bppsuite/build/bppSuite/traitsimulator param=" + character_simulation_parameters_path)
+            "/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/traitsimulator param=" + character_simulation_parameters_path)
         fix_tree_format(true_history_path)
 
         # write the tree without labels into a file
