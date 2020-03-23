@@ -69,8 +69,7 @@ if __name__ == '__main__':
                             touch_file_path = job_name + "_flag_done"
                             full_job = create_job_file(job_name, commands, file_name, error_files_dir, job_files_dir,
                                                        0, 1,
-                                                       touch_file_path, limit_nodes=False, python=False,
-                                                       openmpi=False, language="bash", queue=queue, set_vmem=True)
+                                                       touch_file_path, limit_nodes=False, python=False, language="bash", queue=queue)
                             res = os.system("qsub " + full_job)
 
 
