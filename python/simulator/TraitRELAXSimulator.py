@@ -36,7 +36,6 @@ def convert_history_to_simmap(tree_path, output_path):
             node.delete()
     # write tree on your own because ete3 writer has a bug
     tree_str = getTreeStr(history.get_tree_root())
-    print("tree_str: ", tree_str)
     with open(output_path, "w") as output_file:
         output_file.write(tree_str + ";")
 
@@ -64,11 +63,13 @@ def fix_tree_format(tree_path):
     with open(tree_path, "w") as tree_file:
         tree_file.write(tree_str)
 
+
 def scale_tree(input_tree_path, output_tree_path, scaling_factor=1.0):
     tree = Tree(input_tree_path, format=1)
     for node in tree.traverse():
         node.dist = node.dist * scaling_factor
     tree.write(outfile=output_tree_path, format=1)
+
 
 def remove_spaces(filepath):
     with open(filepath, "r") as input:
@@ -129,6 +130,7 @@ def compute_codon_frequencies(nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta, 
 
     return codon_to_frequency
 
+
 def fix_tree_str_format(tree_str):
     bad_format_numbers_regex = re.compile(":(\d*\.?\d*e-\d*)", re.MULTILINE | re.DOTALL)
     for match in bad_format_numbers_regex.finditer(tree_str):
@@ -136,6 +138,7 @@ def fix_tree_str_format(tree_str):
         good_format = "{:.10f}".format(float(bad_format), 10)
         tree_str = tree_str.replace(bad_format, good_format)
     return tree_str
+
 
 # don't stop until you get a simulation with both types of dats
 def simulate_character_data(character_model_mu, character_model_pi0, tree_path, output_dir):
@@ -195,6 +198,7 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
 
     return true_history_path, character_data_path, history_tree_path
 
+
 # indelible's branch-site simulation feature does not allow selective regime to swtich upon transitions between bramch classes, just like in our implementation
 # one can force selective regimes transitions along the tree using a pre-given labeling, as can be seem at the bottom of the documentation in:
 # http://abacus.gene.ucl.ac.uk/software/indelible/tutorial/branchsite.shtml
@@ -210,6 +214,7 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
     # read the character history and derive from it a tree and a labeling in INDELible control file compatible format
     true_history = Tree(true_history_path, format=1)
     label_regex = re.compile("\{(.*?)\}", re.DOTALL)
+    print("true_history_path: ", true_history_path)
     node_to_branch_length_expression = dict()  # will contain the node name is well if the node is internal, as internal node names should be omitted from the tree string
     node_to_label = dict()
     node_to_branch_index = dict()  # will help in creation of branch labeling in relax parameters file
@@ -272,9 +277,9 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
 
 [SETTINGS]
     [ancestralprint]    FALSE
-	[fastaextension]    fas
-	[output]          	FASTA
-	[fileperrep]      	TRUE
+    [fastaextension]    fas
+    [output]              FASTA
+    [fileperrep]          TRUE
     [printrates]        TRUE
 
   /* Notice that the number of classes and proportions do not change below. */
@@ -418,6 +423,7 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
 
     return sequence_output_dir + "sequence_data_1.fas", labels_str
 
+
 def set_relax_param_file(output_path, sequence_data_path, tree_path, kappa, omega0, omega1, omega2, omega0_weight,
                          omega1_weight, selection_intensity_parameter, labels):
     param_template = '''# Global variables:
@@ -495,9 +501,11 @@ optimization.final = powell
     with open(output_path, "w") as output_file:
         output_file.write(param_content)
 
+
 def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path,
                               kappa, omega0, omega1, omega2, omega0_weight,
-                              omega1_weight, selection_intensity_parameter, history_tree_path, labels_str, character_model_mu = None, character_model_pi0 = None):
+                              omega1_weight, selection_intensity_parameter, history_tree_path, labels_str,
+                              character_model_mu=None, character_model_pi0=None):
     param_template = '''# Global variables:
 verbose = 1
 
@@ -609,6 +617,7 @@ character_model.pi0 = <pi0>
 
     with open(output_path, "w") as output_file:
         output_file.write(param_content)
+
 
 if __name__ == '__main__':
 
@@ -782,6 +791,10 @@ if __name__ == '__main__':
     initial_character_model_pi0 = args.initial_pi0
     if initial_character_model_pi0 != None:
         initial_character_model_pi0 = float(initial_character_model_pi0)
+    character_data_path = args.character_data_path
+    use_scaled_as_hist = False
+    if character_data_path != "":
+        use_scaled_as_hist = True
 
     nuc1_theta = float(args.nuc1_theta)
     nuc1_theta1 = float(args.nuc1_theta1)
@@ -814,22 +827,32 @@ if __name__ == '__main__':
         if int(rep) >= num_of_replicates:
             continue
         fix_tree_format(tree_path)
-        scaled_tree_path = tree_path.replace(".nwk", "_scaled_by_" + str(scaling_factor) + ".nwk")
-        scale_tree(tree_path, scaled_tree_path, scaling_factor=scaling_factor)
+        if scaling_factor == 1:
+            scaled_tree_path = tree_path
+        else:
+            scaled_tree_path = tree_path.replace(".nwk", "_scaled_by_" + str(scaling_factor) + ".nwk")
+            scale_tree(tree_path, scaled_tree_path, scaling_factor=scaling_factor)
+        input_tree_path = ""
+        if use_scaled_as_hist:  # if character data was given
+            input_tree_path = scaled_tree_path
         print("**** simulating replicate " + str(rep) + " ****")
         # set simulation output directory
         simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
         if not os.path.exists(simulation_output_dir):
             res = os.system("mkdir -p " + simulation_output_dir)
         # simulate character data
-        true_history_path, character_data_path, history_tree_path = simulate_character_data(character_model_mu,
-                                                                                            character_model_pi0,
-                                                                                            tree_path,
-                                                                                            simulation_output_dir)
+        if character_data_path == "":
+            true_history_path, character_data_path, history_tree_path = simulate_character_data(character_model_mu,
+                                                                                                character_model_pi0,
+                                                                                                tree_path,
+                                                                                                simulation_output_dir)
+        if input_tree_path == "":
+            input_tree_path = true_history_path
+
         # simulate sequence data
         sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight,
                                                                 omega1_weight, selection_intensity_parameter,
-                                                                scaled_tree_path, simulation_output_dir, 1, aln_len,
+                                                                input_tree_path, simulation_output_dir, 1, aln_len,
                                                                 nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
                                                                 nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1,
                                                                 nuc3_theta2)
@@ -843,4 +866,4 @@ if __name__ == '__main__':
                                   character_data_path,
                                   initial_kappa, initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
                                   initial_omega1_weight, initial_selection_intensity_parameter, history_tree_path,
-                                  labels_str, initial_character_model_mu, initial_character_model_pi0,)
+                                  labels_str, initial_character_model_mu, initial_character_model_pi0, )
