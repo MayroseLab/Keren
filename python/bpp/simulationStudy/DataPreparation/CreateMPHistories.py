@@ -50,18 +50,18 @@ if __name__ == '__main__':
                 outfile.write("output.mp.partition = " + lables_path + "\n")
 
             # execute the program on the parameters file
-            #res = os.system("/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/writemphistory param=" + mp_dir + "mp_solution_parameters.bpp")
-            #while not os.path.exists(lables_path):
-            #    sleep(2)
+            res = os.system("/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/writemphistory param=" + mp_dir + "mp_solution_parameters.bpp")
+            while not os.path.exists(lables_path):
+               sleep(2)
 
             # open mp history and write history tree (should be exactly like the original tree) to a file
-            #history = Tree(history_path, format=1)
-            #history_str = history.write(outfile=None, format=5)
-            #history_str = history_str.replace("{0}", "")
-            #history_str = history_str.replace("{1}", "")
-            #history_tree_path = history_path.replace("mp_history.nwk", "mp_tree.nwk")
-            #with open(history_tree_path, "w") as history_tree_file:
-            #    history_tree_file.write(history_str)
+            history = Tree(history_path, format=1)
+            history_str = history.write(outfile=None, format=5)
+            history_str = history_str.replace("{0}", "")
+            history_str = history_str.replace("{1}", "")
+            history_tree_path = history_path.replace("mp_history.nwk", "mp_tree.nwk")
+            with open(history_tree_path, "w") as history_tree_file:
+               history_tree_file.write(history_str)
             tree_path_info = "input.tree.file = " + tree_path + "\n"
 
             # parse the labels of the mp history
