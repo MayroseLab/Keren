@@ -8,6 +8,8 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 import pandas as pd
+from matplotlib.lines import Line2D
+
 
 ###################################################################
 
@@ -190,19 +192,19 @@ def plot_logl_distance_vs_mu(ax, df, title):
             exhaustive_computation_logl = list(relevant_df["exhaustive_computation_logl"])[0]
             exhaustive_computation_logl_diff = true_history_logl - exhaustive_computation_logl
             exhaustive_diffs.append(exhaustive_computation_logl_diff)
-        mu_to_approximation_diffs[mu] = {"exhausitve": exhaustive_diffs, "sampling_based_expected": sampling_based_expected_histories_diffs, "analytic_expected": analytic_expected_histories_diffs}
+        mu_to_approximation_diffs[mu] = {"exhaustive": exhaustive_diffs, "sampling_based_expected": sampling_based_expected_histories_diffs, "analytic_expected": analytic_expected_histories_diffs}
 
     # normalize the distances
     max_distances_by_mu = []
     for mu in mu_options:
-        max_dist_1 = np.max(mu_to_approximation_diffs[mu]["exhausitve"])
+        max_dist_1 = np.max(mu_to_approximation_diffs[mu]["exhaustive"])
         max_dist_2 = np.max(mu_to_approximation_diffs[mu]["sampling_based_expected"])
         max_dist_3 = np.max(mu_to_approximation_diffs[mu]["analytic_expected"])
         max_distances_by_mu.append(np.max([max_dist_1, max_dist_2, max_dist_3]))
     max_dist = np.max(max_distances_by_mu)
     for mu in mu_options:
-        for i in range(len(mu_to_approximation_diffs[mu]["exhausitve"])):
-            mu_to_approximation_diffs[mu]["exhausitve"][i] = mu_to_approximation_diffs[mu]["exhausitve"][i] / max_dist
+        for i in range(len(mu_to_approximation_diffs[mu]["exhaustive"])):
+            mu_to_approximation_diffs[mu]["exhaustive"][i] = mu_to_approximation_diffs[mu]["exhaustive"][i] / max_dist
         for i in range(len(mu_to_approximation_diffs[mu]["sampling_based_expected"])):
             mu_to_approximation_diffs[mu]["sampling_based_expected"][i] = mu_to_approximation_diffs[mu]["sampling_based_expected"][i] / max_dist
         for i in range(len(mu_to_approximation_diffs[mu]["analytic_expected"])):
@@ -215,8 +217,8 @@ def plot_logl_distance_vs_mu(ax, df, title):
     y = []
     yerr = []
     for mu in mu_options:
-        y.append(np.mean(mu_to_approximation_diffs[mu]["exhausitve"]))
-        yerr.append(np.std(mu_to_approximation_diffs[mu]["exhausitve"]))
+        y.append(np.mean(mu_to_approximation_diffs[mu]["exhaustive"]))
+        yerr.append(np.std(mu_to_approximation_diffs[mu]["exhaustive"]))
     ax.errorbar(mu_options, y, yerr=yerr, label='Exhaustive', lw=1, marker="s", color="black", markersize=16, linestyle='dashed')
 
     # plot results for sampling_based_expected approximation
@@ -239,6 +241,85 @@ def plot_logl_distance_vs_mu(ax, df, title):
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
     ax.set_ylabel("Relative difference in log likelihood", fontdict={'family': 'sans-serif', 'size': 20})
     # ax.update_datalim()
+
+def plot_mappings_logl_diff_from_true_distribution(ax, df, title, mu, use_analytic=True):
+
+    ax.set_title(title + r"                                    $\mu$=" + str(mu), fontdict={'family': 'sans-serif', 'size': 20}, loc='left')
+    ax.grid(False)
+
+    # gather data: this plot is based on a single replicate
+    all_mappings_data = df.loc[(df["mu"] == mu)]
+
+    # compute the diff from true history logl for each replicate
+    replicates = all_mappings_data.replicate.unique()
+    num_of_mappings_to_sampling_based_expected_histories_diffs = []
+    num_of_mappings_to_histories_diffs = []
+    num_of_mappings_to_analytic_expected_histories_diffs = []
+    for replicate in replicates:
+        relevant_df = all_mappings_data.loc[(all_mappings_data["replicate"] == replicate)]
+        relevant_record = relevant_df["true_history_logl"]
+        true_history_logl = float(list(relevant_record)[0])
+        sampling_based_expected_history_logl = list(relevant_df["sampling_based_expected_history_logl"])[0]
+        sampling_based_expected_history_logl_diff = true_history_logl - sampling_based_expected_history_logl
+        num_of_mappings_to_sampling_based_expected_histories_diffs.append(sampling_based_expected_history_logl_diff)
+        analytic_expected_history_logl = list(relevant_df["analytic_expected_history_logl"])[0]
+        analytic_expected_history_logl_diff = true_history_logl - analytic_expected_history_logl
+        num_of_mappings_to_analytic_expected_histories_diffs.append(analytic_expected_history_logl_diff)
+        exhaustive_computation_logl = list(relevant_df["exhaustive_computation_logl"])[0]
+        exhaustive_computation_logl_diff = true_history_logl - exhaustive_computation_logl
+        num_of_mappings_to_histories_diffs.append(exhaustive_computation_logl_diff)
+
+    # plot distribution of real model likelihood computation diffs
+    sns.kdeplot(num_of_mappings_to_histories_diffs, ax=ax, color="steelblue", lw=3, shade=True)
+
+    # plot distribution of expected mappings diffs
+    if not use_analytic:
+        sns.kdeplot(num_of_mappings_to_sampling_based_expected_histories_diffs, ax=ax, color="darkorange", lw=3, shade=True)
+
+    # plot distribution of expected mappings diffs
+    if use_analytic:
+        sns.kdeplot(num_of_mappings_to_analytic_expected_histories_diffs, ax=ax, color="g", lw=3, shade=True)
+
+    ax.set_xticks([-10, 0, 10, 20, 30])
+    ax.set_yticks([0, 0.2, 0.4, 0.6])
+
+    if mu == 1:
+        ax.set_ylabel('Frequency', fontdict={'family': 'sans-serif', 'size': 20})
+    if mu == 4:
+        ax.set_xlabel('Distance (log likelihood)', fontdict={'family': 'sans-serif', 'size': 20})
+
+
+def plot_mappings_logl_approx_diff_distribution(ax, df, title, mu, use_analytic=True):
+
+    ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 20}, loc='left')
+    ax.grid(False)
+
+    # gather data: this plot is based on a single replicate
+    all_mappings_data = df.loc[(df["mu"] == mu)]
+
+    # compute the diff from true history logl for each replicate
+    replicates = all_mappings_data.replicate.unique()
+    approximations_logl_diff = []
+    for replicate in replicates:
+        relevant_df = all_mappings_data.loc[(all_mappings_data["replicate"] == replicate)]
+        exhaustive_computation_logl = list(relevant_df["exhaustive_computation_logl"])[0]
+        if not use_analytic:
+            sampling_based_expected_history_logl = list(relevant_df["sampling_based_expected_history_logl"])[0]
+            approximations_logl_diff.append(exhaustive_computation_logl - sampling_based_expected_history_logl)
+        else:
+            analytic_expected_history_logl = list(relevant_df["analytic_expected_history_logl"])[0]
+            approximations_logl_diff.append(exhaustive_computation_logl - analytic_expected_history_logl)
+
+    # plot distribution of approximations' likelihood computation diffs
+    sns.kdeplot(approximations_logl_diff, ax=ax, color="grey", lw=3, shade=True)
+
+    ax.set_xticks([-30, -20, -10, 0])
+    ax.set_yticks([0, 0.1, 0.2])
+
+    if mu == 4:
+        ax.set_xlabel('Difference in log likelihood\n(Exhaustive - Analytic)', fontdict={'family': 'sans-serif', 'size': 20})
+    if mu == 1:
+        ax.set_ylabel('Frequency', fontdict={'family': 'sans-serif', 'size': 20})
 
 ###################################################################
 
@@ -268,6 +349,48 @@ def plot_full_figure(distances_df, logl_df, mu_options, output_path):
     plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight', transparent=True)
     plt.clf()
 
+
+def plot_alternative_figure(distances_df, logl_df, mu_options, output_path):
+
+    # initialize a figure with 3 subplots
+    plt.grid(False)
+    fig, axis = plt.subplots(nrows=2, ncols=len(mu_options), figsize=[len(mu_options)*8+2, 2*7.58], frameon=True)
+    plt.xticks(mu_options)
+
+    # a
+    plot_mappings_logl_diff_from_true_distribution(axis[0][0], logl_df, "A\n", 1)
+
+    # b
+    plot_mappings_logl_diff_from_true_distribution(axis[0][1], logl_df, "B\n", 4)
+
+    # c
+    plot_mappings_logl_diff_from_true_distribution(axis[0][2], logl_df, "C\n", 8)
+
+    # d
+    plot_mappings_logl_approx_diff_distribution(axis[1][0], logl_df, "D\n", 1)
+
+    # e
+    plot_mappings_logl_approx_diff_distribution(axis[1][1], logl_df, "E\n", 4)
+
+    # f
+    plot_mappings_logl_approx_diff_distribution(axis[1][2], logl_df, "F\n", 8)
+
+    # plot properties: shared xlabel (mu) and xticks (mu_options), shared legend: title: approximations, categories: exhaustive, expected history (sampled), expected history (analytic)
+
+    custom_lines = []
+    custom_names = []
+    custom_lines.append(Line2D([0], [0], color="steelblue", lw=3))
+    custom_names.append("Exhaustive approximation")
+    custom_lines.append(Line2D([0], [0], color='g', lw=3))
+    custom_names.append("Analytic approximation")
+    lgd = axis[0][2].legend(custom_lines, custom_names, loc='right', bbox_to_anchor=(1, 0.9), prop={'size': 20}, frameon=False)
+    fig.subplots_adjust()
+    fig.tight_layout()
+    plt.draw()  # necessary to render figure before saving
+    plt.savefig(output_path, bbox_inches='tight', transparent=True, bbox_extra_artists=(lgd,))
+    plt.clf()
+
+
 ###################################################################
 
 def get_duration(str):
@@ -285,7 +408,6 @@ def get_duration(str):
     for match in seconds_regex.finditer(str):
         duration += float(match.group(1)) * (1 / 60) * (1 / 60)
     return duration
-
 
 def report_durations(dir):
     exhaustive_approximation_data_regex = re.compile(
@@ -336,7 +458,6 @@ def report_durations(dir):
     min = np.min(analytic_expected_durations)
     max = np.max(analytic_expected_durations)
     print("sampled_expected\t", mean, "\t", median, "\t", std, "\t", min, "\t", max)
-
 
 ###################################################################
 
@@ -414,7 +535,8 @@ if __name__ == '__main__':
     print("finished logl data processing")
 
     # plot the results
-    plot_full_figure(distances_df, logls_df, mu_options, output_path)
+    #plot_full_figure(distances_df, logls_df, mu_options, output_path)
+    plot_alternative_figure(distances_df, logls_df, mu_options, output_path)
     print("figure plotted to: ", output_path)
 
     # get_durations_statistics

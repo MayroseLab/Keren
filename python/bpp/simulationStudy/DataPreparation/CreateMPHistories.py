@@ -14,7 +14,7 @@ if __name__ == '__main__':
                         help='directory to write the parameter files to',
                         required=True)
     parser.add_argument('--relax_parameter_files_dir', '-p', help='directory of relax parameter files', required=True)
-    parser.add_argument('--use_mp', '1 for mp histories, 0 for for ml histories', required=False, default=1)
+    parser.add_argument('--use_mp', '-u', '1 for mp histories, 0 for for ml histories', required=False, default=1)
 
     args = parser.parse_args()
     trees_dir = args.trees_dir

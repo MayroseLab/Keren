@@ -33,6 +33,14 @@ grid_data_path = output_dir + "/grid_data.csv"
 
 #####################################################################################
 
+def format_fn(tick_val, tick_pos):
+    return "  " + str(tick_val) + "    "
+
+
+def rel_error(simulated_values, inferred_values):
+    return abs((simulated_values-inferred_values)/simulated_values)
+
+
 def convertToPercent(x, pos=0):
     return '%1.0f%%' % (100 * x)
 
@@ -823,10 +831,37 @@ def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThre
 # a panel with plot for each taxa num
 # In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitRELAX with true history
 # in green - scatter the simulated value of k (with legend)
-def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=False):
+
+def global_accuracy(df):
+
+    p0 = df["simulated_p0"][0]
+    p1 = df["simulated_p1"][0]
+    p2 = 1-p1-p0
+
+    bg_omega0_values = df["alternative_omega0"]
+    simulated_bg_omega0_values = df["simulated_omega0"]
+    bg_omega1_values = df["alternative_omega1"]
+    simulated_bg_omega1_values = df["simulated_omega1"]
+    bg_omega2_values = df["alternative_omega2"]
+    simulated_bg_omega2_values = df["simulated_omega2"]
+
+    k_values = df["alternative_k"]
+    simulated_k_values = df["simulated_k"]
+
+    fg_omega0_values = bg_omega0_values ** k_values
+    simulated_fg_omega0_values = simulated_bg_omega0_values ** simulated_k_values
+    fg_omega1_values = bg_omega1_values ** k_values
+    simulated_fg_omega1_values = simulated_bg_omega1_values ** simulated_k_values
+    fg_omega2_values = bg_omega2_values ** k_values
+    simulated_fg_omega2_values = simulated_bg_omega2_values ** simulated_k_values
+
+    error = p0*((rel_error(simulated_bg_omega0_values, bg_omega0_values)+rel_error(simulated_fg_omega0_values, fg_omega0_values))/2) + p1*((rel_error(simulated_bg_omega1_values, bg_omega1_values)+rel_error(simulated_fg_omega1_values, fg_omega1_values))/2) + p2*((rel_error(simulated_bg_omega2_values, bg_omega2_values)+rel_error(simulated_fg_omega2_values, fg_omega2_values))/2)
+    return error
+
+def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=False,  add_ylabel=True, use_global_accuracy=False):
     # declare fixed parameters
     tbl = 4
-    mu = 8
+    mu = 8 # 4 - just a test
     pi0 = 0.5
     taxa_num = 32
     positions_num = 300
@@ -837,11 +872,15 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=F
     for k in k_values_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
-        rel_error_sim_vs_standard.append((abs(
-            np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
-        rel_error_given_mp_history_vs_standard.append(abs(
-            np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
-                given_mp_history_df["simulated_k"] + 0.000001)).mean())
+        if use_global_accuracy:
+            rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
+            rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df)))
+        else:
+            rel_error_sim_vs_standard.append((abs(
+                np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
+            rel_error_given_mp_history_vs_standard.append(abs(
+                np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
+                    given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
     ax.plot(k_values_options, rel_error_sim_vs_standard, color='black', linestyle="dashed", label="TraitRELAX", lw=2.5)
     ax.plot(k_values_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dotted",
@@ -849,7 +888,11 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=F
 
     ax.set_xticks(k_values_options)
     ax.set_xlabel(r"$k$", fontdict={'size': 30})
-    ax.set_ylabel("Mean error (" + r"$\^k$" + ")", fontdict={'size': 30})
+    if add_ylabel:
+        if not use_global_accuracy:
+            ax.set_ylabel("Mean error(" + r"$\^k$" + ")", fontdict={'size': 30})
+        else:
+            ax.set_ylabel("Mean error(global)", fontdict={'size': 30})
     ax.set_yticks([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.8, 1])
 
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
@@ -866,8 +909,8 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=F
 # y axis: mean relative error of k = abs(simulated_k-inferred_k)/simulated_k (over all alternative datasets)
 # 2 curves: one for TraitRELAX standard execution (full),
 #           another for TraitRELAX given the true history (dashed),
-def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, title, add_legend=False, add_ylabel=False,
-                        include_reference=False):
+def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=False, add_ylabel=False,
+                        use_global_accuracy=False):
     # gather the data
     tbl = 4
     pi0 = 0.5
@@ -881,11 +924,15 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, ti
     for mu in mu_local_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        rel_error_sim_vs_standard.append((abs(
-            np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
-        rel_error_given_mp_history_vs_standard.append(abs(
-            np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
-                given_mp_history_df["simulated_k"] + 0.000001)).mean())
+        if use_global_accuracy:
+            rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
+            rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df)))
+        else:
+            rel_error_sim_vs_standard.append((abs(
+                np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
+            rel_error_given_mp_history_vs_standard.append(abs(
+                np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
+                    given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
     ax.plot(mu_local_options, rel_error_sim_vs_standard, color='black', label="TraitRELAX", linestyle='dashed', lw=2.5)
     ax.plot(mu_local_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
@@ -894,7 +941,10 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, ti
     ax.set_xticks(mu_local_options)
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
     if add_ylabel:
-        ax.set_ylabel("Mean error(" + r"$\^k$" + ")", fontdict={'size': 30})
+        if not use_global_accuracy:
+            ax.set_ylabel("Mean error(" + r"$\^k$" + ")", fontdict={'size': 30})
+        else:
+            ax.set_ylabel("Mean error(global)", fontdict={'size': 30})
 
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
@@ -911,8 +961,8 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, ti
 # y axis:relative error of k = abs(simulated_k-inferred_k)/simulated_k (over all alternative datasets)
 # 2 curves: one for TraitRELAX standard execution (full),
 #           another for TraitRELAX given the true history (dashed)
-def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, title, add_legend=False,
-                         add_ylabel=False, include_reference=False):
+def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=False,
+                         add_ylabel=False, include_reference=False, use_global_accuracy=False):
     # gather the data
     tbl = 4
     mu = 8
@@ -925,12 +975,16 @@ def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, t
     rel_error_given_mp_history_vs_standard = []
     for pi0 in pi0_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        rel_error_sim_vs_standard.append((abs(
-            np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        rel_error_given_mp_history_vs_standard.append((abs(
-            np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
-                given_mp_history_df["simulated_k"] + 0.000001))).mean())
+        if use_global_accuracy:
+            rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
+            rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df)))
+        else:
+            rel_error_sim_vs_standard.append((abs(
+                np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
+            rel_error_given_mp_history_vs_standard.append((abs(
+                np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
+                    given_mp_history_df["simulated_k"] + 0.000001))).mean())
 
     ax.plot(pi0_options, rel_error_sim_vs_standard, color='black', linestyle='dashed', label="TraitRELAX", lw=2.5)
     ax.plot(pi0_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
@@ -942,7 +996,10 @@ def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, t
     ax.set_xticks(pi0_options)
     ax.set_xlabel(r"$\pi_0$", fontdict={'size': 30})
     if add_ylabel:
-        ax.set_ylabel("Mean error (" + r"$\^k$" + ")", fontdict={'size': 30})
+        if not use_global_accuracy:
+            ax.set_ylabel("Mean error(" + r"$\^k$" + ")", fontdict={'size': 30})
+        else:
+            ax.set_ylabel("Mean error(global)", fontdict={'size': 30})
 
     ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
@@ -950,6 +1007,73 @@ def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, t
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_ylabel("Mean error (" + r"$\^k$" + ")", fontdict={'size': 30, 'color': 'white'})
 
+    ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
+
+    if add_legend:
+        handles, labels = ax.get_legend_handles_labels()
+        ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
+
+# plot relative error: dashed - compared to best possible (based on true history), full - based on simulated
+# plot info: fixed to tbl=1, pi0=0.5, taxa_num=32, codons=600
+# x axis: mu
+# y axis: mean relative error of k = abs(simulated_k-inferred_k)/simulated_k (over all alternative datasets)
+# 2 curves: one for TraitRELAX standard execution (full),
+#           another for TraitRELAX given the true history (dashed),
+def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, title, add_legend=False,
+                         add_ylabel=False, include_reference=False, use_global_accuracy=False):
+    # gather the data
+    tbl_to_mu = {1: 32, 4: 8, 8: 4, 16: 2, 32: 1}
+    pi0 = 0.5
+    taxa_num = 32
+    positions_num = 300
+
+    ax.grid(False)
+    ax.grid(False)
+    rel_error_sim_vs_standard = []
+    rel_error_given_true_history_vs_standard = []
+    rel_error_given_mp_history_vs_standard = []
+    tbls = list(tbl_to_mu.keys())
+    tbls.sort()
+    for tbl in tbls:
+        mu = tbl_to_mu[tbl]
+        standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+        standard_df = standard_df.loc[(standard_df["alternative_k"] > 0)]
+        given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+        given_true_history_df = given_true_history_df.loc[(given_true_history_df["alternative_k"] > 0)]
+        given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+        given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["alternative_k"] > 0)]
+        if use_global_accuracy:
+            rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
+            rel_error_given_true_history_vs_standard.append(np.mean(given_true_history_df))
+            rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df)))
+        else:
+            rel_error_sim_vs_standard.append((abs(
+                np.log(standard_df["alternative_k"] + 0.000001) - np.log(
+                    standard_df["simulated_k"] + 0.000001))).mean())
+            rel_error_given_true_history_vs_standard.append(abs(
+                np.log(given_true_history_df["alternative_k"] + 0.000001) - np.log(
+                    given_true_history_df["simulated_k"] + 0.000001)).mean())
+            rel_error_given_mp_history_vs_standard.append(abs(
+                np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
+                    given_mp_history_df["simulated_k"] + 0.000001)).mean())
+
+    ax.plot(tbls, rel_error_sim_vs_standard, color='black', linestyle='dashed', label="TraitRELAX", lw=2.5)
+    ax.plot(tbls, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
+            label="RELAX with maximum\nparsimony partition", lw=2.5)
+    if include_reference:
+        ax.plot(tbls, rel_error_given_true_history_vs_standard, color='black', linestyle="--",
+                label="RELAX with true history", lw=2.5)
+
+    ax.set_xticks(tbls)
+    ax.set_xlabel("Tree length", fontdict={'size': 30})
+    if add_ylabel:
+        if not use_global_accuracy:
+            ax.set_ylabel("Mean error(" + r"$\^k$" + ")", fontdict={'size': 30})
+        else:
+            ax.set_ylabel("Mean error(global)", fontdict={'size': 30})
+
+    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
     if add_legend:
@@ -1082,10 +1206,6 @@ def plot_2d_grid(ax, grid_data_path, title, dist):
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
 
-def format_fn(tick_val, tick_pos):
-    return "  " + str(tick_val) + "    "
-
-
 def plot_inferred_vs_simulated_k_across_positions_num(taxa_num, ax, combo_to_df, title, plot_labels=False):
     # declare fixed parameters
     tbl = 4
@@ -1134,65 +1254,6 @@ def plot_inferred_vs_simulated_k_across_positions_num(taxa_num, ax, combo_to_df,
         ["", "0.2", "", "", "0.5", "", "", "0.8", "", "", "1", "", "", "1.2", "", "", "1.6", "", "", "2", ""])
     ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
-
-
-# plot relative error: dashed - compared to best possible (based on true history), full - based on simulated
-# plot info: fixed to tbl=1, pi0=0.5, taxa_num=32, codons=600
-# x axis: mu
-# y axis: mean relative error of k = abs(simulated_k-inferred_k)/simulated_k (over all alternative datasets)
-# 2 curves: one for TraitRELAX standard execution (full),
-#           another for TraitRELAX given the true history (dashed),
-def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, title, add_legend=False,
-                         add_ylabel=False, include_reference=False):
-    # gather the data
-    tbl_to_mu = {1: 32, 4: 8, 8: 4, 16: 2, 32: 1}
-    pi0 = 0.5
-    taxa_num = 32
-    positions_num = 300
-
-    ax.grid(False)
-    ax.grid(False)
-    rel_error_sim_vs_standard = []
-    rel_error_given_true_history_vs_standard = []
-    rel_error_given_mp_history_vs_standard = []
-    tbls = list(tbl_to_mu.keys())
-    tbls.sort()
-    for tbl in tbls:
-        mu = tbl_to_mu[tbl]
-        standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        standard_df = standard_df.loc[(standard_df["alternative_k"] > 0)]
-        given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        given_true_history_df = given_true_history_df.loc[(given_true_history_df["alternative_k"] > 0)]
-        given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["alternative_k"] > 0)]
-        rel_error_sim_vs_standard.append((abs(
-            np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
-        rel_error_given_true_history_vs_standard.append(abs(
-            np.log(given_true_history_df["alternative_k"] + 0.000001) - np.log(
-                given_true_history_df["simulated_k"] + 0.000001)).mean())
-        rel_error_given_mp_history_vs_standard.append(abs(
-            np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
-                given_mp_history_df["simulated_k"] + 0.000001)).mean())
-
-    ax.plot(tbls, rel_error_sim_vs_standard, color='black', linestyle='dashed', label="TraitRELAX", lw=2.5)
-    ax.plot(tbls, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
-            label="RELAX with maximum\nparsimony partition", lw=2.5)
-    if include_reference:
-        ax.plot(tbls, rel_error_given_true_history_vs_standard, color='black', linestyle="--",
-                label="RELAX with true history", lw=2.5)
-
-    ax.set_xticks(tbls)
-    ax.set_xlabel("Tree length", fontdict={'size': 30})
-    if add_ylabel:
-        ax.set_ylabel("Mean error (" + r"$\^k$" + ")", fontdict={'size': 30})
-
-    ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
-    ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
-
-    if add_legend:
-        handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
 
 
 # fix: tbl=1, pi0=0.5, mu=0.5, taxa_num=32, codons=600
@@ -1303,6 +1364,53 @@ def plot_k_distribution_across_k_and_posnum(ax, comboToDf, title):
     # ax.set_ylabel(r"$^k$", fontdict={'size': 30})
 
 
+def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title):
+    # declare fixed parameters
+    tbl = 4
+    mu = 8
+    pi0 = 0.5
+    zorder_index = 1
+
+    # collect the  data
+    k_values_to_plot = [0.2, 1, 2]
+    taxanum_to_combo = {(0.2, 16): 0, (0.2, 32): 0.3, (0.2, 64): 0.6, (1, 16): 1.2, (1, 32): 1.5, (1, 64): 1.8,
+                          (2, 16): 2.4, (2, 32): 2.7, (2, 64): 3}
+    for k in k_values_to_plot:
+        boxplots = []
+        for taxa_num in taxa_num_options:
+            df = comboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
+            filetred_df = df.loc[(df["alternative_k"] < 3)]
+            k_values = filetred_df["alternative_k"]
+            boxplots.append(ax.boxplot(k_values, widths=0.2, whis=[5, 95], showfliers=True, patch_artist=True,
+                                       positions=[taxanum_to_combo[(k, taxa_num)]],
+                                       zorder=zorder_index))  # , color=colors[codon_positions_num_options.index[positions_num]]
+            zorder_index += 1
+        for boxplot in boxplots:
+            color = colors[boxplots.index(boxplot)]
+            patch = boxplot['boxes'][0]
+            patch.set_facecolor(color)
+
+    x_for_scatter = [0, 0.3, 0.6, 1.2, 1.5, 1.8, 2.4, 2.7, 3]
+    ax.scatter(x=x_for_scatter, y=[0.2, 0.2, 0.2, 1, 1, 1, 2, 2, 2], label="Simulated value", edgecolors=None,
+               color="green", marker="s", zorder=zorder_index)
+
+    # add legend
+    # create custom legend
+    custom_lines = []
+    custom_names = []
+    for taxa_num in taxa_num_options:
+        custom_lines.append(Line2D([0], [0], color=colors[taxa_num_options.index(taxa_num)], lw=6))
+        custom_names.append(str(taxa_num) + "S")
+    ax.legend(custom_lines, custom_names, loc='best', prop={'size': 30}, frameon=False)
+
+    ax.grid(False)
+    ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
+    ax.set_xticklabels(["", "0.2", "", "", "1", "", "", "2", ""])
+    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+    ax.set_xlabel(r"$k$", fontdict={'size': 30})
+    # ax.set_ylabel(r"$^k$", fontdict={'size': 30})
+
+
 def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path, res_output_path,
                            supp_output_path_1, supp_output_path_2, supp_output_path_3):
     # figure 0
@@ -1321,36 +1429,31 @@ def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, gri
     plt.savefig(res_output_path, bbox_inches='tight', transparent=True)
     plt.clf()
 
-    # # figure 0 (for results)
-    # plt.grid(False)
-    # fig = plt.figure(figsize=[3 * 8.2 + 2, 2 * 7.58]) #, constrained_layout=True)
-    # gs = fig.add_gridspec(ncols=3, nrows=2)
-    # ax1 = fig.add_subplot(gs[0,0])
-    # plot_accuracy_vs_k(ax1, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "A\n")
-    # ax2 = fig.add_subplot(gs[0,1])
-    # plot_accuracy_vs_mu(ax2, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "B\n")
-    # ax3 = fig.add_subplot(gs[0,2])
-    # plot_accuracy_vs_pi0(ax3, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "C\n", add_legend=True)
-    # ax4 = fig.add_subplot(gs[1,0])
-    # plot_accuracy_vs_k_across_positions_num(32, ax4, TraitRELAXComboToDf, "D\n", add_legend=True, plot_labels=True)
-    # ax5 = fig.add_subplot(gs[1,1])
-    # plot_accuracy_vs_k_across_taxa_num(300, ax5, TraitRELAXComboToDf, "E\n", add_legend=True, plot_labels=True)
-    # ax6 = fig.add_subplot(gs[1,2], projection='3d')
-    # plot_2d_grid(ax6, grid_data_path, "F\n", 14)
-    # fig.text(0.5, 0.95, r"$k=0.5$", ha='center', fontdict={'size': 30})
-    # fig.text(0.95, 0.95, r"$k=0.5$", ha='center', fontdict={'size': 30})
-    # fig.subplots_adjust()
-    # fig.tight_layout(pad=2)
-    # plt.savefig(res_output_path, bbox_inches='tight', transparent=True)
-    # plt.clf()
+
+    # # alternative figure 0 (for results)
+    plt.grid(False)
+    fig, axis = plt.subplots(nrows=2, ncols=2, sharey='none', sharex='none', figsize=[2 * 8.2 + 2, 2 * 7.58 + 2])
+    plot_k_distribution_across_k_and_taxanum(600, axis[0][0], TraitRELAXComboToDf, "A\n")
+    # plot_2d_grid(axis[0][1], grid_data_path, "B\n", 14)
+    axis[0][1].set_title("B\n", fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
+    axis[0][1].grid(False)
+    plot_accuracy_vs_mu(axis[1][0], TraitRELAXComboToDf, MPComboToDf, "C\n", add_ylabel=True)
+    plot_accuracy_vs_tbl(axis[1][1], TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "D\n", add_legend=True, add_ylabel=False)
+    fig.subplots_adjust()
+    fig.tight_layout()
+    plt.savefig(res_output_path, bbox_inches='tight', transparent=True)
+    plt.clf()
+
 
     # figure 1 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=1, ncols=3, sharey='none', sharex='none', figsize=[3 * 8.2 + 2, 1 * 7.58 + 2])
-    plot_accuracy_vs_mu(axis[0], TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "A\n", add_ylabel=True)
-    plot_accuracy_vs_pi0(axis[1], TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "B\n")
-    plot_accuracy_vs_tbl(axis[2], TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "C\n", add_legend=True,
-                         add_ylabel=False)
+    fig, axis = plt.subplots(nrows=2, ncols=2, sharey='none', sharex='none', figsize=[2 * 8.2 + 2, 2 * 7.58 + 2])
+    plot_accuracy_vs_mu(axis[0][0], TraitRELAXComboToDf, MPComboToDf, "A\n", add_ylabel=False, use_global_accuracy=False)
+    plot_accuracy_vs_pi0(axis[0][1], TraitRELAXComboToDf, MPComboToDf, "B\n", add_ylabel=False, use_global_accuracy=False)
+    plot_accuracy_vs_tbl(axis[1][0], TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, "C\n", add_legend=False,
+                         add_ylabel=False, use_global_accuracy=False)
+    plot_accuracy_vs_k(axis[1][1], TraitRELAXComboToDf, MPComboToDf, "D\n", add_legend=True, add_ylabel=False, use_global_accuracy=False)
+    fig.text(-0.02, 0.5, "Mean error(k)", va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
     plt.savefig(supp_output_path_1, bbox_inches='tight', transparent=True)
