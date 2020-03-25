@@ -848,6 +848,7 @@ if __name__ == '__main__':
         input_tree_path = ""
         if use_scaled_as_hist:  # if character data was given
             input_tree_path = scaled_tree_path
+
         print("**** simulating replicate " + str(rep) + " ****")
         # set simulation output directory
         simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
@@ -881,7 +882,7 @@ if __name__ == '__main__':
         # set parameters file for TraitRELAX
         set_traitrelax_param_file(simulation_output_dir + "traitrelax_result/",
                                   traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path,
-                                  output_dir + "history_tree.nwk", character_data_path, initial_kappa, initial_omega0, initial_omega1,
+                                  scaled_tree_path, character_data_path, initial_kappa, initial_omega0, initial_omega1,
                                   initial_omega2, initial_omega0_weight, initial_omega1_weight,
                                   initial_selection_intensity_parameter, history_tree_path,
                                   initial_nuc1_theta, initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta,
