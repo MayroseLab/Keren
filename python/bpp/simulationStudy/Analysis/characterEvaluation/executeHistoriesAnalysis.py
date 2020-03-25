@@ -59,8 +59,8 @@ if __name__ == '__main__':
     id_regex = re.compile("(\d*)\.bpp")
     # for each combo, execute <replicates_number> calls to the evaluation program, for the first replicates
     for mu in mu_options:
-        for taxa in taxa_options:
-            for pos in positions_options:
+        for taxa in taxa_num_options:
+            for pos in positions_num_options:
                 for k in k_options:
                     print("executing jobs for combo: (mu=", mu, ", #taxa=", taxa, ", #pos=", pos, ", k=", k, ")")
                     parameter_files_dir = input_dir + "tbl_4_mu_" + str(int(mu)) + "_pi0_0.5_kappa_2_p_0.125_omega1_0.8_omega2_2_theta1_0.5_theta2_0.8/" + str(taxa) + "_taxa/" + str(pos) + "_codons/k_" + str(k) + "/traitrelax_param/"
