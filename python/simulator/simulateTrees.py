@@ -180,7 +180,7 @@ if __name__ == '__main__':
                         replicates_num, output_dir+"control.txt")
     # execute INDELible
     res = os.chdir(output_dir)
-    res = os.system("/groups/itay_mayrose/halabikeren/indelible/INDELibleV1.03/src/indelible")
+    res = os.system("/groups/itay_mayrose/halabikeren/programs/indelible/INDELibleV1.03/src/indelible")
 
     # delete redundant files
     res = os.system("rm -r " + output_dir + "LOG.txt")
