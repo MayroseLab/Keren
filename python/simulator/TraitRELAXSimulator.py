@@ -859,8 +859,9 @@ if __name__ == '__main__':
                                                                                                 character_model_pi0,
                                                                                                 tree_path,
                                                                                                 simulation_output_dir)
-            if input_tree_path == "":
-                input_tree_path = true_history_path
+        if input_tree_path == "":
+            input_tree_path = true_history_path
+
 
         # simulate sequence data
         sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight,
