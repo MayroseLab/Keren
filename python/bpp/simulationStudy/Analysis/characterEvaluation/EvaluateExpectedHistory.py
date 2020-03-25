@@ -242,7 +242,7 @@ def plot_logl_distance_vs_mu(ax, df, title):
     ax.set_ylabel("Relative difference in log likelihood", fontdict={'family': 'sans-serif', 'size': 20})
     # ax.update_datalim()
 
-def plot_mappings_logl_diff_from_true_distribution(ax, df, title, mu, use_analytic=True):
+def plot_mappings_logl_diff_from_true_distribution(ax, df, title, mu, mu_options, use_analytic=True):
 
     ax.set_title(title + r"                                    $\mu$=" + str(mu), fontdict={'family': 'sans-serif', 'size': 20}, loc='left')
     ax.grid(False)
@@ -283,13 +283,13 @@ def plot_mappings_logl_diff_from_true_distribution(ax, df, title, mu, use_analyt
     ax.set_xticks([-10, 0, 10, 20, 30])
     ax.set_yticks([0, 0.2, 0.4, 0.6])
 
-    if mu == 1:
+    if mu == mu_options[0]:
         ax.set_ylabel('Frequency', fontdict={'family': 'sans-serif', 'size': 20})
-    if mu == 4:
-        ax.set_xlabel('Distance (log likelihood)', fontdict={'family': 'sans-serif', 'size': 20})
+    if mu == mu_options[1]:
+        ax.set_xlabel('Difference in log likelihood\n(true-approximated)', fontdict={'family': 'sans-serif', 'size': 20})
 
 
-def plot_mappings_logl_approx_diff_distribution(ax, df, title, mu, use_analytic=True):
+def plot_mappings_logl_approx_diff_distribution(ax, df, title, mu, mu_options, use_analytic=True):
 
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 20}, loc='left')
     ax.grid(False)
@@ -316,9 +316,9 @@ def plot_mappings_logl_approx_diff_distribution(ax, df, title, mu, use_analytic=
     ax.set_xticks([-30, -20, -10, 0])
     ax.set_yticks([0, 0.1, 0.2])
 
-    if mu == 4:
-        ax.set_xlabel('Difference in log likelihood\n(Exhaustive - Analytic)', fontdict={'family': 'sans-serif', 'size': 20})
-    if mu == 1:
+    if mu == mu_options[1]:
+        ax.set_xlabel('Difference in log likelihood\n(exhaustive-analytic)', fontdict={'family': 'sans-serif', 'size': 20})
+    if mu == mu_options[0]:
         ax.set_ylabel('Frequency', fontdict={'family': 'sans-serif', 'size': 20})
 
 ###################################################################
@@ -354,28 +354,17 @@ def plot_alternative_figure(distances_df, logl_df, mu_options, output_path):
 
     # initialize a figure with 3 subplots
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=len(mu_options), figsize=[len(mu_options)*8+2, 2*7.58], frameon=True)
+    fig, axis = plt.subplots(nrows=1, ncols=len(mu_options), figsize=[len(mu_options)*8+2, 1*7.58], frameon=True)
     plt.xticks(mu_options)
 
     # a
-    plot_mappings_logl_diff_from_true_distribution(axis[0][0], logl_df, "A\n", 1)
+    plot_mappings_logl_diff_from_true_distribution(axis[0], logl_df, "A\n", mu_options[0], mu_options)
 
     # b
-    plot_mappings_logl_diff_from_true_distribution(axis[0][1], logl_df, "B\n", 4)
+    plot_mappings_logl_diff_from_true_distribution(axis[1], logl_df, "B\n", mu_options[1], mu_options)
 
     # c
-    plot_mappings_logl_diff_from_true_distribution(axis[0][2], logl_df, "C\n", 8)
-
-    # d
-    plot_mappings_logl_approx_diff_distribution(axis[1][0], logl_df, "D\n", 1)
-
-    # e
-    plot_mappings_logl_approx_diff_distribution(axis[1][1], logl_df, "E\n", 4)
-
-    # f
-    plot_mappings_logl_approx_diff_distribution(axis[1][2], logl_df, "F\n", 8)
-
-    # plot properties: shared xlabel (mu) and xticks (mu_options), shared legend: title: approximations, categories: exhaustive, expected history (sampled), expected history (analytic)
+    plot_mappings_logl_diff_from_true_distribution(axis[2], logl_df, "C\n", mu_options[2], mu_options)
 
     custom_lines = []
     custom_names = []
@@ -470,7 +459,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
     description='Analyses the estimated expected histories based on the multiple histories approximation and the true history based computation')
     parser.add_argument('--input_dir', '-i', help='directory that holds the stdout of the histories evaluation jobs', required=True)
-    parser.add_argument('--mu_options', '-mu', help='list of values of mu to include in the analysis', required=False, default=[1, 4, 8])
+    parser.add_argument('--mu_options', '-mu', help='list of values of mu to include in the analysis', required=False, default=[1, 2, 4]) #, 8])
     parser.add_argument('--taxa_num_options', '-tn', help='list of taxa number values to include in the analysis', required=False, default=[32])
     parser.add_argument('--positions_num_options', '-pn', help='list of positions number values to include in the analysis', required=False, default=[300])
     parser.add_argument('--k_options', '-ko', help='list of k values to include in the analysis', required=False, default=[0.5])
