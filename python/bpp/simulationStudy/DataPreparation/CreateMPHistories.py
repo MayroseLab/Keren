@@ -59,7 +59,7 @@ if __name__ == '__main__':
             script_path = "/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/writemphistory"
             if use_mp == 0:
                 script_path = "/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/writeasrsolution"
-            res = os.system(script_path + " param=" + hist_dir + "mp_solution_parameters.bpp")
+            res = os.system(script_path + " param=" + hist_dir + hist_prefix + "_solution_parameters.bpp")
             while not os.path.exists(lables_path):
                sleep(2)
 
