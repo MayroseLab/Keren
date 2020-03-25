@@ -26,18 +26,33 @@ if __name__ == '__main__':
     error_dir = args.error_dir
     if not os.path.exists(error_dir):
         res = os.system("mkdir -p " + error_dir)
+
     mu_options = args.mu_options
     if not type(mu_options) == list:
-        mu_options = [float(mu) for mu in mu_options.split(",")]
-    taxa_options = args.taxa_options
-    if not type(taxa_options) == list:
-        taxa_options = [float(taxa) for taxa in taxa_options.split(",")]
-    positions_options = args.positions_options
-    if not type(positions_options) == list:
-        positions_options = [float(pos) for pos in positions_options.split(",")]
+        mu_options = mu_options.split(",")
+        for i in range(len(mu_options)):
+            try:
+                mu_options[i] = int(mu_options[i])
+            except Exception as e:
+                mu_options[i] = float(mu_options[i])
+
+    taxa_num_options = args.taxa_num_options
+    if not type(taxa_num_options) == list:
+        taxa_num_options = [int(tn) for tn in taxa_num_options.split(",")]
+
+    positions_num_options = args.positions_num_options
+    if not type(positions_num_options) == list:
+        positions_num_options = [int(pn) for pn in positions_num_options.split(",")]
+
     k_options = args.k_options
     if not type(k_options) == list:
-        k_options = [float(k) for k in k_options.split(",")]
+        k_options = k_options.split(",")
+        for i in range(len(k_options)):
+            try:
+                k_options[i] = int(k_options[i])
+            except Exception as e:
+                k_options[i] = float(k_options[i])
+
     replicates_number = int(args.replicates_number)
     queue = args.queue
     evaluation_program_path = "/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/debugexpectedhistory"
