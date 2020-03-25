@@ -372,7 +372,7 @@ def plot_alternative_figure(distances_df, logl_df, mu_options, output_path):
     custom_names.append("Exhaustive approximation")
     custom_lines.append(Line2D([0], [0], color='g', lw=3))
     custom_names.append("Analytic approximation")
-    lgd = axis[0][2].legend(custom_lines, custom_names, loc='right', bbox_to_anchor=(1, 0.9), prop={'size': 20}, frameon=False)
+    lgd = axis[2].legend(custom_lines, custom_names, loc='right', bbox_to_anchor=(1, 0.9), prop={'size': 20}, frameon=False)
     fig.subplots_adjust()
     fig.tight_layout()
     plt.draw()  # necessary to render figure before saving
