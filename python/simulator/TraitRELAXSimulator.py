@@ -425,7 +425,8 @@ def simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight, omega1_
 
 
 def set_relax_param_file(output_path, sequence_data_path, tree_path, kappa, omega0, omega1, omega2, omega0_weight,
-                         omega1_weight, selection_intensity_parameter, labels):
+                         omega1_weight, selection_intensity_parameter, nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
+                         nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2, labels):
     param_template = '''# Global variables:
 verbose = 1
 
@@ -454,8 +455,8 @@ init.brlen.method = Input
 #                                    Model specification
 # ----------------------------------------------------------------------------------------
 
-model1 = RELAX(kappa=<kappa>,p=<p>,omega1=<omega1>,omega2=<omega1>,k=1,theta1=<theta1>,theta2=<theta2>,frequencies=F0)
-model2 = RELAX(kappa=RELAX.kappa_1,p=RELAX.p_1,omega1=RELAX.omega1_1,omega2=RELAX.omega2_1,theta1=RELAX.theta1_1,theta2=RELAX.theta2_1,frequencies=F0,k=<selection_intensity_parameter>)
+model1 = RELAX(kappa=<kappa>,p=<p>,omega1=<omega1>,omega2=<omega2>,k=1,theta1=<theta1>,theta2=<theta2>,frequencies=F3X4,1_Full.theta=<nuc1_theta>,1_Full.theta1=<nuc1_theta1>, 1_Full.theta2=<nuc1_theta2>, 2_Full.theta=<nuc2_theta>,2_Full.theta1=<nuc2_theta1>, 2_Full.theta2=<nuc2_theta2>,3_Full.theta=<nuc3_theta>,3_Full.theta1=<nuc3_theta1>, 3_Full.theta2=<nuc3_theta2>)
+model2 = RELAX(kappa=RELAX.kappa_1,p=RELAX.p_1,omega1=RELAX.omega1_1,omega2=RELAX.omega2_1,theta1=RELAX.theta1_1,theta2=RELAX.theta2_1,frequencies=F3X4,1_Full.theta=RELAX.1_Full.theta_1,1_Full.theta1=RELAX.1_Full.theta1_1,1_Full.theta2=RELAX.1_Full.theta2_1,2_Full.theta=RELAX.2_Full.theta_1,2_Full.theta1=RELAX.2_Full.theta1_1,2_Full.theta2=RELAX.2_Full.theta2_1,3_Full.theta=RELAX.3_Full.theta_1,3_Full.theta1=RELAX.3_Full.theta1_1,3_Full.theta2=RELAX.3_Full.theta2_1,k=<selection_intensity_parameter>)
 nonhomogeneous = general
 nonhomogeneous.number_of_models = 2
 nonhomogeneous.stationarity = yes
@@ -495,6 +496,15 @@ optimization.final = powell
     param_content = param_content.replace("<omega2>", str(omega2))
     param_content = param_content.replace("<theta1>", str(theta1))
     param_content = param_content.replace("<theta2>", str(theta2))
+    param_content = param_content.replace("<nuc1_theta>", str(nuc1_theta))
+    param_content = param_content.replace("<nuc1_theta1>", str(nuc1_theta1))
+    param_content = param_content.replace("<nuc1_theta2>", str(nuc1_theta2))
+    param_content = param_content.replace("<nuc2_theta>", str(nuc2_theta))
+    param_content = param_content.replace("<nuc2_theta1>", str(nuc2_theta1))
+    param_content = param_content.replace("<nuc2_theta2>", str(nuc2_theta2))
+    param_content = param_content.replace("<nuc3_theta>", str(nuc3_theta))
+    param_content = param_content.replace("<nuc3_theta1>", str(nuc3_theta1))
+    param_content = param_content.replace("<nuc3_theta2>", str(nuc3_theta2))
     param_content = param_content.replace("<selection_intensity_parameter>", str(selection_intensity_parameter))
     param_content = param_content.replace("<labels>", labels)
 
@@ -502,10 +512,11 @@ optimization.final = powell
         output_file.write(param_content)
 
 
-def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path,
-                              kappa, omega0, omega1, omega2, omega0_weight,
-                              omega1_weight, selection_intensity_parameter, history_tree_path, labels_str,
-                              character_model_mu=None, character_model_pi0=None):
+def set_traitrelax_param_file(output_dir, output_path, sequence_data_path, tree_path, character_data_path, kappa,
+                              omega0, omega1, omega2, omega0_weight,
+                              omega1_weight, selection_intensity_parameter, history_tree_path, nuc1_theta, nuc1_theta1,
+                              nuc1_theta2, nuc2_theta, nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1, nuc3_theta2,
+                              labels_str, character_model_mu=None, character_model_pi0=None):
     param_template = '''# Global variables:
 verbose = 1
 
@@ -541,8 +552,8 @@ init.brlen.method = Input
 # ----------------------------------------------------------------------------------------
 
 sequence_model.set_initial_parameters = true
-model1 = RELAX(kappa=<kappa>,p=<p>,omega1=<omega1>,omega2=<omega2>,k=1,theta1=<theta1>,theta2=<theta2>,frequencies=F0)
-model2 = RELAX(kappa=RELAX.kappa_1,p=RELAX.p_1,omega1=RELAX.omega1_1,omega2=RELAX.omega2_1,theta1=RELAX.theta1_1,theta2=RELAX.theta2_1,frequencies=F0,k=<selection_intensity_parameter>)
+model1 = RELAX(kappa=<kappa>,p=<p>,omega1=<omega1>,omega2=<omega2>,k=1,theta1=<theta1>,theta2=<theta2>,frequencies=F3X4, 1_Full.theta=<nuc1_theta>,1_Full.theta1=<nuc1_theta1>, 1_Full.theta2=<nuc1_theta2>, 2_Full.theta=<nuc2_theta>,2_Full.theta1=<nuc2_theta1>, 2_Full.theta2=<nuc2_theta2>,3_Full.theta=<nuc3_theta>,3_Full.theta1=<nuc3_theta1>, 3_Full.theta2=<nuc3_theta2>)
+model2 = RELAX(kappa=RELAX.kappa_1,p=RELAX.p_1,omega1=RELAX.omega1_1,omega2=RELAX.omega2_1,theta1=RELAX.theta1_1,theta2=RELAX.theta2_1,frequencies=F3X4,1_Full.theta=RELAX.1_Full.theta_1,1_Full.theta1=RELAX.1_Full.theta1_1,1_Full.theta2=RELAX.1_Full.theta2_1,2_Full.theta=RELAX.2_Full.theta_1,2_Full.theta1=RELAX.2_Full.theta1_1,2_Full.theta2=RELAX.2_Full.theta2_1,3_Full.theta=RELAX.3_Full.theta_1,3_Full.theta1=RELAX.3_Full.theta1_1,3_Full.theta2=RELAX.3_Full.theta2_1,k=<selection_intensity_parameter>)
 
 # ----------------------------------------------------------------------------------------
 #                                    optimization parameters
@@ -554,19 +565,14 @@ optimization = FullD(derivatives=Newton,nstep=10)
 optimization.final = powell
 #optimization.message_handler = std
 optimization.ignore_parameters = RELAX.k_1,BrLen
-optimization.scale.tree = 0
-optimization.advanced = 1
-
 
 # ----------------------------------------------------------------------------------------
 #                                    output files data                                    
 # ----------------------------------------------------------------------------------------
 
-joint.likelihood.debug = 0
 optimization.profiler = <log_path>
 output.tree.file = <expected_history_path>
 output.debug.dir = <debug_dir>
-optimization.backup.file = <backup_dir>
 output.tree.format = Newick
 true_history.tree.file = <history_tree_path>
 '''
@@ -578,7 +584,6 @@ true_history.tree.file = <history_tree_path>
     debug_dir = output_dir + "histories_evaluation/"
     if not os.path.exists(debug_dir):
         res = os.system("mkdir -p " + debug_dir)
-    backup_dir = output_dir + "inferred_values"
     log_path = output_dir + "traitrelax_optimization.log"
     p = omega0 / omega1
     theta1 = omega0_weight
@@ -593,11 +598,19 @@ true_history.tree.file = <history_tree_path>
     param_content = param_content.replace("<omega2>", str(omega2))
     param_content = param_content.replace("<theta1>", str(theta1))
     param_content = param_content.replace("<theta2>", str(theta2))
+    param_content = param_content.replace("<nuc1_theta>", str(nuc1_theta))
+    param_content = param_content.replace("<nuc1_theta1>", str(nuc1_theta1))
+    param_content = param_content.replace("<nuc1_theta2>", str(nuc1_theta2))
+    param_content = param_content.replace("<nuc2_theta>", str(nuc2_theta))
+    param_content = param_content.replace("<nuc2_theta1>", str(nuc2_theta1))
+    param_content = param_content.replace("<nuc2_theta2>", str(nuc2_theta2))
+    param_content = param_content.replace("<nuc3_theta>", str(nuc3_theta))
+    param_content = param_content.replace("<nuc3_theta1>", str(nuc3_theta1))
+    param_content = param_content.replace("<nuc3_theta2>", str(nuc3_theta2))
     param_content = param_content.replace("<selection_intensity_parameter>", str(selection_intensity_parameter))
     param_content = param_content.replace("<log_path>", log_path)
     param_content = param_content.replace("<expected_history_path>", expected_history_path)
     param_content = param_content.replace("<debug_dir>", debug_dir)
-    param_content = param_content.replace("<backup_dir>", backup_dir)
     param_content = param_content.replace("<history_tree_path>", history_tree_path)
     adjusted_labels_str = labels_str.replace("model1.nodes_id", "true_history.model1.nodes_id")
     adjusted_labels_str = adjusted_labels_str.replace("model2.nodes_id", "true_history.model2.nodes_id")
@@ -610,8 +623,8 @@ true_history.tree.file = <history_tree_path>
 
 character_model.set_initial_parameters = true
 character_model.mu = <mu>
-character_model.pi0 = <pi0>
-'''
+character_model.pi0 = <pi0>'''
+
         param_content = param_content.replace("<mu>", str(character_model_mu))
         param_content = param_content.replace("<pi0>", str(character_model_pi0))
 
@@ -846,8 +859,8 @@ if __name__ == '__main__':
                                                                                                 character_model_pi0,
                                                                                                 tree_path,
                                                                                                 simulation_output_dir)
-        if input_tree_path == "":
-            input_tree_path = true_history_path
+            if input_tree_path == "":
+                input_tree_path = true_history_path
 
         # simulate sequence data
         sequence_data_path, labels_str = simulate_sequence_data(kappa, omega0, omega1, omega2, omega0_weight,
@@ -856,14 +869,21 @@ if __name__ == '__main__':
                                                                 nuc1_theta, nuc1_theta1, nuc1_theta2, nuc2_theta,
                                                                 nuc2_theta1, nuc2_theta2, nuc3_theta, nuc3_theta1,
                                                                 nuc3_theta2)
+
         # set the parameters file for RELAX
-        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path, initial_kappa,
-                             initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
-                             initial_omega1_weight, initial_selection_intensity_parameter, labels_str)
+        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path,
+                             initial_kappa, initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
+                             initial_omega1_weight, initial_selection_intensity_parameter, initial_nuc1_theta,
+                             initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta, initial_nuc2_theta1,
+                             initial_nuc2_theta2, initial_nuc3_theta, initial_nuc3_theta1, initial_nuc3_theta2,
+                             labels_str)
         # set parameters file for TraitRELAX
         set_traitrelax_param_file(simulation_output_dir + "traitrelax_result/",
-                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path,
-                                  character_data_path,
-                                  initial_kappa, initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
-                                  initial_omega1_weight, initial_selection_intensity_parameter, history_tree_path,
-                                  labels_str, initial_character_model_mu, initial_character_model_pi0, )
+                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path,
+                                  output_dir + "history_tree.nwk", character_data_path, initial_kappa, initial_omega0, initial_omega1,
+                                  initial_omega2, initial_omega0_weight, initial_omega1_weight,
+                                  initial_selection_intensity_parameter, history_tree_path,
+                                  initial_nuc1_theta, initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta,
+                                  initial_nuc2_theta1, initial_nuc2_theta2, initial_nuc3_theta, initial_nuc3_theta1,
+                                  initial_nuc3_theta2, labels_str, initial_character_model_mu,
+                                  initial_character_model_pi0)
