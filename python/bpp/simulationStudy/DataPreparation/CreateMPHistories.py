@@ -14,6 +14,7 @@ if __name__ == '__main__':
                         help='directory to write the parameter files to',
                         required=True)
     parser.add_argument('--relax_parameter_files_dir', '-p', help='directory of relax parameter files', required=True)
+    parser.add_argument('--use_mp', '1 for mp histories, 0 for for ml histories', required=False, default=1)
 
     args = parser.parse_args()
     trees_dir = args.trees_dir
@@ -22,6 +23,7 @@ if __name__ == '__main__':
     parameter_files_dir = args.parameter_files_dir
     if not os.path.exists(parameter_files_dir):
         res = os.system("mkdir -p " + parameter_files_dir)
+    use_mp = int(args.use_mp)
 
     # # get the tree height
     # tbl_regex = re.compile("tbl_(\d*\.?\d*)")
@@ -31,18 +33,22 @@ if __name__ == '__main__':
     for path in os.listdir(character_data_dir):
         if "replicate" in path and os.path.isdir(character_data_dir+path):
             replicate = replicate_regex.search(path).group(1)
+            
+            hist_prefix = "mp"
+            if use_mp == 0:
+                hist_prefix = "ml"
 
             # create input parameters file for the program
             character_data_path = character_data_dir + path + "/character_data/character_data.fas"
             if not os.path.exists(character_data_path):
                 continue
             tree_path = trees_dir + replicate + ".nwk"
-            mp_dir = character_data_dir + path + "/mp_data/"
-            if not os.path.exists(mp_dir):
-                res = os.system("mkdir -p " + mp_dir)
-            history_path = mp_dir + "mp_history.nwk"
-            lables_path = mp_dir + "mp_partition.txt"
-            with open(mp_dir + "mp_solution_parameters.bpp", "w") as outfile:
+            hist_dir = character_data_dir + path + "/" + hist_prefix + "_data/"
+            if not os.path.exists(hist_dir):
+                res = os.system("mkdir -p " + hist_dir)
+            history_path = hist_dir + hist_prefix + "_history.nwk"
+            lables_path = hist_dir + "mp_partition.txt"
+            with open(hist_dir + hist_prefix + "_solution_parameters.bpp", "w") as outfile:
                 outfile.write("input.character.file = " + character_data_path + "\n")
                 outfile.write("init.tree = user\ninput.tree.file = " + tree_path + "\n")
                 outfile.write("input.tree.format = Newick\ninit.brlen.method = Input\n")
@@ -50,7 +56,10 @@ if __name__ == '__main__':
                 outfile.write("output.mp.partition = " + lables_path + "\n")
 
             # execute the program on the parameters file
-            res = os.system("/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/writemphistory param=" + mp_dir + "mp_solution_parameters.bpp")
+            script_path = "/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/writemphistory"
+            if use_mp == 0:
+                script_path = "/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/writeasrsolution"
+            res = os.system(script_path + " param=" + hist_dir + "mp_solution_parameters.bpp")
             while not os.path.exists(lables_path):
                sleep(2)
 
@@ -64,7 +73,7 @@ if __name__ == '__main__':
                history_tree_file.write(history_str)
             tree_path_info = "input.tree.file = " + tree_path + "\n"
 
-            # parse the labels of the mp history
+            # parse the labels of the history
             with open(lables_path, "r") as infile:
                 labels_data = infile.readlines()
                 BG_labels = "model1.nodes_id = " + labels_data[0]
@@ -82,7 +91,7 @@ if __name__ == '__main__':
             content = re.sub("model1.nodes_id = .*\n", BG_labels, content)
             content = re.sub("model2.nodes_id = .*\n*", FG_labels, content)
             content = re.sub("input.tree.file = .*?\n", tree_path_info, content)
-			# replace the directory of the history tree with the one of the tree
+            # replace the directory of the history tree with the one of the tree
             with open(parameter_files_dir + replicate + ".bpp", "w") as outfile:
                 outfile.write(content)
 
