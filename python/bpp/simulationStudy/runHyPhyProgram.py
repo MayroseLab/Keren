@@ -42,9 +42,8 @@ if __name__ == '__main__':
         job_name = "HyPhy_" + str(replicate)
         file_name = job_name + ".sh"
         cmds = ['conda activate /groups/itay_mayrose/liorglic/miniconda3/envs/hyphy/', '(printf "1\\n7\\n1\\n' + sequence_data_path + '\\n' + labeled_tree_path + '\\n1\\n2\\n" && cat) | HYPHYMP']
-        commands = [cmds]  # ["export OMP_NUM_THREADS=4", cmd]
         touch_file_path = job_name + "_flag_done"
-        full_job = create_job_file(job_name, commands, file_name, error_files_path, job_files_path, priority, 1,
+        full_job = create_job_file(job_name, cmds, file_name, error_files_path, job_files_path, priority, 1,
                                                        touch_file_path, limit_nodes=False, python=False,
                                                        openmpi=True, language="bash", queue=queue)
         res=os.system("qsub -q " + queue + " -p " + str(priority) + " " + full_job)
