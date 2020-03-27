@@ -16,7 +16,6 @@ from mpl_toolkits.mplot3d import Axes3D
 colors = ["lightgrey", "grey", "k"]
 alternative_colors = ["mediumblue", "darkslateblue", "blueviolet"]
 markers = ["o", "^", "s"]
-MAX_RECORDS_TO_PROCESS = 50
 tbl_options = [1, 4, 8, 16, 32]
 mu_options = [1, 2, 4, 8, 16, 32]  # there is also 2 and 2 but not for FPR values
 pi0_options = [0.1, 0.3, 0.5, 0.7, 0.9]
@@ -512,7 +511,7 @@ def plot_power_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTr
                 y_full_values.append(full_power)
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
-                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(positions_num) + "P",
+                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(positions_num) + " sites",
                 linestyle="dashed", markersize=16)
         if plot_labels:
             ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -558,7 +557,7 @@ def plot_power_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, Empir
                 y_full_values.append(full_power)
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
-                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(taxa_num) + "S", linestyle="dashed",
+                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(taxa_num) + " taxa", linestyle="dashed",
                 markersize=16)
         if plot_labels:
             ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -589,13 +588,13 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
     k = 0.5
     sig_fraction_standard_execution = []
     sig_fraction_given_true_history = []
-    sig_fraction_given_mp_history = []
     mu_local_options = [1, 2, 4, 8, 16]
 
     ax.set_xticks(mu_local_options)
     # ax.set_ylim(0, 1)
     vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
     ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
+    ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
 
     for mu in mu_local_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
@@ -610,7 +609,7 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
     ax.grid(False)
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
     ax.plot(mu_local_options, sig_fraction_given_true_history, color=colors[codon_positions_num_options.index(300)],
-            label="RELAX with\ntrue history", linestyle='dotted', marker=markers[taxa_num_options.index(32)], lw=2.5,
+            label="TraitRELAX\nwith true history", linestyle='dotted', marker=markers[taxa_num_options.index(32)], lw=2.5,
             markersize=16)
     ax.plot(mu_local_options, sig_fraction_standard_execution, label="TraitRELAX",
             color=colors[codon_positions_num_options.index(300)], linestyle='dashed',
@@ -620,7 +619,7 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
     # ax.set_ylabel("Null rejected", fontdict={'size': 30})
 
     handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles, labels, prop={'size': 30}, loc='best')  # , bbox_to_anchor=(0.5, -0.02))
+    ax.legend(handles, labels, prop={'size': 30}, loc='best', frameon=False)  # , bbox_to_anchor=(0.5, -0.02))
 
 
 # plot info: fixed to mu=0.5, pi0=0.5, taxa_num=32, codons=300, k=0.5
@@ -661,7 +660,7 @@ def plot_power_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, 
             sig_fraction_given_true_history.append(float('nan'))
 
     ax.plot(tbl_options, sig_fraction_given_true_history, linestyle='dotted', color='black',
-            label="RELAX with true history", lw=2.5)
+            label="TraitRELAX with true history", lw=2.5)
     ax.plot(tbl_options, sig_fraction_standard_execution, label="TraitRELAX", linestyle='dashed', color='black', lw=2.5)
 
     ax.plot([],[], linestyle='dashed', color='red', label="Theoretical threshold")
@@ -692,7 +691,6 @@ def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAX
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
     LR_standard_execution = []
     LR_given_true_history = []
-    LR_given_mp_history = []
     mu_local_options = [1, 2, 4, 8, 16]
     for mu in mu_local_options:
         # divide by 2 to achieve LR threshold instead of 2*LR threshold
@@ -705,15 +703,15 @@ def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAX
             LR_given_true_history.append(float("nan"))
             continue
     ax.plot(mu_local_options, LR_standard_execution, label="TraitRELAX", linestyle='dashed', color='black', lw=2.5)
-    ax.plot(mu_local_options, LR_given_true_history, linestyle='dotted', color='black', label="RELAX with true history",
-            lw=2.5)
+    #ax.plot(mu_local_options, LR_given_true_history, linestyle='dotted', color='black', label="TraitRELAX with true history",
+            # lw=2.5)
 
     ax.set_yticks([1, 2, 3, 4, 5])
     ax.set_xticks(mu_local_options)
 
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
     ax.set_ylabel("Computed empirical LR threshold", fontdict={'size': 30})
-    ax.axhline(y=3.841, color='red', linestyle='dashed', label="Theoretical threshold")
+    ax.axhline(y=3.841/2, color='red', linestyle='dashed', label="Theoretical threshold")
 
 
 # plot info: fixed to: pi0=0.5, taxa_num=32, codons=300, k=0.5
@@ -749,7 +747,7 @@ def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELA
             lw=2.5)
     # ax.plot(list(tbl_to_mu.keys()), LR_given_mp_history, linestyle=":", color='black', label="RELAX with maximum parsimony partition", lw=2.5)
     ax.plot(list(tbl_to_mu.keys()), LR_given_true_history, linestyle='dotted', color='black',
-            label="RELAX with true history", lw=2.5)
+            label="TraitRELAX with true history", lw=2.5)
 
     ax.set_xticks(tbl_options)
     ax.set_yticks([1, 2, 3, 4, 5])
@@ -829,7 +827,7 @@ def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThre
 # y axis: mean value inferred value of k
 # add errorbars if not too noisy
 # a panel with plot for each taxa num
-# In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitRELAX with true history
+# In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitTraitRELAX with true history
 # in green - scatter the simulated value of k (with legend)
 
 def global_accuracy(df):
@@ -935,8 +933,8 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=
                     given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
     ax.plot(mu_local_options, rel_error_sim_vs_standard, color='black', label="TraitRELAX", linestyle='dashed', lw=2.5)
-    ax.plot(mu_local_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
-            label="RELAX with maximum\nparsimony partition", lw=2.5)
+    # ax.plot(mu_local_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
+    #         label="RELAX with maximum\nparsimony partition", lw=2.5)
 
     ax.set_xticks(mu_local_options)
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
@@ -950,9 +948,9 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend=
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
-    if add_legend:
-        handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
+    # if add_legend:
+    #     handles, labels = ax.get_legend_handles_labels()
+    #     ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
 
 
 # plot relative error: dashed - compared to best possible (based on true history), full - based on simulated
@@ -991,7 +989,7 @@ def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, MPComboToDf, title, add_legend
             label="RELAX with maximum\nparsimony partition", lw=2.5)
     if include_reference:
         ax.plot(pi0_options, rel_error_given_true_history_vs_standard, color='black', linestyle="--",
-                label="RELAX with true history")
+                label="TraitRELAX with true history")
 
     ax.set_xticks(pi0_options)
     ax.set_xlabel(r"$\pi_0$", fontdict={'size': 30})
@@ -1058,11 +1056,11 @@ def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, t
                     given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
     ax.plot(tbls, rel_error_sim_vs_standard, color='black', linestyle='dashed', label="TraitRELAX", lw=2.5)
-    ax.plot(tbls, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
-            label="RELAX with maximum\nparsimony partition", lw=2.5)
-    if include_reference:
-        ax.plot(tbls, rel_error_given_true_history_vs_standard, color='black', linestyle="--",
-                label="RELAX with true history", lw=2.5)
+    # ax.plot(tbls, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
+    #         label="RELAX with maximum\nparsimony partition", lw=2.5)
+    # if include_reference:
+    #     ax.plot(tbls, rel_error_given_true_history_vs_standard, color='black', linestyle="--",
+    #             label="TraitRELAX with true history", lw=2.5)
 
     ax.set_xticks(tbls)
     ax.set_xlabel("Tree length", fontdict={'size': 30})
@@ -1076,9 +1074,9 @@ def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, t
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
-    if add_legend:
-        handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
+    # if add_legend:
+    #     handles, labels = ax.get_legend_handles_labels()
+    #     ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
 
 
 # fixed parameters: tbl=4, mu=8, pi0=0.5
@@ -1087,7 +1085,7 @@ def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, t
 # y axis: mean value inferred value of k
 # add errorbars if not too noisy
 # a panel with plot for each taxa num
-# In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitRELAX with true history
+# In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitTraitRELAX with true history
 # in green - scatter the simulated value of k (with legend)
 def plot_accuracy_vs_k_across_positions_num(taxa_num, ax, TraitRELAXComboToDf, title, add_legend=False,
                                             plot_labels=True):
@@ -1111,7 +1109,7 @@ def plot_accuracy_vs_k_across_positions_num(taxa_num, ax, TraitRELAXComboToDf, t
             y_full_values.append(np.mean(k_error_values))
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
-                label=str(positions_num) + "P", lw=2.5)
+                label=str(positions_num) + " sites", lw=2.5)
 
     if plot_labels:
         ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -1132,7 +1130,7 @@ def plot_accuracy_vs_k_across_positions_num(taxa_num, ax, TraitRELAXComboToDf, t
 # y axis: mean value inferred value of k
 # add errorbars if not too noisy
 # a panel with plot for each taxa num
-# In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitRELAX with true history
+# In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitTraitRELAX with true history
 # in green - scatter the simulated value of k (with legend)
 def plot_accuracy_vs_k_across_taxa_num(positions_num, ax, TraitRELAXComboToDf, title, add_legend=False,
                                        plot_labels=True):
@@ -1156,7 +1154,7 @@ def plot_accuracy_vs_k_across_taxa_num(positions_num, ax, TraitRELAXComboToDf, t
             y_full_values.append(np.mean(k_error_values))
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[taxa_num_options.index(taxa_num)],
-                label=str(taxa_num) + "S", lw=2.5)
+                label=str(taxa_num) + " taxa", lw=2.5)
 
     if plot_labels:
         ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -1230,7 +1228,7 @@ def plot_inferred_vs_simulated_k_across_positions_num(taxa_num, ax, combo_to_df,
             # inferred_k_errors.append(df["alternative_k"].std())
             filtered_df = df.loc[(df["alternative_k"] < 3)]
             boxplots.append(
-                ax.boxplot(filtered_df["alternative_k"], widths=0.2, whis=[5, 95], showfliers=True, patch_artist=True,
+                ax.boxplot(filtered_df["alternative_k"], widths=0.2, whis=[5, 95], showfliers=False, patch_artist=True,
                            positions=[positions_to_combo[(k, positions_num)]],
                            zorder=zorder_index))  # , color=colors[codon_positions_num_options.index[positions_num]]
             zorder_index += 1
@@ -1238,6 +1236,7 @@ def plot_inferred_vs_simulated_k_across_positions_num(taxa_num, ax, combo_to_df,
             color = colors[boxplots.index(boxplot)]
             patch = boxplot['boxes'][0]
             patch.set_facecolor(color)
+            # patch.set_linewidth(2)
 
         # ax.scatter(k_values_options, inferred_k_values, color=colors[codon_positions_num_options.index(positions_num)]) #, label=str(positions_num)+" positions")
         # ax.errorbar(k_values_options, inferred_k_values, yerr=inferred_k_errors, color=colors[codon_positions_num_options.index(positions_num)])
@@ -1334,7 +1333,7 @@ def plot_k_distribution_across_k_and_posnum(ax, comboToDf, title):
             df = comboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
             filetred_df = df.loc[(df["alternative_k"] < 3)]
             k_values = filetred_df["alternative_k"]
-            boxplots.append(ax.boxplot(k_values, widths=0.2, whis=[5, 95], showfliers=True, patch_artist=True,
+            boxplots.append(ax.boxplot(k_values, widths=0.2, whis=[5, 95], showfliers=False, patch_artist=True,
                                        positions=[positions_to_combo[(k, positions_num)]],
                                        zorder=zorder_index))  # , color=colors[codon_positions_num_options.index[positions_num]]
             zorder_index += 1
@@ -1347,13 +1346,15 @@ def plot_k_distribution_across_k_and_posnum(ax, comboToDf, title):
     ax.scatter(x=x_for_scatter, y=[0.2, 0.2, 0.2, 1, 1, 1, 2, 2, 2], label="Simulated value", edgecolors=None,
                color="green", marker="s", zorder=zorder_index)
 
+    ax.set_ylabel("", fontdict={'size': 30})
+
     # add legend
     # create custom legend
     custom_lines = []
     custom_names = []
     for positions_num in codon_positions_num_options:
         custom_lines.append(Line2D([0], [0], color=colors[codon_positions_num_options.index(positions_num)], lw=6))
-        custom_names.append(str(positions_num) + "P")
+        custom_names.append(str(positions_num) + " sites")
     ax.legend(custom_lines, custom_names, loc='best', prop={'size': 30}, frameon=False)
 
     ax.grid(False)
@@ -1381,7 +1382,7 @@ def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title
             df = comboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
             filetred_df = df.loc[(df["alternative_k"] < 3)]
             k_values = filetred_df["alternative_k"]
-            boxplots.append(ax.boxplot(k_values, widths=0.2, whis=[5, 95], showfliers=True, patch_artist=True,
+            boxplots.append(ax.boxplot(k_values, widths=0.2, whis=[5, 95], showfliers=False, patch_artist=True,
                                        positions=[taxanum_to_combo[(k, taxa_num)]],
                                        zorder=zorder_index))  # , color=colors[codon_positions_num_options.index[positions_num]]
             zorder_index += 1
@@ -1400,7 +1401,7 @@ def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title
     custom_names = []
     for taxa_num in taxa_num_options:
         custom_lines.append(Line2D([0], [0], color=colors[taxa_num_options.index(taxa_num)], lw=6))
-        custom_names.append(str(taxa_num) + "S")
+        custom_names.append(str(taxa_num) + " taxa")
     ax.legend(custom_lines, custom_names, loc='best', prop={'size': 30}, frameon=False)
 
     ax.grid(False)
@@ -1408,14 +1409,14 @@ def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title
     ax.set_xticklabels(["", "0.2", "", "", "1", "", "", "2", ""])
     ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
     ax.set_xlabel(r"$k$", fontdict={'size': 30})
-    # ax.set_ylabel(r"$^k$", fontdict={'size': 30})
+    ax.set_ylabel(r"$^k$", fontdict={'size': 30})
 
 
 def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path, res_output_path,
                            supp_output_path_1, supp_output_path_2, supp_output_path_3):
     # figure 0
     plt.grid(False)
-    fig = plt.figure(figsize=[3 * 8.2 + 4, 7.58 + 2])
+    fig = plt.figure(figsize=[3 * 9 + 4, 7.58 + 2])
     gs = fig.add_gridspec(ncols=3, nrows=1)  # , width_ratios=[1, 1, 1.5])
     ax1 = fig.add_subplot(gs[0, 0])
     plot_k_distribution_across_k_and_posnum(ax1, TraitRELAXComboToDf, "A\n")
@@ -1461,11 +1462,11 @@ def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, gri
 
     # figure 2 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=3, sharey='none', sharex='none', figsize=[3 * 8.2 + 2, 2 * 7.58 + 2])
+    fig, axis = plt.subplots(nrows=2, ncols=3, sharey='none', sharex='none', figsize=[3 * 12 + 2, 2 * 7.58 + 2])
     plot_accuracy_vs_k_across_positions_num(16, axis[0][0], TraitRELAXComboToDf, "A\n", add_legend=True,
                                             plot_labels=False)
     plot_accuracy_vs_k_across_positions_num(32, axis[0][1], TraitRELAXComboToDf, "B\n", add_legend=False,
-                                            plot_labels=False)
+                                            plot_labels=True)
     plot_accuracy_vs_k_across_positions_num(64, axis[0][2], TraitRELAXComboToDf, "C\n", add_legend=False,
                                             plot_labels=False)
     plot_inferred_vs_simulated_k_across_positions_num(16, axis[1][0], TraitRELAXComboToDf, "D\n", plot_labels=False)
@@ -1722,4 +1723,6 @@ if __name__ == '__main__':
                            figures_dir + "accuracy_assessment_for_supp_2.svg",
                            figures_dir + "accuracy_assessment_for_supp_3.svg")
 
-    plot_duration(TraitRELAXComboToDf, figures_dir + "duration_analysis.svg")
+    # plot_duration(TraitRELAXComboToDf, figures_dir + "duration_analysis.svg")
+
+

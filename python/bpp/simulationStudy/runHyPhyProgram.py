@@ -37,8 +37,8 @@ if __name__ == '__main__':
 
     for replicate in range(replicates_num):
         replicate_data_path = input_data_path + "replicate_" + str(replicate) + "/"
-        sequence_data_path = input_data_path + "sequence_data/sequence_data_1.fas"
-        labeled_tree_path = input_data_path + "mp_data/mp_history.nwk"
+        sequence_data_path = replicate_data_path + "sequence_data/sequence_data_1.fas"
+        labeled_tree_path = replicate_data_path + "mp_data/mp_history.nwk"
         job_name = "HyPhy_" + str(replicate)
         file_name = job_name + ".sh"
         cmds = ['conda activate /groups/itay_mayrose/liorglic/miniconda3/envs/hyphy/', '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n1\\\\n2\\\\n" && cat) | HYPHYMP']

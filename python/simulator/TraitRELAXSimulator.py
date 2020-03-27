@@ -184,7 +184,6 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
                 availableStates.append(0)
             elif "{1}" in leaf.name:
                 availableStates.append(1)
-        print("availableStates: ", availableStates)  # debug
         if 0 in availableStates and 1 in availableStates:
             return_res = True
 
@@ -804,9 +803,9 @@ if __name__ == '__main__':
     initial_character_model_pi0 = args.initial_pi0
     if initial_character_model_pi0 != None:
         initial_character_model_pi0 = float(initial_character_model_pi0)
-    character_data_path = args.character_data_path
+    orig_character_data_path = args.character_data_path
     use_scaled_as_hist = False
-    if character_data_path != "":
+    if orig_character_data_path != "":
         use_scaled_as_hist = True
 
     nuc1_theta = float(args.nuc1_theta)
@@ -848,18 +847,19 @@ if __name__ == '__main__':
         input_tree_path = ""
         if use_scaled_as_hist:  # if character data was given
             input_tree_path = scaled_tree_path
-
         print("**** simulating replicate " + str(rep) + " ****")
         # set simulation output directory
         simulation_output_dir = output_dir + "replicate_" + str(rep) + "/"
         if not os.path.exists(simulation_output_dir):
             res = os.system("mkdir -p " + simulation_output_dir)
         # simulate character data
-        if character_data_path == "":
+        if orig_character_data_path == "":
             true_history_path, character_data_path, history_tree_path = simulate_character_data(character_model_mu,
                                                                                                 character_model_pi0,
                                                                                                 tree_path,
                                                                                                 simulation_output_dir)
+        else:
+            character_data_path = orig_character_data_path
         if input_tree_path == "":
             input_tree_path = true_history_path
 
@@ -879,10 +879,12 @@ if __name__ == '__main__':
                              initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta, initial_nuc2_theta1,
                              initial_nuc2_theta2, initial_nuc3_theta, initial_nuc3_theta1, initial_nuc3_theta2,
                              labels_str)
+
         # set parameters file for TraitRELAX
+        print("character_data_path: ", character_data_path)
         set_traitrelax_param_file(simulation_output_dir + "traitrelax_result/",
-                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path,
-                                  scaled_tree_path, character_data_path, initial_kappa, initial_omega0, initial_omega1,
+                                  traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path,
+                                  character_data_path, initial_kappa, initial_omega0, initial_omega1,
                                   initial_omega2, initial_omega0_weight, initial_omega1_weight,
                                   initial_selection_intensity_parameter, history_tree_path,
                                   initial_nuc1_theta, initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta,
