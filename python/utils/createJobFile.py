@@ -7,9 +7,9 @@ import socket, os
 # set jobs environment
 def set_job_env(job_files_path = "/groups/itay_mayrose/halabikeren/jobs/", error_files_path = "/groups/itay_mayrose/halabikeren/error_files/"):
     if not os.path.exists(job_files_path):
-        res = os.system("mkdir " + job_files_path)
+        res = os.system("mkdir -p " + job_files_path)
     if not os.path.exists(error_files_path):
-        res = os.system("mkdir " + error_files_path)
+        res = os.system("mkdir -p " + error_files_path)
     return 0
 
 # creates a standard job file with a single command, with multi-threading option
