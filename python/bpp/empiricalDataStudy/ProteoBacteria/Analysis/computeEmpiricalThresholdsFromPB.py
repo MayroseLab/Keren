@@ -18,6 +18,7 @@ if __name__ == '__main__':
 
     integrated_df = pd.read_csv(theoretical_res_path)
     integrated_df['significant_by_PB'] = np.zeros(integrated_df.shape[0])
+    integrated_df['pvalue_by_PB'] = np.zeros(integrated_df.shape[0])
 
 
     for path in os.listdir(input_dir):
@@ -48,7 +49,11 @@ if __name__ == '__main__':
         LR_empirical_cutoff = LR_scores[int(len(LR_scores)*95/100)]
         integrated_df.loc[integrated_df.dataset_id == dataset_name, 'empirical_LRT_statistic_cutoff'] = LR_empirical_cutoff
         actual_LR = float(integrated_df.loc[integrated_df.dataset_id == dataset_name, 'LRT_statistic'])
+        LR_scores.append(actual_LR)
+        LR_scores.sort()
+        pvalue_by_PB = 1 - LR_scores.index(actual_LR) / len(LR_scores)
         if actual_LR > float(LR_empirical_cutoff):
             integrated_df.loc[integrated_df.dataset_id == dataset_name, 'significant_by_PB'] = 1
+        integrated_df.loc[integrated_df.dataset_id == dataset_name, 'pvalue_by_PB'] = pvalue_by_PB
 
     integrated_df.to_csv(output_path)
