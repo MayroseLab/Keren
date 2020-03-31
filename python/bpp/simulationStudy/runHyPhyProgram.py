@@ -41,7 +41,7 @@ if __name__ == '__main__':
         labeled_tree_path = replicate_data_path + "mp_data/mp_history.nwk"
         job_name = "HyPhy_" + str(replicate)
         file_name = job_name + ".sh"
-        cmds = ['conda activate /groups/itay_mayrose/liorglic/miniconda3/envs/hyphy/', '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n2\\\\n2\\\\n" && cat) | HYPHYMP']
+        cmds = ['source ~/.bashrc' , 'conda activate hyphy' , '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n2\\\\n2\\\\n" && cat) | HYPHYMP']
         touch_file_path = job_name + "_flag_done"
         full_job = create_job_file(job_name, cmds, file_name, error_files_path, job_files_path, priority, 1,
                                                        touch_file_path, limit_nodes=False, python=False,
