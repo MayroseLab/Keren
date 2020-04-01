@@ -58,11 +58,15 @@ def extract_hyphy_data(input_dir):
         with open(input_dir+path, "r") as infile:
             content = infile.read()
         for colname in list(colname_to_regex.keys()):
-            if colname == "dataset_id":
-                record[colname] = colname_to_regex[colname].search(content).group(1)
-            else:
+            # print("colname: ", colname, "\nregex: ", colname_to_regex[colname].pattern, "\npath: ", input_dir+path)
+            if "omega" in colname:
+                record[colname] = float(colname_to_regex[colname].search(content).group(2))
+            elif "p0" in colname or "p1" in colname:
+                record[colname] = float(colname_to_regex[colname].search(content).group(2)) / 100
+            elif colname != "job_id" and colname != "dataset_id":
                 record[colname] = float(colname_to_regex[colname].search(content).group(1))
-
+            elif colname == "dataset_id":
+                record[colname] = colname_to_regex[colname].search(content).group(1)
         record["LR"] = 2 * (record["alternative_logl"] - record["null_logl"])
         pvalue = doLRT(record["null_logl"], record["alternative_logl"])
         if abs(pvalue - record["pvalue"]) > 0.05:
