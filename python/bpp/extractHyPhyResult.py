@@ -74,11 +74,6 @@ def extract_hyphy_data(input_dir):
             record["significant"] = 1
         else:
             record["significant"] = 0
-        if (record["simulated_k"] < 1 and record["alternative_k"] < 1) or (record["simulated_k"] > 1 and record["alternative_k"] > 1) or (record["simulated_k"] == 1 and record["alternative_k"] == 1):
-            record["correctDirection"] = 1
-        else:
-            record["correctDirection"] = 0
-
         df = df.append(record, ignore_index=True)
     return df
 
