@@ -35,7 +35,10 @@ def extract_hyphy_data(input_dir):
         with open(input_dir+path, "r") as infile:
             content = infile.read()
         for colname in list(colname_to_regex.keys()):
-            record[colname] = float(colname_to_regex[colname].search(content).group(1))
+            if colname == "dataset_id":
+                record[colname] = colname_to_regex[colname].search(content).group(1)
+            else:
+                record[colname] = float(colname_to_regex[colname].search(content).group(1))
 
         record["LR"] = 2 * (record["alternative_logl"] - record["null_logl"])
         pvalue = doLRT(record["null_logl"], record["alternative_logl"])
