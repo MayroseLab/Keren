@@ -44,7 +44,7 @@ def extract_hyphy_data(input_dir):
                                                     re.MULTILINE | re.DOTALL),
                         "job_id": re.compile("(\d*)\.power8", re.MULTILINE | re.DOTALL)}
     colnames = list(colname_to_regex.keys()) + ["LR", "significant", "job_id"]
-    df = pd.DataFrame(colnames)
+    df = pd.DataFrame(columns=colnames)
 
     for path in os.listdir(input_dir):
         if not "power8" in path:
