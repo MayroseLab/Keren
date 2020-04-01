@@ -11,21 +11,44 @@ def doLRT(null_logl, alternative_logl, df=1):
 def extract_hyphy_data(input_dir):
 
     colname_to_regex = {"dataset_id": re.compile("(COG.*?)\.fa", re.MULTILINE | re.DOTALL),
-                                      "null_logl": re.compile("Fitting the null \(K \:= 1\) model.*?Log\(L\)\s*=\s*(-\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "alternative_logl": re.compile("Fitting the alternative model.*?Log\(L\)\s*=\s*(-\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "pvalue" : re.compile("", re.MULTILINE | re.DOTALL),
-                                      "null_omega0": re.compile("Fitting the null.*?Negative selection.*?\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "null_omega1": re.compile("Fitting the null.*?Negative selection.*?\|.*?Negative selection.*?\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "null_omega2": re.compile("Fitting the null.*?Diversifying selection.*?\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "null_p0": re.compile("Fitting the null.*?Negative selection.*?\|\s*\d*\.?\d*\s*\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "null_p1": re.compile("Fitting the null.*?Negative selection.*?\|.*?Negative selection.*?\|\s*\d*\.?\d*\s*\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "alternative_omega0": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches.*?Negative selection.*?\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "alternative_omega1": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches.*?Negative selection.*?\|.*?Negative selection.*?\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "alternative_omega2": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches.*?Diversifying selection.*?\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "alternative_p0": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches.*?Negative selection.*?\|\s*\d*\.?\d*\s*\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "alternative_p1": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches.*?Negative selection.*?\|.*?Negative selection.*?\|\s*\d*\.?\d*\s*\|\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
-                                      "alternative_k": re.compile("", re.MULTILINE | re.DOTALL),
-                                      "job_id" : re.compile("(\d*)\.power8", re.MULTILINE | re.DOTALL)}
+                        "null_logl": re.compile("Fitting the null \(K \:= 1\) model.*?Log\(L\)\s*=\s*(-\d*\.?\d*)",
+                                                re.MULTILINE | re.DOTALL),
+                        "alternative_logl": re.compile("Fitting the alternative model.*?Log\(L\)\s*=\s*(-\d*\.?\d*)",
+                                                       re.MULTILINE | re.DOTALL),
+                        "pvalue": re.compile("Likelihood ratio test\s*\*\*p\s*=\s*(\d*\.?\d*)\*\*",
+                                             re.MULTILINE | re.DOTALL),
+                        "simulated_omega0": re.compile("_p_(\d*\.?\d*)_omega1_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                        "simulated_omega1": re.compile("_omega1_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                        "simulated_omega2": re.compile("_omega2_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                        "simulated_p0": re.compile("_theta1_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                        "simulated_p1": re.compile("_theta1_(\d*\.?\d*)_theta2_(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
+                        "simulated_k": re.compile("\/k_(\d*\.?\d*)\/", re.MULTILINE | re.DOTALL),
+                        "null_omega0": re.compile("Fitting the null(.*?\|){12}\s*(\d*\.?\d*)",
+                                                  re.MULTILINE | re.DOTALL),
+                        "null_omega1": re.compile("Fitting the null(.*?\|){17}\s*(\d*\.?\d*)",
+                                                  re.MULTILINE | re.DOTALL),
+                        "null_omega2": re.compile("Fitting the null(.*?\|){22}\s*(\d*\.?\d*)",
+                                                  re.MULTILINE | re.DOTALL),
+                        "null_p0": re.compile("Fitting the null(.*?\|){13}\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
+                        "null_p1": re.compile("Fitting the null(.*?\|){18}\s*(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
+                        "alternative_omega0": re.compile(
+                            "Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){12}\s*(\d*\.?\d*)",
+                            re.MULTILINE | re.DOTALL),
+                        "alternative_omega1": re.compile(
+                            "Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){17}\s*(\d*\.?\d*)",
+                            re.MULTILINE | re.DOTALL),
+                        "alternative_omega2": re.compile(
+                            "Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){22}\s*(\d*\.?\d*)",
+                            re.MULTILINE | re.DOTALL),
+                        "alternative_p0": re.compile(
+                            "Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){13}\s*(\d*\.?\d*)",
+                            re.MULTILINE | re.DOTALL),
+                        "alternative_p1": re.compile(
+                            "Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){18}\s*(\d*\.?\d*)",
+                            re.MULTILINE | re.DOTALL),
+                        "alternative_k": re.compile("Relaxation\/intensification parameter\s*\(K\)\s*=\s*(\d*\.?\d*)",
+                                                    re.MULTILINE | re.DOTALL),
+                        "job_id": re.compile("(\d*)\.power8", re.MULTILINE | re.DOTALL)}
     colnames = list(colname_to_regex.keys()) + ["LR", "significant", "job_id"]
     df = pd.DataFrame(colnames)
 
