@@ -47,6 +47,8 @@ def extract_hyphy_data(input_dir):
     df = pd.DataFrame(colnames)
 
     for path in os.listdir(input_dir):
+        if not "power8" in path:
+            continue
         record = dict()
         record["job_id"] = colname_to_regex["job_id"].search(path).group(1)
         with open(input_dir+path, "r") as infile:
