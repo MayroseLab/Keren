@@ -42,8 +42,7 @@ if __name__ == '__main__':
     id_regex = re.compile("(.*?)\.bpp", re.DOTALL)
 
     # verify that MP histories exist and if not - create them
-    if not os.path.exists(input_data_path + "replicate_0/mp_data/mp_history.nwk"):
-        res=os.system(" python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/simulationStudy/DataPreparation/CreateMPHistories.py -t " + trees_dir + ' -c ' + input_data_path + ' -o ' + input_data_path + "mp_param/ -p " + input_data_path + "relax_param/ -u 1")
+    res=os.system(" python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/simulationStudy/DataPreparation/CreateMPHistories.py -t " + trees_dir + ' -c ' + input_data_path + ' -o ' + input_data_path + "mp_param/ -p " + input_data_path + "relax_param/ -u 1")
 
     for replicate in range(replicates_num):
         replicate_data_path = input_data_path + "replicate_" + str(replicate) + "/"
