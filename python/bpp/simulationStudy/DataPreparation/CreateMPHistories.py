@@ -2,6 +2,36 @@ import re, os, argparse
 from time import sleep
 from ete3 import Tree
 
+def size(tree):
+    s = 0
+    for node in tree.traverse():
+        s += node.dist
+    return s
+
+def reroot(history_path, tree_path):
+    history = Tree(history_path, format=1)
+    tree = Tree(tree_path)
+    if len(tree.get_children()) > 2:
+        print("orginial tree is not rooted, no need to fix history")
+        return
+    missing_length = tree.get_children()[0].dist
+    outgroup = tree.get_children()[1]
+    # find the outgroup in the history and set it as outgroup
+    history_outgroup = history.get_children()[-1]
+    for node in history.traverse():
+        if outgroup.name in node.name:
+            history_outgroup = node
+            history.set_outgroup(node.name)
+    history_outgroup.dist = outgroup.dist
+    for child in history.get_children():
+        if child != history_outgroup:
+            child.dist = missing_length
+    # make sure that now the tree and the history are of the same length
+    if not size(history) == size(tree):
+        print("Error! failed to fix history tree")
+        print("size(history) = ", size(history) , "\n size(tree) = ", size(tree))
+        return 1
+    history.write(outfile=history_path, format=1)
 
 if __name__ == '__main__':
     # process input from command line
@@ -62,6 +92,9 @@ if __name__ == '__main__':
             res = os.system(script_path + " param=" + hist_dir + hist_prefix + "_solution_parameters.bpp")
             while not os.path.exists(lables_path):
                sleep(2)
+
+            # re-rot the tree according to the input tree
+            reroot(history_path, tree_path)
 
             # open mp history and write history tree (should be exactly like the original tree) to a file
             history = Tree(history_path, format=1)
