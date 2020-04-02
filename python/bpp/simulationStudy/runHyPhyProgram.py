@@ -50,7 +50,7 @@ if __name__ == '__main__':
         labeled_tree_path = replicate_data_path + "mp_data/mp_history.nwk"
         test_category_index = 1
         first_category = get_first_state(labeled_tree_path)
-        if first_category == 1:
+        if first_category == 0:
             test_category_index = 2
         job_name = "HyPhy_" + str(replicate)
         file_name = job_name + ".sh"
