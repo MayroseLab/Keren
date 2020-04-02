@@ -18,6 +18,8 @@ def reroot(history_path, tree_path):
     child1 = history.get_children()[0].detach()
     child2 = history.get_children()[1].detach()
     missing_length = tree.get_children()[0].dist
+    if tree.get_children()[0].is_leaf():
+        missing_length = tree.get_children()[1].dist
     history.get_tree_root().add_child(name="missing_node{0}", dist=missing_length)
     history.get_children()[-1].add_child(child1)
     history.get_children()[-1].add_child(child2)
