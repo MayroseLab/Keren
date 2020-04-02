@@ -15,27 +15,33 @@ def reroot(history_path, tree_path):
     if len(tree.get_children()) > 2:
         print("original tree is not rooted, no need to fix history")
         return
-    child1 = history.get_children()[0].detach()
-    child2 = history.get_children()[1].detach()
-    missing_length = tree.get_children()[0].dist
-    if tree.get_children()[0].is_leaf():
-        missing_length = tree.get_children()[1].dist
-    history.get_tree_root().add_child(name="missing_node{0}", dist=missing_length)
-    history.get_children()[-1].add_child(child1)
-    history.get_children()[-1].add_child(child2)
+    missing_length = size(tree) - size(history)
+    tree_children = tree.get_children()
+    if abs(tree_children[0].dist-missing_length) < abs(tree_children[1].dist-missing_length):
+        missing_child = tree_children[0]
+    else:
+        missing_child = tree_children[1]
+    grandchildren_dists = [child.dist for child in missing_child.get_children()]
+    children_to_detach = []
+    for child in history.get_children():
+        if child.dist in grandchildren_dists:
+            children_to_detach.append(child.detach())
+    new_child = history.get_tree_root().add_child(name="missing_node{0}", dist=missing_length)
+    for child in children_to_detach:
+        new_child.add_child(child)
     # make sure that now the tree and the history are of the same length
     if abs(size(history)-size(tree)) > 0.00001:
         print("Error! failed to fix history tree")
         print("size(history) = ", size(history) , "\n size(tree) = ", size(tree))
-        exit(1)
+        exit (1)
     # make sure that all the lengths were written to tree string
     history_str = history.write(outfile=None, format=1)
-    bl_re = re.compile("\:(\d*\.?\d*)", re.MULTILINE | re.DOTALL)
-    bls = [float(match.group(1)) for match in bl_re.finditer(history_str)]
-    if abs(np.sum(bls)-size(tree)) > 0.00001:
+    new_history = Tree(history_str, format=1)
+    if abs(size(new_history)-size(tree)) > 0.00001:
         print("Error! failed to fix history tree newick format")
         print("size(history) = ", size(history) , "\n size(tree) = ", np.sum(bls))
-        exit(1)
+        exit (1)
+    # if all went well, write the fixed history to its original file
     history.write(outfile=history_path, format=1)
 
 if __name__ == '__main__':
