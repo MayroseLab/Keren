@@ -31,7 +31,7 @@ def reroot(history_path, tree_path):
             else:
                 labels.append(1)
             children_to_detach.append(child.detach())
-    remaining_child = history.get_children()
+    remaining_child = history.get_children()[-1]
     if "{0}" in remaining_child.name:
         labels.append(0)
     else:
