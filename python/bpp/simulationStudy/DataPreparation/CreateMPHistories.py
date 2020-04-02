@@ -22,7 +22,7 @@ def reroot(history_path, tree_path):
     history.get_children()[-1].add_child(child1)
     history.get_children()[-1].add_child(child2)
     # make sure that now the tree and the history are of the same length
-    if not size(history) == size(tree):
+    if abs(size(history)-size(tree)) > 0.00001:
         print("Error! failed to fix history tree")
         print("size(history) = ", size(history) , "\n size(tree) = ", size(tree))
         exit(1)
