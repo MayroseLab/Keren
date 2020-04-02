@@ -1,6 +1,16 @@
 import sys, re, argparse, os
+from ete3 import Tree
 sys.path.append("/groups/itay_mayrose/halabikeren/myScripts/python/")
 from utils.createJobFile import set_job_env, create_job_file
+
+def get_first_state(tree_path):
+    with open (tree_path, "r") as infile:
+        tree_str = infile.read()
+    state_0_appearance = tree_str.find("{0}")
+    state_1_appearance = tree_str.find("{1}")
+    if state_0_appearance < state_1_appearance:
+        return 0
+    return 1
 
 if __name__ == '__main__':
 
@@ -39,9 +49,13 @@ if __name__ == '__main__':
         replicate_data_path = input_data_path + "replicate_" + str(replicate) + "/"
         sequence_data_path = replicate_data_path + "sequence_data/sequence_data_1.fas"
         labeled_tree_path = replicate_data_path + "mp_data/mp_history.nwk"
+        test_category_index = 1
+        majority_category = get_first_state(labeled_tree_path)
+        if majority_category == 1:
+            test_category_index = 2
         job_name = "HyPhy_" + str(replicate)
         file_name = job_name + ".sh"
-        cmds = ['source ~/.bashrc' , 'conda activate hyphy' , '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n2\\\\n2\\\\n" && cat) | HYPHYMP']
+        cmds = ['source ~/.bashrc' , 'conda activate hyphy' , '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n' + str(test_category_index) + '\\\\n2\\\\n" && cat) | HYPHYMP']
         touch_file_path = job_name + "_flag_done"
         full_job = create_job_file(job_name, cmds, file_name, error_files_path, job_files_path, priority, 1,
                                                        touch_file_path, limit_nodes=False, python=False,
