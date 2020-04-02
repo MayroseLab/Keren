@@ -1,6 +1,7 @@
 import re, os, argparse
 from time import sleep
 from ete3 import Tree
+import numpy as np
 
 def size(tree):
     s = 0
@@ -12,25 +13,27 @@ def reroot(history_path, tree_path):
     history = Tree(history_path, format=1)
     tree = Tree(tree_path)
     if len(tree.get_children()) > 2:
-        print("orginial tree is not rooted, no need to fix history")
+        print("original tree is not rooted, no need to fix history")
         return
+    child1 = history.get_children()[0].detach()
+    child2 = history.get_children()[1].detach()
     missing_length = tree.get_children()[0].dist
-    outgroup = tree.get_children()[1]
-    # find the outgroup in the history and set it as outgroup
-    history_outgroup = history.get_children()[-1]
-    for node in history.traverse():
-        if outgroup.name in node.name:
-            history_outgroup = node
-            history.set_outgroup(node.name)
-    history_outgroup.dist = outgroup.dist
-    for child in history.get_children():
-        if child != history_outgroup:
-            child.dist = missing_length
+    history.get_tree_root().add_child(name="missing_node{0}", dist=missing_length)
+    history.get_children()[-1].add_child(child1)
+    history.get_children()[-1].add_child(child2)
     # make sure that now the tree and the history are of the same length
     if not size(history) == size(tree):
         print("Error! failed to fix history tree")
         print("size(history) = ", size(history) , "\n size(tree) = ", size(tree))
-        return 1
+        exit(1)
+    # make sure that all the lengths were written to tree string
+    history_str = history.write(outfile=None, format=1)
+    bl_re = re.compile("\:(\d*\.?\d*)", re.MULTILINE | re.DOTALL)
+    bls = [float(match.group(1)) for match in bl_re.finditer(history_str)]
+    if abs(np.sum(bls)-size(tree)) > 0.00001:
+        print("Error! failed to fix history tree newick format")
+        print("size(history) = ", size(history) , "\n size(tree) = ", np.sum(bls))
+        exit(1)
     history.write(outfile=history_path, format=1)
 
 if __name__ == '__main__':
