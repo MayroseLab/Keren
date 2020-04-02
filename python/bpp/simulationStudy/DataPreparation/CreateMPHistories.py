@@ -23,10 +23,24 @@ def reroot(history_path, tree_path):
         missing_child = tree_children[1]
     grandchildren_dists = [child.dist for child in missing_child.get_children()]
     children_to_detach = []
+    labels = []
     for child in history.get_children():
         if child.dist in grandchildren_dists:
+            if "{0}" in child.name:
+                labels.append(0)
+            else:
+                labels.append(1)
             children_to_detach.append(child.detach())
-    new_child = history.get_tree_root().add_child(name="missing_node{0}", dist=missing_length)
+    remaining_child = history.get_children()
+    if "{0}" in remaining_child.name:
+        labels.append(0)
+    else:
+        labels.append(1)
+    if np.sum(labels) < 2:
+        chosen_label = 0
+    else:
+        chosen_label = 1
+    new_child = history.get_tree_root().add_child(name="missing_node{" + str(chosen_label) + "}", dist=missing_length)
     for child in children_to_detach:
         new_child.add_child(child)
     # make sure that now the tree and the history are of the same length
