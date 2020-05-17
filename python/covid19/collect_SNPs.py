@@ -17,7 +17,7 @@ if __name__ == '__main__':
     start_index = int(args.start_index)
     end_index = int(args.end_index)
 
-    merge_cmd = 'bcftools merge -o --force-samples ' + output_dir + "all.vcf"
+    merge_cmd = 'bcftools merge --force-samples -o ' + output_dir + "all.vcf"
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
