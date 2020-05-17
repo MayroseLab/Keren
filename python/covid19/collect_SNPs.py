@@ -29,35 +29,33 @@ if __name__ == '__main__':
     # extract the sequences from the start index to the end index to distinct a fasta file, then run minimap on it, and then delete it
     with open(genomes_path, 'r') as input_file:
         lines = input_file.readlines()
+
     for index in range(start_index, end_index):
         line = 2 * index
-        print("index: ", index, ", line: ", line)
-        # create the genome fasta file
-        if index < end_index:
-            line1 = lines[line]
-            print("line1: ", line1)
-            line2 = lines[line+1]
-            alternative_genome_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.fa'
-            with open(alternative_genome_path, 'w') as genome_file:
-                genome_file.write(line1)
-                genome_file.write(line2)
+        line1 = lines[line]
+        line2 = lines[line+1]
+        alternative_genome_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.fa'
+        with open(alternative_genome_path, 'w') as genome_file:
+            genome_file.write(line1)
+            genome_file.write(line2)
 
-            # execute minimap on the genome_path
-            pas_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.pas'
-            vcf_path = vcfs_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.vcf'
-            if index == start_index:
-                vcf_path = united_vcf_path
-            res = os.system('minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
-            res = os.system('sort -k6,6 -k8,8n ' + pas_path + ' | paftools.js call -f ' + reference_genome_path + ' -L10000 -l1000 - > ' + vcf_path)
+        # execute minimap on the genome_path
+        pas_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.pas'
+        vcf_path = vcfs_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.vcf'
+        if index == start_index:
+            vcf_path = united_vcf_path
+        res = os.system('minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
+        res = os.system('sort -k6,6 -k8,8n ' + pas_path + ' | paftools.js call -f ' + reference_genome_path + ' -L10000 -l1000 - > ' + vcf_path)
 
-            # delete the fasta, pas and vcf files files
-            res = os.system('rm -r ' + alternative_genome_path)
-            res = os.system('rm -r ' + pas_path)
-            
-            # chain th path to the vcf file to the merge command of bcf tools
-            merge_cmd = merge_cmd + ' ' + vcf_path
+        # delete the fasta, pas and vcf files files
+        res = os.system('rm -r ' + alternative_genome_path)
+        res = os.system('rm -r ' + pas_path)
+
+        # chain th path to the vcf file to the merge command of bcf tools
+        merge_cmd = merge_cmd + ' ' + vcf_path
 
     res = os.system(merge_cmd)
-    res = os.system('rm -r ' + vcfs_dir)
+    print("merge_cmd: ", merge_cmd)
+    # res = os.system('rm -r ' + vcfs_dir)
 
             
