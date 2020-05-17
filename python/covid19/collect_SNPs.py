@@ -16,7 +16,7 @@ if __name__ == '__main__':
     output_dir = args.output_dir
     start_index = int(args.start_index)
     end_index = int(args.end_index)
-    merge_cmd = 'merge -o all.vcf '
+    merge_cmd = 'merge all.vcf '
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
