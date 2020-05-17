@@ -16,7 +16,9 @@ if __name__ == '__main__':
     output_dir = args.output_dir
     start_index = int(args.start_index)
     end_index = int(args.end_index)
-    merge_cmd = 'merge all.vcf '
+    united_vcf_path = output_dir + "all.vcf"
+
+    merge_cmd = 'merge ' + united_vcf_path
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
@@ -42,6 +44,8 @@ if __name__ == '__main__':
             # execute minimap on the genome_path
             pas_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.pas'
             vcf_path = vcfs_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.vcf'
+            if index == start_index:
+                vcf_path = united_vcf_path
             res = os.system('minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
             res = os.system('sort -k6,6 -k8,8n ' + pas_path + ' | paftools.js call -f ' + reference_genome_path + ' -L10000 -l1000 - > ' + vcf_path)
 
