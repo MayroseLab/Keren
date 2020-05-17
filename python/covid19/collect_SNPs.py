@@ -18,11 +18,11 @@ if __name__ == '__main__':
     end_index = int(args.end_index)
     merge_cmd = 'merge -o all.vcf '
 
-    res = os.system("conda init")
-    res = os.system('conda activate CovidML')
-    vcfs_dir = output_dir + "vcf/"
+    # res = os.system('conda init')
+    # res = os.system('conda activate CovidML')
+    vcfs_dir = output_dir + 'vcf/'
     if not os.path.exists(vcfs_dir):
-        res = os.system("mkdir -p " + vcfs_dir)
+        res = os.system('mkdir -p ' + vcfs_dir)
 
     # extract the sequences from the start index to the end index to distinct a fasta file, then run minimap on it, and then delete it
     with open(genomes_path, 'r') as input_file:
@@ -34,14 +34,14 @@ if __name__ == '__main__':
         if index < end_index:
             line1 = lines[line]
             line2 = lines[line+1]
-            alternative_genome_path = output_dir + '/' + line1.replace('>', '').replace("\n", "") + '.fa'
+            alternative_genome_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.fa'
             with open(alternative_genome_path, 'w') as genome_file:
                 genome_file.write(line1)
                 genome_file.write(line2)
 
             # execute minimap on the genome_path
-            pas_path = output_dir + '/' + line1.replace('>', '').replace("\n", "") + '.pas'
-            vcf_path = vcfs_dir + '/' + line1.replace('>', '').replace("\n", "") + '.vcf'
+            pas_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.pas'
+            vcf_path = vcfs_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.vcf'
             res = os.system('minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
             res = os.system('sort -k6,6 -k8,8n ' + pas_path + ' | paftools.js call -f ' + reference_genome_path + ' -L10000 -l1000 - > ' + vcf_path)
 
@@ -53,6 +53,6 @@ if __name__ == '__main__':
             merge_cmd = merge_cmd + ' ' + vcf_path
 
     res = os.system(merge_cmd)
-    res = os.system("rm -r " + vcfs_dir)
+    res = os.system('rm -r ' + vcfs_dir)
 
             
