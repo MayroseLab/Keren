@@ -49,7 +49,7 @@ if __name__ == '__main__':
         res = os.system('rm -r ' + pas_path)
 
         # compress the variants file
-        res = os.system("bgzip " + vcf_path)
+        res = os.system("bgzip -c " + vcf_path)
         vcf_path += ".gz"
 
         # chain th path to the vcf file to the merge command of bcf tools
