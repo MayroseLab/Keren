@@ -17,7 +17,7 @@ if __name__ == '__main__':
     start_index = int(args.start_index)
     end_index = int(args.end_index)
 
-    merge_cmd = 'bcftool merge -o ' + output_dir + "all.vcf"
+    merge_cmd = 'bcftools merge -o ' + output_dir + "all.vcf"
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
@@ -49,7 +49,7 @@ if __name__ == '__main__':
         res = os.system('rm -r ' + pas_path)
 
         # compress the variants file
-        res = os.system("gzip " + vcf_path)
+        res = os.system("bgzip " + vcf_path)
         vcf_path += ".gz"
 
         # chain th path to the vcf file to the merge command of bcf tools
