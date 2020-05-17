@@ -270,15 +270,15 @@ def plot_mappings_logl_diff_from_true_distribution(ax, df, title, mu, mu_options
         num_of_mappings_to_histories_diffs.append(exhaustive_computation_logl_diff)
 
     # plot distribution of real model likelihood computation diffs
-    sns.kdeplot(num_of_mappings_to_histories_diffs, ax=ax, color="steelblue", lw=4, shade=True)
+    sns.kdeplot(num_of_mappings_to_histories_diffs, ax=ax, color="steelblue", lw=6, shade=True)
 
     # plot distribution of expected mappings diffs
     if not use_analytic:
-        sns.kdeplot(num_of_mappings_to_sampling_based_expected_histories_diffs, ax=ax, color="darkorange", lw=4, shade=True)
+        sns.kdeplot(num_of_mappings_to_sampling_based_expected_histories_diffs, ax=ax, color="darkorange", lw=6, shade=True)
 
     # plot distribution of expected mappings diffs
     if use_analytic:
-        sns.kdeplot(num_of_mappings_to_analytic_expected_histories_diffs, ax=ax, color="g", lw=4, shade=True)
+        sns.kdeplot(num_of_mappings_to_analytic_expected_histories_diffs, ax=ax, color="g", lw=6, shade=True)
 
     ax.set_xticks([-10, 0, 10, 20, 30])
     ax.set_yticks([0, 0.2, 0.4, 0.6])
@@ -331,13 +331,13 @@ def plot_full_figure(distances_df, logl_df, mu_options, output_path):
     plt.xticks(mu_options)
 
     # (a) - mean distance (logl) vs. mu
-    plot_mappings_distance_vs_mu(axis[0], distances_df, "A\n")
+    plot_mappings_distance_vs_mu(axis[0], distances_df, "a\n")
 
     # (b) - mean distance (partition) vs. mu
-    plot_logl_distance_vs_mu(axis[1], logl_df, "B\n")
+    plot_logl_distance_vs_mu(axis[1], logl_df, "b\n")
 
     # (c) - rank (expected history) vs. mu
-    plot_expected_history_rank_among_mappings(axis[2], distances_df, "C\n")
+    plot_expected_history_rank_among_mappings(axis[2], distances_df, "c\n")
 
     # plot properties: shared xlabel (mu) and xticks (mu_options), shared legend: title: approximations, categories: exhaustive, expected history (sampled), expected history (analytic)
     axis[1].set_xlabel(r"$\mu$", fontdict={'family': 'sans-serif', 'size': 20})
@@ -358,20 +358,20 @@ def plot_alternative_figure(distances_df, logl_df, mu_options, output_path):
     plt.xticks(mu_options)
 
     # a
-    plot_mappings_logl_diff_from_true_distribution(axis[0], logl_df, "A\n", mu_options[0], mu_options)
+    plot_mappings_logl_diff_from_true_distribution(axis[0], logl_df, "a\n", mu_options[0], mu_options)
 
     # b
-    plot_mappings_logl_diff_from_true_distribution(axis[1], logl_df, "B\n", mu_options[1], mu_options)
+    plot_mappings_logl_diff_from_true_distribution(axis[1], logl_df, "b\n", mu_options[1], mu_options)
 
     # c
-    plot_mappings_logl_diff_from_true_distribution(axis[2], logl_df, "C\n", mu_options[2], mu_options)
+    plot_mappings_logl_diff_from_true_distribution(axis[2], logl_df, "c\n", mu_options[2], mu_options)
 
     custom_lines = []
     custom_names = []
     custom_lines.append(Line2D([0], [0], color="steelblue", lw=3))
     custom_names.append("Exhaustive approximation")
     custom_lines.append(Line2D([0], [0], color='g', lw=3))
-    custom_names.append("Analytic approximation")
+    custom_names.append("Expected history approximation")
     lgd = axis[2].legend(custom_lines, custom_names, loc='right', bbox_to_anchor=(1, 0.9), prop={'size': 20}, frameon=False)
     fig.subplots_adjust()
     fig.tight_layout()
@@ -454,6 +454,13 @@ if __name__ == '__main__':
 
     matplotlib.rc('xtick', labelsize=22)
     matplotlib.rc('ytick', labelsize=22)
+    matplotlib.rc('legend', frameon=False)
+    matplotlib.rc('legend', fontsize=30)
+    matplotlib.rc('figure', facecolor='white')
+    matplotlib.rc('axes', facecolor='white')
+    matplotlib.rc('axes', grid=False)
+    matplotlib.rc('figure', edgecolor='k')
+    matplotlib.rc('figure', frameon=True)
     plt.rcParams["axes.edgecolor"] = "lightgrey"
     plt.rcParams["axes.linewidth"] = 1.25
 
@@ -555,7 +562,3 @@ if __name__ == '__main__':
 
     # get_durations_statistics
     # report_durations(input_dir)
-
-
-
-
