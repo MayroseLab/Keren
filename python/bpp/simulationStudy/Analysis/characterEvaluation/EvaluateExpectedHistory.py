@@ -270,21 +270,21 @@ def plot_mappings_logl_diff_from_true_distribution(ax, df, title, mu, mu_options
         num_of_mappings_to_histories_diffs.append(exhaustive_computation_logl_diff)
 
     # plot distribution of real model likelihood computation diffs
-    sns.kdeplot(num_of_mappings_to_histories_diffs, ax=ax, color="steelblue", lw=3, shade=True)
+    sns.kdeplot(num_of_mappings_to_histories_diffs, ax=ax, color="steelblue", lw=4, shade=True)
 
     # plot distribution of expected mappings diffs
     if not use_analytic:
-        sns.kdeplot(num_of_mappings_to_sampling_based_expected_histories_diffs, ax=ax, color="darkorange", lw=3, shade=True)
+        sns.kdeplot(num_of_mappings_to_sampling_based_expected_histories_diffs, ax=ax, color="darkorange", lw=4, shade=True)
 
     # plot distribution of expected mappings diffs
     if use_analytic:
-        sns.kdeplot(num_of_mappings_to_analytic_expected_histories_diffs, ax=ax, color="g", lw=3, shade=True)
+        sns.kdeplot(num_of_mappings_to_analytic_expected_histories_diffs, ax=ax, color="g", lw=4, shade=True)
 
     ax.set_xticks([-10, 0, 10, 20, 30])
     ax.set_yticks([0, 0.2, 0.4, 0.6])
 
     if mu == mu_options[0]:
-        ax.set_ylabel('Frequency', fontdict={'family': 'sans-serif', 'size': 20})
+        ax.set_ylabel('Density', fontdict={'family': 'sans-serif', 'size': 20})
     if mu == mu_options[1]:
         ax.set_xlabel('Difference in log likelihood\n(true-approximated)', fontdict={'family': 'sans-serif', 'size': 20})
 
@@ -454,6 +454,8 @@ if __name__ == '__main__':
 
     matplotlib.rc('xtick', labelsize=22)
     matplotlib.rc('ytick', labelsize=22)
+    plt.rcParams["axes.edgecolor"] = "lightgrey"
+    plt.rcParams["axes.linewidth"] = 1.25
 
     # process input from command line
     parser = argparse.ArgumentParser(

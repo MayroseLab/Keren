@@ -6,8 +6,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='extracts the empirical LR thresholds obtained by parametric bootstrapping and update them + statistical test according to them in the data file of theoretical resuts')
     parser.add_argument('--input_dir', '-i', help='directory that holds the results of he parametric bootstrapping', required=True)
-    parser.add_argument('--theoretical_res_path', '-t', help='pah to the analysis results of the theoretical tests', required=True)
-    parser.add_argument('--output_path', '-o', help='path that will hold the results of the theoretical and empirical statistical tests', required=True)
+    parser.add_argument('--theoretical_res_path', '-t', help='pah to the analysis results of the theoretical Tests', required=True)
+    parser.add_argument('--output_path', '-o', help='path that will hold the results of the theoretical and empirical statistical Tests', required=True)
     parser.add_argument('--script_type', '-s', help='0 for RELAX, 1 for TraitRELAX', required=False, default=0)
 
     args = parser.parse_args()

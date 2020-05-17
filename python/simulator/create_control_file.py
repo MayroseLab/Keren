@@ -67,7 +67,7 @@ def adjust_tree(tree, source):
             reformatted_num = reformat_num(number)
             tree_str = tree_str.replace(number, reformatted_num, 1)
 
-    elif source == "const": # if the source of the tree is FastTree tests
+    elif source == "const": # if the source of the tree is FastTree Tests
 
         # reformat the branches
         comb_branch = '\)[0-9]+\.[0-9]+'

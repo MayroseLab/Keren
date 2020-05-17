@@ -594,7 +594,7 @@ def get_div_for_null_rejected(df, empricial_threshold, theoretical=0, out_of_all
 # x axis: simulated value of k
 # y axis: %significant (over all alternative datasets)
 def plot_power_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title,
-                                  empirical=True, add_legend=False, plot_labels=True, add_fpr_line=False):
+                                  empirical=True, add_legend=False, plot_labels=True, add_fpr_line=False, linestyle='solid'):
     # specify the data to use
     tbl = 4
     mu = 8
@@ -610,21 +610,21 @@ def plot_power_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTr
             full_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
             if empirical:
                 full_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
-                full_power = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                full_power = full_df.loc[(full_df["LR"] >= full_threshold)].shape[0] / full_df.shape[0]
                 y_full_values.append(full_power)
             else:
-                full_power = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                full_power = full_df.loc[(full_df["pvalue"] <= 0.05)].shape[0] / full_df.shape[0]
                 y_full_values.append(full_power)
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
                 marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(positions_num) + " sites",
-                linestyle="dashed", markersize=16)
+                linestyle=linestyle, markersize=16)
         if plot_labels:
             ax.set_xlabel(r"$k$", fontdict={'size': 30})
             ax.set_ylabel("Null rejected", fontdict={'size': 30})
 
     if add_fpr_line:
-        ax.axhline(y=0.05, color='red', linestyle='dashed', label="Required FPR")
+        ax.axhline(y=0.05, color='red', linestyle='solid', label="Required FPR")
 
     if add_legend:
         handles, labels = ax.get_legend_handles_labels()
@@ -633,14 +633,14 @@ def plot_power_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTr
     vals = [0, 0.05, 0.2, 0.4, 0.6, 0.8, 1]
     ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
     ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
-    # ax.set_ylim(0, 1)
+    ax.set_ylim(0, 1)
     ax.set_xticks(k_values_options)
 
 # plot info: fixed to tbl=4, pi0=0.5, mu=8, taxa_num=32, codons=300
 # x axis: simulated value of k
 # y axis: %significant (over all alternative datasets)
 def plot_power_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title,
-                                   empirical=True, add_legend=False, plot_labels=True):
+                                   empirical=True, add_legend=False, plot_labels=True, linestyle='solid'):
     # specify the data to use
     tbl = 4
     mu = 8
@@ -656,14 +656,14 @@ def plot_power_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, Empir
             full_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
             if empirical:
                 full_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
-                full_power = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                full_power = full_df.loc[(full_df["LR"] >= full_threshold)].shape[0] / full_df.shape[0]
                 y_full_values.append(full_power)
             else:
-                full_power = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                full_power = full_df.loc[(full_df["pvalue"] <= 0.05)].shape[0] / full_df.shape[0]
                 y_full_values.append(full_power)
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
-                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(taxa_num) + " taxa", linestyle="dashed",
+                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(taxa_num) + " taxa", linestyle=linestyle,
                 markersize=16)
         if plot_labels:
             ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -672,7 +672,7 @@ def plot_power_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, Empir
     vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
     ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
     ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
-    # ax.set_ylim(0, 1)
+    ax.set_ylim(0, 1)
     ax.set_xticks(k_values_options)
 
     if add_legend:
@@ -698,7 +698,7 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
     mu_local_options = [1, 2, 4, 8, 16]
 
     ax.set_xticks(mu_local_options)
-    # ax.set_ylim(0, 1)
+    ax.set_ylim(0, 1)
     vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
     ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
     ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
@@ -708,23 +708,23 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
         given_true_history_df = RELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
         LR_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
         sig_fraction_standard_execution.append(
-            standard_df.loc[(standard_df["LR"] >= LR_threshold) & (standard_df["correctDirection"] == 1)].shape[0] / standard_df.shape[0])
+            standard_df.loc[(standard_df["LR"] >= LR_threshold)].shape[0] / standard_df.shape[0])
         LR_threshold = EmpiricalRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
         sig_fraction_given_true_history.append(
-            given_true_history_df.loc[(given_true_history_df["LR"] >= LR_threshold) & (given_true_history_df["correctDirection"] == 1)].shape[0] / given_true_history_df.shape[0])
+            given_true_history_df.loc[(given_true_history_df["LR"] >= LR_threshold)].shape[0] / given_true_history_df.shape[0])
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
-        LR_threshold = EmpiricalMPThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
-        sig_fraction_given_mp_history.append(given_mp_history_df.loc[(given_mp_history_df["LR"] >= LR_threshold) & (given_mp_history_df["correctDirection"] == 1)].shape[0] / given_mp_history_df.shape[0])
+        #LR_threshold = EmpiricalMPThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+        sig_fraction_given_mp_history.append(given_mp_history_df.loc[(given_mp_history_df["pvalue"] <= 0.05)].shape[0] / given_mp_history_df.shape[0])
 
 
     ax.grid(False)
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
-    ax.plot(mu_local_options, sig_fraction_given_true_history, color=colors[codon_positions_num_options.index(300)],
-            label="TraitRELAX\nwith true history", linestyle='dotted', marker=markers[taxa_num_options.index(32)], lw=2.5,
-            markersize=16)
     ax.plot(mu_local_options, sig_fraction_standard_execution, label="TraitRELAX",
-            color=colors[codon_positions_num_options.index(300)], linestyle='dashdot',
+            color=colors[codon_positions_num_options.index(300)], linestyle='solid',
             marker=markers[taxa_num_options.index(32)], lw=2.5, markersize=16)
+    ax.plot(mu_local_options, sig_fraction_given_true_history, color=colors[codon_positions_num_options.index(300)],
+            label="TraitRELAX+TH", linestyle='dotted', marker=markers[taxa_num_options.index(32)], lw=2.5,
+            markersize=16)
     ax.plot(mu_local_options, sig_fraction_given_mp_history, label="RELAX",
             color=colors[codon_positions_num_options.index(300)], linestyle='dashed',
             marker=markers[taxa_num_options.index(32)], lw=2.5, markersize=16)
@@ -776,7 +776,7 @@ def plot_power_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, 
 
     ax.plot(tbl_options, sig_fraction_given_true_history, linestyle='dotted', color='black',
             label="TraitRELAX with true history", lw=2.5)
-    ax.plot(tbl_options, sig_fraction_standard_execution, label="TraitRELAX", linestyle='dashed', color='black', lw=2.5)
+    ax.plot(tbl_options, sig_fraction_standard_execution, label="TraitRELAX", linestyle='solid', color='black', lw=2.5)
 
     ax.plot([],[], linestyle='dashed', color='red', label="Theoretical threshold")
 
@@ -817,7 +817,7 @@ def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAX
             print("no real data for combo: ", (tbl, mu, pi0, taxa_num, positions_num), " yet")
             LR_given_true_history.append(float("nan"))
             continue
-    ax.plot(mu_local_options, LR_standard_execution, label="TraitRELAX", linestyle='dashed', color='black', lw=2.5)
+    ax.plot(mu_local_options, LR_standard_execution, label="TraitRELAX", linestyle='solid', color='black', lw=2.5)
     #ax.plot(mu_local_options, LR_given_true_history, linestyle='dotted', color='black', label="TraitRELAX with true history",
             # lw=2.5)
 
@@ -826,7 +826,7 @@ def plot_empirical_LRs_vs_mu(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELAX
 
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
     ax.set_ylabel("Computed empirical LR threshold", fontdict={'size': 30})
-    ax.axhline(y=3.841/2, color='red', linestyle='dashed', label="Theoretical threshold")
+    ax.axhline(y=3.841/2, color='red', linestyle='solid', label="Theoretical threshold")
 
 
 # plot info: fixed to: pi0=0.5, taxa_num=32, codons=300, k=0.5
@@ -858,7 +858,7 @@ def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELA
             LR_given_true_history.append(float("nan"))
             continue
 
-    ax.plot(list(tbl_to_mu.keys()), LR_standard_execution, label="TraitRELAX", linestyle='dashed', color='black',
+    ax.plot(list(tbl_to_mu.keys()), LR_standard_execution, label="TraitRELAX", linestyle='solid', color='black',
             lw=2.5)
     # ax.plot(list(tbl_to_mu.keys()), LR_given_mp_history, linestyle=":", color='black', label="RELAX with maximum parsimony partition", lw=2.5)
     ax.plot(list(tbl_to_mu.keys()), LR_given_true_history, linestyle='dotted', color='black',
@@ -869,7 +869,7 @@ def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELA
 
     ax.set_xlabel("Tree length", fontdict={'size': 30})
     ax.set_ylabel("Computed empirical LR threshold", fontdict={'size': 30})
-    ax.axhline(y=3.841, color='red', linestyle='dashed')
+    ax.axhline(y=3.841, color='red', linestyle='solid')
 
 
 # power and FPR assessment
@@ -884,52 +884,50 @@ def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThre
                                   output_path_res, output_path_supp_1, output_path_supp_2):
     # figure 0 (for results)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58])
-    plot_power_vs_k_across_posnum(32, axis[0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "A\n",
+    fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58], frameon=True)
+    plot_power_vs_k_across_posnum(32, axis[0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "a\n",
                                   empirical=True, add_legend=True)
-    # plot_power_vs_k_across_posnum(32, axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "B\n", empirical=False, add_legend=True)
-    plot_power_vs_k_across_taxanum(300, axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "B\n",
+    plot_power_vs_k_across_taxanum(300, axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "b\n",
                                    empirical=True, add_legend=True, plot_labels=True)
-    plot_power_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf, EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds, "C\n")
-    # fig.text(0.95, 0.17, r"$k=0.5$", ha='center', fontdict={'size': 30})
+    plot_power_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf, EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds, "c\n")
     fig.subplots_adjust()
     fig.tight_layout()
-    plt.savefig(output_path_res, bbox_inches='tight', transparent=True)
+    plt.savefig(output_path_res, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
     # figure 1 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=3, sharey='all', sharex='all', figsize=[3 * 8.2 + 2, 2 * 7.58])
-    plot_power_vs_k_across_posnum(16, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "A\n",
+    fig, axis = plt.subplots(nrows=2, ncols=3, sharey='all', sharex='all', figsize=[3 * 8.2 + 2, 2 * 7.58], frameon=True)
+    plot_power_vs_k_across_posnum(16, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "a\n",
                                   empirical=True, add_legend=True, plot_labels=False, add_fpr_line=True)
-    plot_power_vs_k_across_posnum(32, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "B\n",
+    plot_power_vs_k_across_posnum(32, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "b\n",
                                   empirical=True, add_legend=False, plot_labels=False, add_fpr_line=True)
-    plot_power_vs_k_across_posnum(64, axis[0][2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "C\n",
+    plot_power_vs_k_across_posnum(64, axis[0][2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "c\n",
                                   empirical=True, add_legend=False, plot_labels=False, add_fpr_line=True)
-    plot_power_vs_k_across_posnum(16, axis[1][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "D\n",
+    plot_power_vs_k_across_posnum(16, axis[1][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "d\n",
                                   empirical=False, add_legend=False, plot_labels=False)
-    plot_power_vs_k_across_posnum(32, axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "E\n",
+    plot_power_vs_k_across_posnum(32, axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "e\n",
                                   empirical=False, add_legend=False, plot_labels=False)
-    plot_power_vs_k_across_posnum(64, axis[1][2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "F\n",
+    plot_power_vs_k_across_posnum(64, axis[1][2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "f\n",
                                   empirical=False, add_legend=False, plot_labels=False)
     fig.text(0.53, -0.02, r"$k$", ha='center', fontdict={'size': 30})
     fig.text(-0.015, 0.75, 'Null rejected (5% FPR)', va='center', rotation='vertical', fontdict={'size': 30})
     fig.text(-0.015, 0.25, 'Null rejected (> 1.92 LR)', va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
-    plt.savefig(output_path_supp_1, bbox_inches='tight', transparent=True)
+    plt.savefig(output_path_supp_1, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
     # figure 2 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58])
+    fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58], frameon=True)
     plot_power_vs_tbl(axis[0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-                      EmpiricalRELAXLRThresholds, "A\n")
-    plot_empirical_LRs_vs_tbl(axis[1], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, "B\n")
-    plot_empirical_LRs_vs_mu(axis[2], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, "C\n")
+                      EmpiricalRELAXLRThresholds, "a\n")
+    plot_empirical_LRs_vs_tbl(axis[1], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, "b\n")
+    plot_empirical_LRs_vs_mu(axis[2], EmpiricalTraitRELAXLRThresholds, EmpiricalRELAXLRThresholds, "c\n")
     fig.subplots_adjust()
     fig.tight_layout(pad=0.5)
-    plt.savefig(output_path_supp_2, bbox_inches='tight', transparent=True)
+    plt.savefig(output_path_supp_2, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
 
@@ -1019,8 +1017,8 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds,
                 np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
                     given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
-    ax.plot(k_values_options, rel_error_sim_vs_standard, color='black', linestyle="dashed", label="TraitRELAX", lw=2.5)
-    ax.plot(k_values_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dotted",
+    ax.plot(k_values_options, rel_error_sim_vs_standard, color='black', linestyle='solid', label="TraitRELAX", lw=2.5)
+    ax.plot(k_values_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dashed",
             label="RELAX", lw=2.5)
 
     ax.set_xticks(k_values_options)
@@ -1033,7 +1031,7 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds,
     if use_global_accuracy:
         ax.set_yticks([0, 1, 2, 3, 4, 5, 6])
     else:
-        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
 
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
@@ -1049,68 +1047,117 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds,
 # 2 curves: one for TraitRELAX standard execution (full),
 #           another for TraitRELAX given the true history (dashed),
 def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalMPLRThresholds, title, add_legend=False, add_ylabel=False,
-                        use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False, add_mp=False):
+                        use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False, add_mp=False, use_boxplot=True):
     # gather the data
     tbl = 4
     pi0 = 0.5
     taxa_num = 32
     positions_num = 300
+    mu_local_options = [1, 2, 4, 8, 16]
 
     ax.grid(False)
-    rel_error_sim_vs_standard = []
-    rel_error_given_mp_history_vs_standard = []
-    mu_local_options = [1, 2, 4, 8, 16]
-    for mu in mu_local_options:
-        standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        if aggregate_k:
-            standard_df = pd.concat([TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)] for k in k_values_options if (tbl, mu, pi0, taxa_num, positions_num, k) in TraitRELAXComboToDf])
-        if only_of_significants and use_empirical:
-            empirical_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
-            standard_df = standard_df.loc[(standard_df["LR"] >= empirical_threshold)]
-        elif only_of_significants:
-            standard_df = standard_df.loc[(standard_df["significant"] == 1)]
-        given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
-        if aggregate_k:
-            given_mp_history_df = pd.concat([MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)] for k in k_values_options  if (tbl, mu, pi0, taxa_num, positions_num, k) in MPComboToDf])
-        if only_of_significants and use_empirical:
-            empirical_threshold = EmpiricalMPLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
-            given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["LR"] >= empirical_threshold)]
-        elif only_of_significants:
-            given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["significant"] == 1)]
+    if not use_boxplot:
+        rel_error_sim_vs_standard = []
+        rel_error_given_mp_history_vs_standard = []
+        for mu in mu_local_options:
+            standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+            if aggregate_k:
+                standard_df = pd.concat([TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)] for k in k_values_options if (tbl, mu, pi0, taxa_num, positions_num, k) in TraitRELAXComboToDf])
+            if only_of_significants and use_empirical:
+                empirical_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+                standard_df = standard_df.loc[(standard_df["LR"] >= empirical_threshold)]
+            elif only_of_significants:
+                standard_df = standard_df.loc[(standard_df["significant"] == 1)]
+            given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+            if aggregate_k:
+                given_mp_history_df = pd.concat([MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)] for k in k_values_options  if (tbl, mu, pi0, taxa_num, positions_num, k) in MPComboToDf])
+            if only_of_significants and use_empirical:
+                empirical_threshold = EmpiricalMPLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+                given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["LR"] >= empirical_threshold)]
+            elif only_of_significants:
+                given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["significant"] == 1)]
 
-        if use_global_accuracy:
-            rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
-            rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df)))
-        else:
-            rel_error_sim_vs_standard.append((abs(
-                np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
-            rel_error_given_mp_history_vs_standard.append(abs(
-                np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
-                    given_mp_history_df["simulated_k"] + 0.000001)).mean())
+            if use_global_accuracy:
+                rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
+                rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df)))
+            else:
+                rel_error_sim_vs_standard.append((abs(
+                    np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
+                rel_error_given_mp_history_vs_standard.append(abs(
+                    np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
+                        given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
-    ax.plot(mu_local_options, rel_error_sim_vs_standard, color='black', label="TraitRELAX", linestyle='dashed', lw=2.5)
-    if add_mp:
-        ax.plot(mu_local_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
-            label="RELAX", lw=2.5)
+        ax.plot(mu_local_options, rel_error_sim_vs_standard, color='black', label="TraitRELAX", linestyle='solid', lw=2.5)
+        if add_mp:
+            ax.plot(mu_local_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dashed",
+                label="RELAX", lw=2.5)
 
-    ax.set_xticks(mu_local_options)
+    else:
+        mu_and_method_to_combo = {(1, 'TraitRELAX'): 0, (1, 'RELAX'): 1.6, (2, 'TraitRELAX'): 4.8, (2, 'RELAX'): 6.4, (4, 'TraitRELAX'): 8.0,
+                                  (4, 'RELAX'): 9.6, (8, 'TraitRELAX'): 11.2, (8, 'RELAX'): 12.8, (16, 'TraitRELAX'): 14.4, (16, 'RELAX'): 16.0}
+        # plot the data
+        boxplots = []
+        zorder_index = 1
+        for mu in mu_local_options:
+            traitrelax_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+            if only_of_significants and use_empirical:
+                empirical_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+                traitrelax_df = traitrelax_df.loc[(traitrelax_df["LR"] >= empirical_threshold)]
+            elif only_of_significants:
+                traitrelax_df = traitrelax_df.loc[(traitrelax_df["significant"] == 1)]
+            boxplots.append(
+                ax.boxplot(traitrelax_df["alternative_k"], widths=0.5, whis=[5, 95], showfliers=False, patch_artist=True,
+                           positions=[mu_and_method_to_combo[(mu, 'TraitRELAX')]],
+                           zorder=zorder_index, boxprops = dict(facecolor=pretty_colors[5]), medianprops=dict(linewidth=6, color='k'))) # labels='TraitRELAX'
+            zorder_index += 1
+            relax_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+            if only_of_significants and use_empirical:
+                empirical_threshold = EmpiricalMPLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+                relax_df = relax_df.loc[(relax_df["LR"] >= empirical_threshold)]
+            elif only_of_significants:
+                relax_df = relax_df.loc[(relax_df["significant"] == 1)]
+            boxplots.append(
+                ax.boxplot(relax_df["alternative_k"], widths=0.5, whis=[5, 95], showfliers=False, patch_artist=True,
+                           positions=[mu_and_method_to_combo[(mu, 'RELAX')]],
+                           zorder=zorder_index, boxprops = dict(facecolor=pretty_colors[7]), medianprops=dict(linewidth=6, color='k'))) # labels='RELAX'
+            zorder_index += 1
+        if add_ylabel:
+            ax.set_ylabel(r"$^k$")
+
+    ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
+    if not use_boxplot:
+        ax.set_xticks(mu_local_options)
+    else:
+        ax.set_xticks([0.8, 5.6, 8.8, 12, 15.2])
+        ax.set_xticklabels([str(mu) for mu in mu_local_options])
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
-    if add_ylabel:
-        if not use_global_accuracy:
-            ax.set_ylabel("Mean error(" + r"$\^k$" + ")", fontdict={'size': 30})
-        else:
-            ax.set_ylabel("Mean error(global)", fontdict={'size': 30})
-
     if use_global_accuracy:
         ax.set_yticks([0, 1, 2, 3, 4, 5, 6])
     else:
-        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+        if use_boxplot:
+            ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+        else:
+            ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
+    if add_ylabel:
+        if not use_boxplot:
+            if not use_global_accuracy:
+                ax.set_ylabel("Mean error(" + r"$\^k$" + ")", fontdict={'size': 30})
+            else:
+                ax.set_ylabel("Mean error(global)", fontdict={'size': 30})
+        else:
+            ax.set_ylabel(r"$\^k$", fontdict={'size': 30})
+
     if add_legend:
-        handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
+        if use_boxplot:
+            circ1 = mpatches.Patch(facecolor=pretty_colors[5], label='TraitRELAX')
+            circ2 = mpatches.Patch(facecolor=pretty_colors[7], label='RELAX')
+            ax.legend(handles=[circ1, circ2], loc='best', prop={'size': 30}, frameon=False)
+        else:
+            handles, labels = ax.get_legend_handles_labels()
+            ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
 
 
 # plot relative error: dashed - compared to best possible (based on true history), full - based on simulated
@@ -1161,8 +1208,8 @@ def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
                 np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
                     given_mp_history_df["simulated_k"] + 0.000001))).mean())
 
-    ax.plot(pi0_options, rel_error_sim_vs_standard, color='black', linestyle='dashed', label="TraitRELAX", lw=2.5)
-    ax.plot(pi0_options, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
+    ax.plot(pi0_options, rel_error_sim_vs_standard, color='black', linestyle='solid', label="TraitRELAX", lw=2.5)
+    ax.plot(pi0_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dashed",
             label="RELAX", lw=2.5)
     if include_mp:
         ax.plot(pi0_options, rel_error_given_true_history_vs_standard, color='black', linestyle="--",
@@ -1179,7 +1226,7 @@ def plot_accuracy_vs_pi0(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
     if use_global_accuracy:
         ax.set_yticks([0, 1, 2, 3, 4, 5, 6])
     else:
-        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_xticks(pi0_options)
     ax.xaxis.set_major_formatter(FormatStrFormatter('%.1f'))
@@ -1242,9 +1289,9 @@ def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
                 np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
                     given_mp_history_df["simulated_k"] + 0.000001)).mean())
 
-    ax.plot(tbls, rel_error_sim_vs_standard, color='black', linestyle='dashed', label="TraitRELAX", lw=2.5)
+    ax.plot(tbls, rel_error_sim_vs_standard, color='black', linestyle='solid', label="TraitRELAX", lw=2.5)
     if include_mp:
-        ax.plot(tbls, rel_error_given_mp_history_vs_standard, color='black', linestyle=":",
+        ax.plot(tbls, rel_error_given_mp_history_vs_standard, color='black', linestyle="dashed",
                 label="RELAX", lw=2.5)
 
     ax.set_xticks(tbls)
@@ -1258,7 +1305,7 @@ def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
     if use_global_accuracy:
         ax.set_yticks([0, 1, 2, 3, 4, 5, 6])
     else:
-        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
@@ -1276,7 +1323,7 @@ def plot_accuracy_vs_tbl(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
 # In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitTraitRELAX with true history
 # in green - scatter the simulated value of k (with legend)
 def plot_accuracy_vs_k_across_positions_num(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title, add_legend=False,
-                                            plot_labels=True, only_of_significants=False, use_empirical=False):
+                                            plot_labels=True, only_of_significants=False, use_empirical=False, linestyle='solid'):
     # declare fixed parameters
     tbl = 4
     mu = 8
@@ -1302,7 +1349,7 @@ def plot_accuracy_vs_k_across_positions_num(taxa_num, ax, TraitRELAXComboToDf, E
             y_full_values.append(np.mean(k_error_values))
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
-                label=str(positions_num) + " sites", lw=2.5)
+                label=str(positions_num) + " sites", lw=2.5, linestyle=linestyle)
 
     if plot_labels:
         ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -1310,7 +1357,7 @@ def plot_accuracy_vs_k_across_positions_num(taxa_num, ax, TraitRELAXComboToDf, E
 
     ax.set_xticks(k_values_options)
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
-    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
 
     if add_legend:
         handles, labels = ax.get_legend_handles_labels()
@@ -1326,7 +1373,7 @@ def plot_accuracy_vs_k_across_positions_num(taxa_num, ax, TraitRELAXComboToDf, E
 # In each plot, 6 curves in 3 colors (color per positions number) - full for TraitRELAX, dashed for TraitTraitRELAX with true history
 # in green - scatter the simulated value of k (with legend)
 def plot_accuracy_vs_k_across_taxa_num(positions_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title, add_legend=False,
-                                       plot_labels=True, only_of_significants=False, use_empirical=False):
+                                       plot_labels=True, only_of_significants=False, use_empirical=False, linestyle='solid'):
     # declare fixed parameters
     tbl = 4
     mu = 8
@@ -1352,7 +1399,7 @@ def plot_accuracy_vs_k_across_taxa_num(positions_num, ax, TraitRELAXComboToDf, E
             y_full_values.append(np.mean(k_error_values))
         # plot the data in ax
         ax.plot(k_values_options, y_full_values, color=colors[taxa_num_options.index(taxa_num)],
-                label=str(taxa_num) + " taxa", lw=2.5)
+                label=str(taxa_num) + " taxa", lw=2.5, linestyle=linestyle)
 
     if plot_labels:
         ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -1383,12 +1430,12 @@ def plot_2d_grid(ax, grid_data_path, title, dist):
     # scatter the ML point
     mlX, mlY = np.meshgrid([0.890321], [2.12883])
     mlZ = np.array([-15170.1873250066])
-    ax.plot(mlX, mlY, mlZ, color='red', marker='o', label="MLE", markersize=10)
+    ax.plot(mlX, mlY, mlZ, color='red', marker='o', label="MLE", markersize=14)
 
     # scatter the simulated point
     mlX, mlY = np.meshgrid([0.8], [2])
     mlZ = np.array([-15190.836444])
-    ax.plot(mlX, mlY, mlZ, color='k', marker='o', label="True", markersize=10)
+    ax.plot(mlX, mlY, mlZ, color='k', marker='o', label="True", markersize=14)
 
     ax.set_xticks([0, 0.5, 1, 1.5, 2])
     ax.set_xlabel("\n\n" + r"$k$", fontdict={'size': 30}, labelpad=8)
@@ -1452,7 +1499,7 @@ def plot_inferred_vs_simulated_k_across_positions_num(taxa_num, ax, combo_to_df,
 
     ax.set_xticklabels(
         ["", "0.2", "", "", "0.5", "", "", "0.8", "", "", "1", "", "", "1.2", "", "", "1.6", "", "", "2", ""])
-    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5])
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
 
@@ -1502,21 +1549,27 @@ def plot_k_to_omegas_accuracy(ax, comboToDf, empricial_thresholds, title, only_o
     melted_df = pd.melt(df, id_vars="simulated value of k")
 
     # plot the boxplots
+    matplotlib.rc('legend', fontsize=16)
+    matplotlib.rc('legend', frameon=False)
     ax.grid(False)
-    sns.boxplot(x="simulated value of k", y='value', hue='variable', data=melted_df, ax=ax, palette="Set3")
+    sns.boxplot(x="simulated value of k", y='value', hue='variable', data=melted_df, ax=ax, palette="Set3", showfliers=False)
     ax.legend().set_title('')
+    # ax.legend().set_loc('upper right')
+    # ax.legend().set_fontsize()
 
     # scatter the simulated values
     x_for_scatter = [-0.3, -0.1, 0.1, 0.3, 0.7, 0.9, 1.1, 1.3, 1.7, 1.9, 2.1, 2.3, 2.7, 2.9, 3.1, 3.3, 3.7, 3.9, 4.1,
                      4.3]
     ax.scatter(x=np.array(x_for_scatter), y=np.array(true_values), label="Simulated value", edgecolors=None,
-               color="green", marker="s")
+               color="k", marker="s")
 
     ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4])
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
-    ax.set_ylabel(r"$MLEs$", fontdict={'size': 30})
+    ax.set_ylabel(r"Parameter value", fontdict={'size': 30})
     ax.set_xlabel(r"$k$", fontdict={'size': 30})
 
+    matplotlib.rc('legend', frameon=False)
+    matplotlib.rc('legend', fontsize=30)
 
 # fix: tbl=1, pi0=0.5, mu=0.5, taxa_num=32, codons=600
 # a panel of 5 plots: one per k.
@@ -1567,7 +1620,7 @@ def plot_k_distribution_across_k_and_posnum(ax, comboToDf, title):
     ax.grid(False)
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
     ax.set_xticklabels(["", "0.2", "", "", "1", "", "", "2", ""])
-    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
 
 
 def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title):
@@ -1589,7 +1642,7 @@ def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title
             k_values = filetred_df["alternative_k"]
             boxplots.append(ax.boxplot(k_values, widths=0.2, whis=[5, 95], showfliers=False, patch_artist=True,
                                        positions=[taxanum_to_combo[(k, taxa_num)]],
-                                       zorder=zorder_index))  # , color=colors[codon_positions_num_options.index[positions_num]]
+                                       zorder=zorder_index, medianprops=dict(linewidth=6, color='k')))  # , color=colors[codon_positions_num_options.index[positions_num]]
             zorder_index += 1
         for boxplot in boxplots:
             box = boxplot['boxes'][0]
@@ -1620,7 +1673,7 @@ def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title
     ax.grid(False)
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
     ax.set_xticklabels(["", "0.2", "", "", "1", "", "", "2", ""])
-    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
     ax.set_xlabel(r"$k$", fontdict={'size': 30})
     ax.set_ylabel(r"$\^k$", fontdict={'size': 30})
 
@@ -1631,13 +1684,13 @@ def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, gri
 
     # alternative figure 0 (for results)
     plt.grid(False)
-    fig = plt.figure(figsize=[3 * 8.5 + 2, 1 * 7.58 + 2])
+    fig = plt.figure(figsize=[3 * 8.5 + 2, 1 * 7.58 + 2], frameon=True)
     ax1 = fig.add_subplot(1, 3, 1)
-    plot_k_distribution_across_k_and_taxanum(600, ax1, TraitRELAXComboToDf, "A\n")
+    plot_k_distribution_across_k_and_taxanum(600, ax1, TraitRELAXComboToDf, "a\n")
     ax2 = fig.add_subplot(1, 3, 2)
-    plot_accuracy_vs_mu(ax2, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "B\n", add_ylabel=True, add_legend=False, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_mu(ax2, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n", add_ylabel=True, add_legend=True, only_of_significants=True, use_empirical=True, use_boxplot=True)
     ax3 = fig.add_subplot(1, 3, 3, projection='3d')
-    plot_2d_grid(ax3, grid_data_path, "C\n", 9)
+    plot_2d_grid(ax3, grid_data_path, "c\n", 9)
     # Rotate angle
     l2 = np.array((1, 1))
     trans_angle = plt.gca().transData.transform_angles(np.array((86,)),
@@ -1645,51 +1698,55 @@ def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, gri
     fig.text(1.04, 0.4, 'Log likelihood', va='center', rotation_mode='anchor', fontdict={'size': 30}, rotation=86) #=trans_angle)
     fig.subplots_adjust()
     fig.tight_layout()
-    plt.savefig(res_output_path, bbox_inches='tight', transparent=True)
+    plt.savefig(res_output_path, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
     # figure 1 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=2, sharey='none', sharex='none', figsize=[2 * 8.2 + 2, 2 * 7.58 + 2])
-    plot_accuracy_vs_mu(axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "A\n", add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_pi0(axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "B\n", add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_tbl(axis[1][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "C\n", add_legend=False,
+    fig, axis = plt.subplots(nrows=2, ncols=2, sharey='none', sharex='none', figsize=[2 * 8.2 + 2, 2 * 7.58 + 2], frameon=True)
+    plot_accuracy_vs_mu(axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "a\n", add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_pi0(axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n", add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_tbl(axis[1][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n", add_legend=False,
                          add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k(axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "D\n", add_legend=True, add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k(axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "d\n", add_legend=True, add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
     fig.text(-0.02, 0.5, "Mean error(k)", va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
-    plt.savefig(supp_output_path_1, bbox_inches='tight', transparent=True)
+    plt.savefig(supp_output_path_1, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
     # figure 2 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=3, sharey='none', sharex='none', figsize=[3 * 12 + 2, 2 * 7.58 + 2])
-    plot_inferred_vs_simulated_k_across_positions_num(16, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "A\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_inferred_vs_simulated_k_across_positions_num(32, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "B\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_inferred_vs_simulated_k_across_positions_num(64, axis[0][2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "C\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k_across_positions_num(16, axis[1][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "D\n", add_legend=False,
+    fig, axis = plt.subplots(nrows=3, ncols=2, sharey='none', sharex='none', figsize=[2 * 12 + 2, 3 * 7.58 + 2], frameon=True)
+    plot_inferred_vs_simulated_k_across_positions_num(16, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "a\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k_across_positions_num(16, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "b\n", add_legend=False,
                                             plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k_across_positions_num(32, axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "E\n", add_legend=False,
+    plot_inferred_vs_simulated_k_across_positions_num(32, axis[1][0], TraitRELAXComboToDf,
+                                                      EmpiricalTraitRELAXLRThresholds, "c\n",
+                                                      plot_labels=True)  # , only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k_across_positions_num(32, axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "d\n", add_legend=False,
                                             plot_labels=True) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k_across_positions_num(64, axis[1][2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "F\n", add_legend=True,
+    plot_inferred_vs_simulated_k_across_positions_num(64, axis[2][0], TraitRELAXComboToDf,
+                                                      EmpiricalTraitRELAXLRThresholds, "e\n",
+                                                      plot_labels=False)  # , only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k_across_positions_num(64, axis[2][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "f\n", add_legend=True,
                                             plot_labels=False) #, only_of_significants=True, use_empirical=True)
 
     # fig.text(0.53, -0.02, r"$k$", ha='center', fontdict={'size': 30})
-    fig.text(-0.02, 0.75, "Mean(" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
-    fig.text(-0.02, 0.25, "Mean error (" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
+    fig.text(-0.02, 0.5, "Mean(" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
+    fig.text(0.5, -0.02, r"$\^k$" , va='center', rotation='horizontal', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout(pad=1)
-    plt.savefig(supp_output_path_2, bbox_inches='tight', transparent=True)
+    plt.savefig(supp_output_path_2, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
     # figure 3 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=1, ncols=1, sharex="none", sharey="none", figsize=[1 * 8.2 + 2, 7.58])
+    fig, axis = plt.subplots(nrows=1, ncols=1, sharex="none", sharey="none", figsize=[1 * 8.2 + 2, 7.58], frameon=True)
     plot_k_to_omegas_accuracy(axis, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "", only_of_significants=True, use_empirical=True)
     fig.subplots_adjust()
     fig.tight_layout(pad=1)
-    plt.savefig(supp_output_path_3, bbox_inches='tight', transparent=True)
+    plt.savefig(supp_output_path_3, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
 
@@ -1718,7 +1775,7 @@ def plot_duration(TraitRELAXComboToDf, output_path):
             duration_data_by_taxa[taxa_num].append(joint_df["duration(hours)"].mean())
 
     # plot a line for each taxa_num
-    fig, axis = plt.subplots(nrows=1, ncols=1)
+    fig, axis = plt.subplots(nrows=1, ncols=1, frameon=True)
     plt.grid(False)
     for taxa_num in taxa_num_options:
         axis.plot(codon_positions_num_options, duration_data_by_taxa[taxa_num],
@@ -1731,7 +1788,7 @@ def plot_duration(TraitRELAXComboToDf, output_path):
     # axis.set_yticks([0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20])
     plt.tight_layout(w_pad=0.5)
     fig.subplots_adjust(right=0.8)
-    plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight', figsize=[11, 7.58], transparent=True)
+    plt.savefig(output_path, bbox_extra_artists=(lgd,), bbox_inches='tight', figsize=[11, 7.58]) #, transparent=True)
     plt.clf()
 
 
@@ -1740,8 +1797,8 @@ def plot_duration(TraitRELAXComboToDf, output_path):
 # plot info: fixed to tbl=4, pi0=0.5, mu=8, taxa_num=32, codons=300
 # x axis: simulated value of k
 # y axis: %significant (over all alternative datasets)
-def plot_wrong_direction_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title,
-                                  empirical=True, add_legend=False, plot_labels=True, add_fpr_line=False):
+def plot_direction_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title,
+                                  empirical=True, add_legend=False, plot_labels=True, direction='wrong', linestyle='solid'):
     # specify the data to use
     tbl = 4
     mu = 8
@@ -1754,40 +1811,46 @@ def plot_wrong_direction_vs_k_across_posnum(taxa_num, ax, TraitRELAXComboToDf, E
         # gather the data
         y_full_values = []
         for k in k_values_options:
+            if k == 1:
+                continue
             full_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
             if empirical:
                 full_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
-                full_wrong_direction = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
-                y_full_values.append(full_wrong_direction)
+                full_direction = 0
+                if direction == 'wrong':
+                    full_direction = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
+                else:
+                    full_direction = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                y_full_values.append(full_direction)
             else:
-                full_wrong_direction = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
-                y_full_values.append(full_wrong_direction)
+                if direction == 'wrong':
+                    full_direction = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
+                else:
+                    full_direction = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                y_full_values.append(full_direction)
         # plot the data in ax
-        print("y_full_values: ", y_full_values)
-        ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
+        ax.plot([k for k in k_values_options if k!=1], y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
                 marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(positions_num) + " sites",
-                linestyle="dashed", markersize=16)
+                linestyle=linestyle, markersize=16)
         if plot_labels:
             ax.set_xlabel(r"$k$", fontdict={'size': 30})
-            ax.set_ylabel("Null rejected in wrong\nselection intensity direction", fontdict={'size': 30})
-
-    if add_fpr_line:
-        ax.axhline(y=0.05, color='red', linestyle='dashed', label="Required FPR")
+            ax.set_ylabel("Null rejected in " + direction + "\nselection intensity direction", fontdict={'size': 30})
 
     if add_legend:
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, labels, loc='upper center', prop={'size': 30}, frameon=False)
 
-    vals = [0, 0.05, 0.2, 0.4, 0.6, 0.8, 1]
-    ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
+    # vals = [0, 0.05, 0.2, 0.4, 0.6, 0.8, 1]
+    # ax.set_ylim(0,1)
+    # ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
     ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
-    ax.set_xticks(k_values_options)
+    ax.set_xticks([k for k in k_values_options if k!=1])
 
 # plot info: fixed to tbl=4, pi0=0.5, mu=8, taxa_num=32, codons=300
 # x axis: simulated value of k
 # y axis: %significant (over all alternative datasets)
-def plot_wrong_direction_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title,
-                                   empirical=True, add_legend=False, plot_labels=True):
+def plot_direction_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, title,
+                                   empirical=True, add_legend=False, plot_labels=True, direction='wrong', linestyle='solid'):
     # specify the data to use
     tbl = 4
     mu = 8
@@ -1800,25 +1863,33 @@ def plot_wrong_direction_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboT
         # gather the data
         y_full_values = []
         for k in k_values_options:
+            if k == 1:
+                continue
             full_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
             if empirical:
                 full_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
-                full_wrong_direction = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
-                y_full_values.append(full_wrong_direction)
+                if direction == 'wrong':
+                    full_direction = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
+                else:
+                    full_direction = full_df.loc[(full_df["LR"] >= full_threshold) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                y_full_values.append(full_direction)
             else:
-                full_wrong_direction = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
-                y_full_values.append(full_wrong_direction)
+                if direction == 'wrong':
+                    full_direction = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 0)].shape[0] / full_df.shape[0]
+                else:
+                    full_direction = full_df.loc[(full_df["pvalue"] <= 0.05) & (full_df["correctDirection"] == 1)].shape[0] / full_df.shape[0]
+                y_full_values.append(full_direction)
         # plot the data in ax
-        ax.plot(k_values_options, y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
-                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(taxa_num) + " taxa", linestyle="dashed",
+        ax.plot([k for k in k_values_options if k!=1], y_full_values, color=colors[codon_positions_num_options.index(positions_num)],
+                marker=markers[taxa_num_options.index(taxa_num)], lw=2.5, label=str(taxa_num) + " taxa", linestyle=linestyle,
                 markersize=16)
         if plot_labels:
             ax.set_xlabel(r"$k$", fontdict={'size': 30})
 
-    vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
-    ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
-    ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
-    ax.set_xticks(k_values_options)
+    # vals = [0, 0.2, 0.4, 0.6, 0.8, 1]
+    # ax.set_yticks(vals, ['{:,.0%}'.format(x) for x in vals])
+    # ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
+    ax.set_xticks([k for k in k_values_options if k!=1])
 
     if add_legend:
         handles, labels = ax.get_legend_handles_labels()
@@ -1933,49 +2004,49 @@ def plot_correct_direction_distribution(ax, title, TraitRELAXComboToDf, Empirica
     ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
-def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, output_path_1, output_path_2, output_path_3, output_path_4):
+def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, output_path_1, output_path_2, output_path_3, output_path_4, output_path_5):
 
     # figure 0 (for results)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=2, sharex="all", sharey="all", figsize=[2 * 8.2 + 2, 2* 7.58])
-    plot_power_vs_k_across_posnum(32, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "A\n",
-                                  empirical=True, add_legend=False, plot_labels=False)
-    plot_power_vs_k_across_taxanum(300, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "B\n",
-                                   empirical=True, add_legend=False, plot_labels=False)
-    plot_power_vs_k_across_posnum(32, axis[1][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "C\n",
-                                  empirical=False, add_legend=True, plot_labels=False)
-    plot_power_vs_k_across_taxanum(300, axis[1][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "D\n",
-                                   empirical=False, add_legend=True, plot_labels=False)
+    fig, axis = plt.subplots(nrows=2, ncols=2, sharex="all", sharey="all", figsize=[2 * 8.2 + 2, 2* 7.58], frameon=True)
+    plot_direction_vs_k_across_posnum(32, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "a\n",
+                                  empirical=True, add_legend=True, plot_labels=False, direction='right')
+    plot_direction_vs_k_across_taxanum(300, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "b\n",
+                                   empirical=True, add_legend=True, plot_labels=False, direction='right')
+    plot_direction_vs_k_across_posnum(32, axis[1][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n",
+                                  empirical=False, add_legend=False, plot_labels=False, direction='right', linestyle='dashed')
+    plot_direction_vs_k_across_taxanum(300, axis[1][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "d\n",
+                                   empirical=False, add_legend=False, plot_labels=False, direction='right', linestyle='dashed')
     fig.text(-0.015, 0.5, 'Null rejected in correct direction', va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
-    plt.savefig(output_path_1, bbox_inches='tight', transparent=True)
+    plt.savefig(output_path_1, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
     # figure 1: power plots for TraitRELAX by empirical test (A,B,C) and for HyPhy by theoretical test (D,E,F) with addition of required FPR line
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=2, sharey='all', sharex='all', figsize=[2 * 8.2 + 2, 2 * 7.58])
-    plot_wrong_direction_vs_k_across_posnum(32, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "A\n",
-                                  empirical=True, add_legend=False, plot_labels=False)
-    plot_wrong_direction_vs_k_across_taxanum(300, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "B\n",
-                                  empirical=True, add_legend=False, plot_labels=False)
-    plot_wrong_direction_vs_k_across_posnum(32, axis[1][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "C\n",
-                                  empirical=False, add_legend=True, plot_labels=False)
-    plot_wrong_direction_vs_k_across_taxanum(300, axis[1][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "D\n",
-                                  empirical=False, add_legend=True, plot_labels=False)
+    fig, axis = plt.subplots(nrows=2, ncols=2, sharey='all', sharex='all', figsize=[2 * 8.2 + 2, 2 * 7.58], frameon=True)
+    plot_direction_vs_k_across_posnum(32, axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "a\n",
+                                  empirical=True, add_legend=True, plot_labels=False, direction='wrong')
+    plot_direction_vs_k_across_taxanum(300, axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "b\n",
+                                  empirical=True, add_legend=True, plot_labels=False, direction='wrong')
+    plot_direction_vs_k_across_posnum(32, axis[1][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n",
+                                  empirical=False, add_legend=False, plot_labels=False, direction='wrong', linestyle='dashed')
+    plot_direction_vs_k_across_taxanum(300, axis[1][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "d\n",
+                                  empirical=False, add_legend=False, plot_labels=False, direction='wrong', linestyle='dashed')
     fig.text(-0.015, 0.5, 'Null rejected in wrong direction', va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
-    plt.savefig(output_path_2, bbox_inches='tight', transparent=True)
+    plt.savefig(output_path_2, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
     # # figure 2: 2 histograms: in one the x-axis is the #taxa for 300 positions and in another it is #positions for 32 taxa
     # #           in each histogram, we plot the fraction of correct directions of TraitREAX and HyPhy
     # #           two options are enabled: aggregation across all the k values (except 1) and focus on a single k. This is done by passing a list argument of "k options"
     # plt.grid(False)
-    # fig, axis = plt.subplots(nrows=2, ncols=1, sharey='none', sharex='none', figsize=[2 * 8.2 + 4, 1 * 7.58])
-    # plot_correct_direction_distribution(axis[0], "A\n", TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, by_taxa=1, add_legend=True, out_of_all=1)
-    # plot_correct_direction_distribution(axis[1], "B\n", TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, by_taxa=0, add_legend=False, out_of_all=1)
+    # fig, axis = plt.subplots(nrows=2, ncols=1, sharey='none', sharex='none', figsize=[2 * 8.2 + 4, 1 * 7.58], frameon=True)
+    # plot_correct_direction_distribution(axis[0], "a\n", TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, by_taxa=1, add_legend=True, out_of_all=1)
+    # plot_correct_direction_distribution(axis[1], "b\n", TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, by_taxa=0, add_legend=False, out_of_all=1)
     # # plot custom legend
     # circ1 = mpatches.Patch(facecolor='lightgrey', label='TraitRELAX')
     # circ2 = mpatches.Patch(facecolor='k', label='RELAX')
@@ -1989,36 +2060,48 @@ def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
 
     # figure 3: accuracy comparison between TraitRELAX and HyPhy
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=1, ncols=2, sharey='none', sharex='none', figsize=[2 * 8.2 + 4, 1 * 7.58])
-    plot_accuracy_vs_k(axis[0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "A\n", add_legend=False, add_ylabel=True, use_global_accuracy=False, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_mu(axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "B\n", add_legend=True, add_ylabel=True, use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False, add_mp=True)
+    fig, axis = plt.subplots(nrows=1, ncols=3, sharey='none', sharex='none', figsize=[3 * 8.2 + 4, 1 * 7.58], frameon=True)
+    plot_k_distribution_across_k_and_taxanum(600, axis[0], HyPhyMPComboToDf, "a\n")
+    plot_accuracy_vs_k(axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n", add_legend=False, add_ylabel=True, use_global_accuracy=False, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n", add_legend=True, add_ylabel=True, use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False, add_mp=True, use_boxplot=False)
     fig.subplots_adjust()
     fig.tight_layout()
-    plt.savefig(output_path_3, bbox_inches='tight', transparent=True)
+    plt.savefig(output_path_3, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
 
     # figure 2 (for supp materials)
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=2, ncols=3, sharey='none', sharex='none', figsize=[3 * 12 + 2, 2 * 7.58 + 2])
-    plot_inferred_vs_simulated_k_across_positions_num(16, axis[0][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "A\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_inferred_vs_simulated_k_across_positions_num(32, axis[0][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "B\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_inferred_vs_simulated_k_across_positions_num(64, axis[0][2], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "C\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k_across_positions_num(16, axis[1][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "D\n", add_legend=False,
-                                            plot_labels=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k_across_positions_num(32, axis[1][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "E\n", add_legend=False,
-                                            plot_labels=True) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k_across_positions_num(64, axis[1][2], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "F\n", add_legend=True,
+    fig, axis = plt.subplots(nrows=3, ncols=2, sharey='none', sharex='none', figsize=[2 * 12 + 2, 3 * 7.58 + 2], frameon=True)
+    plot_inferred_vs_simulated_k_across_positions_num(16, axis[0][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "a\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k_across_positions_num(16, axis[0][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n",
+                                            add_legend=False, plot_labels=False)  # , only_of_significants=True, use_empirical=True)
+    plot_inferred_vs_simulated_k_across_positions_num(32, axis[1][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n", plot_labels=True) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k_across_positions_num(32, axis[1][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "d\n",
+                                            add_legend=False, plot_labels=True)  # , only_of_significants=True, use_empirical=True)
+    plot_inferred_vs_simulated_k_across_positions_num(64, axis[2][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "e\n", plot_labels=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k_across_positions_num(64, axis[2][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "f\n", add_legend=True,
                                             plot_labels=False) #, only_of_significants=True, use_empirical=True)
 
     # fig.text(0.53, -0.02, r"$k$", ha='center', fontdict={'size': 30})
-    fig.text(-0.02, 0.75, "Mean(" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
-    fig.text(-0.02, 0.25, "Mean error (" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
+    # fig.text(-0.02, 0.5, "Mean(" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
+    # fig.text(, 0.25, "Mean error (" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout(pad=1)
-    plt.savefig(output_path_4, bbox_inches='tight', transparent=True)
+    plt.savefig(output_path_4, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
+    # figure s4 - power of hyphy
+    plt.grid(False)
+    fig, axis = plt.subplots(nrows=1, ncols=2, sharex="all", sharey="all", figsize=[2 * 8.2 + 2, 7.58], frameon=True)
+    plot_power_vs_k_across_posnum(32, axis[0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "a\n",
+                                  empirical=False, add_legend=True, linestyle='dashed')
+    plot_power_vs_k_across_taxanum(300, axis[1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n",
+                                   empirical=False, add_legend=True, plot_labels=True, linestyle='dashed')
+    fig.subplots_adjust()
+    fig.tight_layout()
+    plt.savefig(output_path_5, bbox_inches='tight') #, transparent=True)
+    plt.clf()
 
 #####################################################################################
 
@@ -2027,10 +2110,15 @@ if __name__ == '__main__':
 
     matplotlib.rc('xtick', labelsize=22)
     matplotlib.rc('ytick', labelsize=22)
-    matplotlib.rc('legend', fontsize=16)
     matplotlib.rc('legend', frameon=False)
     matplotlib.rc('legend', fontsize=30)
-    matplotlib.rc('hatch', color='white')
+    matplotlib.rc('figure', facecolor='white')
+    matplotlib.rc('axes', facecolor='white')
+    matplotlib.rc('axes', grid=False)
+    matplotlib.rc('figure', edgecolor='k')
+    matplotlib.rc('figure', frameon=True)
+    plt.rcParams["axes.edgecolor"] = "lightgrey"
+    plt.rcParams["axes.linewidth"] = 1.25
 
     # create a directory of figures
     figures_dir = output_dir + "/figures/"
@@ -2230,20 +2318,20 @@ if __name__ == '__main__':
 
     print("***********************************************\n\n")
 
-    # plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-    #                               EmpiricalRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds,
-    #                               figures_dir + "power_and_fpr_assessment_for_results.svg",
-    #                               figures_dir + "power_and_fpr_assessment_for_supp_1.svg",
-    #                               figures_dir + "power_and_fpr_assessment_for_supp_2.svg")
+    plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
+                                  EmpiricalRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds,
+                                  figures_dir + "power_and_fpr_assessment_for_results.svg",
+                                  figures_dir + "power_and_fpr_assessment_for_supp_1.svg",
+                                  figures_dir + "power_and_fpr_assessment_for_supp_2.svg")
 
-    # plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path,
-    #                        figures_dir + "accuracy_assessment_for_results.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_1.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_2.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_3.svg")
+    plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path,
+                           figures_dir + "accuracy_assessment_for_results.svg",
+                           figures_dir + "accuracy_assessment_for_supp_1.svg",
+                           figures_dir + "accuracy_assessment_for_supp_2.svg",
+                           figures_dir + "accuracy_assessment_for_supp_3.svg")
 
     # plot_duration(TraitRELAXComboToDf, figures_dir + "duration_analysis.svg")
 
     # report_power_fpr_comparison(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds)
 
-    plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, figures_dir + "hyphy_comparison_1.svg", figures_dir + "hyphy_comparison_2.svg", figures_dir + "hyphy_comparison_3.svg", figures_dir + "hyphy_comparison_4.svg")
+    plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, figures_dir + "hyphy_comparison_1.svg", figures_dir + "hyphy_comparison_2.svg", figures_dir + "hyphy_comparison_3.svg", figures_dir + "hyphy_comparison_4.svg", figures_dir + "hyphy_comparison_5.svg")

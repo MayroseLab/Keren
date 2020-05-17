@@ -6,7 +6,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Performs minimap alignment to ference genome per sequence in a fasta file of genomes and collects the SNPs with respect to the reference genome to a vcf file')
     parser.add_argument('--reference_genome_path', '-r', help='path to the file holding the reference gnome', required=True)
     parser.add_argument('--genomes_path', '-i', help='path a fasta file holding all the covid19 genomes to be aligned to the reference', required=True)
-    parser.add_argument('--output_dir', '-o', help='directory to hold the vcf files outputed for each pairwise alignment of a genome with the refernce genome with the collected SNPs', requited=True)
+    parser.add_argument('--output_dir', '-o', help='directory to hold the vcf files outputed for each pairwise alignment of a genome with the refernce genome with the collected SNPs', required=True)
     parser.add_argument('--start_index', '-s', help='index of sequence to start the analysis from', required=False, default=0)
     parser.add_argument('--end_index', '-e', help='index of sequence to end the analysis with', required=False, default=2)
 
