@@ -50,6 +50,7 @@ if __name__ == '__main__':
 
         # compress the variants file
         res = os.system("bgzip -c " + vcf_path + " > " + vcf_path + ".gz")
+        res = os.system("bcftools index " + vcf_path + ".gz")
         res = os.system("rm -r " + vcf_path)
         vcf_path += ".gz"
 
