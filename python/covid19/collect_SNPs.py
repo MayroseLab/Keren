@@ -31,9 +31,11 @@ if __name__ == '__main__':
         lines = input_file.readlines()
     for index in range(start_index, end_index):
         line = 2 * index
+        print("index: ", index, ", line: ", line)
         # create the genome fasta file
         if index < end_index:
             line1 = lines[line]
+            print("line1: ", line1)
             line2 = lines[line+1]
             alternative_genome_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.fa'
             with open(alternative_genome_path, 'w') as genome_file:
