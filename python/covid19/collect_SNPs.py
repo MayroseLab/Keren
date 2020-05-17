@@ -16,9 +16,8 @@ if __name__ == '__main__':
     output_dir = args.output_dir
     start_index = int(args.start_index)
     end_index = int(args.end_index)
-    united_vcf_path = output_dir + "all.vcf"
 
-    merge_cmd = 'merge ' + united_vcf_path
+    merge_cmd = 'bcftool merge -o ' + output_dir + "all.vcf"
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
@@ -42,8 +41,6 @@ if __name__ == '__main__':
         # execute minimap on the genome_path
         pas_path = output_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.pas'
         vcf_path = vcfs_dir + '/' + line1.replace('>', '').replace('\n', '').replace('/', '_') + '.vcf'
-        if index == start_index:
-            vcf_path = united_vcf_path
         res = os.system('minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
         res = os.system('sort -k6,6 -k8,8n ' + pas_path + ' | paftools.js call -f ' + reference_genome_path + ' -L10000 -l1000 - > ' + vcf_path)
 
@@ -51,11 +48,15 @@ if __name__ == '__main__':
         res = os.system('rm -r ' + alternative_genome_path)
         res = os.system('rm -r ' + pas_path)
 
+        # compress the variants file
+        res = os.system("gzip " + vcf_path)
+        vcf_path += ".gz"
+
         # chain th path to the vcf file to the merge command of bcf tools
         merge_cmd = merge_cmd + ' ' + vcf_path
 
     res = os.system(merge_cmd)
-    print("merge_cmd: ", merge_cmd)
+    print(merge_cmd)
     # res = os.system('rm -r ' + vcfs_dir)
 
             
