@@ -29,9 +29,8 @@ if __name__ == '__main__':
     # extract the sequences from the start index to the end index to distinct a fasta file, then run minimap on it, and then delete it
     with open(genomes_path, 'r') as input_file:
         lines = input_file.readlines()
-    index = start_index
-    line = 2 * index
-    for i in range(end_index - start_index):
+    for index in range(start_index, end_index):
+        line = 2 * index
         # create the genome fasta file
         if index < end_index:
             line1 = lines[line]
