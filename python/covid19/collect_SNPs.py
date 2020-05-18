@@ -20,7 +20,7 @@ if __name__ == '__main__':
     parser.add_argument('--start_index', '-s', help='index of sequence to start the analysis from', required=False,
                         default=0)
     parser.add_argument('--end_index', '-e', help='index of sequence to end the analysis with', required=False,
-                        default=2)
+                        default=27160)
 
     args = parser.parse_args()
     reference_genome_path = args.reference_genome_path
@@ -30,13 +30,19 @@ if __name__ == '__main__':
     start_index = int(args.start_index)
     end_index = int(args.end_index)
 
-    merge_cmd = 'bcftools concat -o ' + output_dir + "all.vcf"
+    concat_cmd = 'bcftools concat -o ' + output_dir + "vairants_" + str(start_index) + "_to_" + str(end_index) + ".vcf"
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
+    fasta_dir = output_dir + "genomes/"
+    if not os.path.exists(fasta_dir):
+        res = os.system("mkdir -p " + fasta_dir)
     vcfs_dir = output_dir + 'vcf/'
     if not os.path.exists(vcfs_dir):
         res = os.system('mkdir -p ' + vcfs_dir)
+    jobs_dir = output_dir + "jobs/"
+    if not os.path.exists(jobs_dir):
+        res = os.system("mkdir -p " + jobs_dir)
 
     # read the metadata file to a df
     metadata = pd.read_csv(metadata_path, sep="\t")
@@ -77,14 +83,13 @@ if __name__ == '__main__':
         # compress the variants file
         res = os.system("bgzip -c " + vcf_path + " > " + vcf_path + ".gz")
         res = os.system("bcftools index " + vcf_path + ".gz")
-        # res = os.system("rm -r " + vcf_path)
+        res = os.system("rm -r " + vcf_path)
         vcf_path += ".gz"
 
         # chain th path to the vcf file to the merge command of bcf tools
-        merge_cmd = merge_cmd + ' ' + vcf_path
+        concat_cmd = concat_cmd + ' ' + vcf_path
 
-    res = os.system(merge_cmd)
-    print(merge_cmd)
-    # res = os.system('rm -r ' + vcfs_dir)
+    res = os.system(concat_cmd)
+    res = os.system('rm -r ' + vcfs_dir)
 
 
