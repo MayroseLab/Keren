@@ -90,6 +90,9 @@ if __name__ == '__main__':
         concat_cmd = concat_cmd + ' ' + vcf_path
 
     res = os.system(concat_cmd)
-    res = os.system('rm -r ' + vcfs_dir)
+    print("concat_cmd:\n", concat_cmd)
+    # res = os.system('rm -r ' + vcfs_dir)
+    res = os.system('rm -r ' + fasta_dir)
+    res = os.system('rm -r ' + pafs_dir)
 
 
