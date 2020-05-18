@@ -40,9 +40,9 @@ if __name__ == '__main__':
     vcfs_dir = output_dir + 'vcf/'
     if not os.path.exists(vcfs_dir):
         res = os.system('mkdir -p ' + vcfs_dir)
-    jobs_dir = output_dir + "jobs/"
-    if not os.path.exists(jobs_dir):
-        res = os.system("mkdir -p " + jobs_dir)
+    pafs_dir = output_dir + "paf/"
+    if not os.path.exists(pafs_dir):
+        res = os.system("mkdir -p " + pafs_dir)
 
     # read the metadata file to a df
     metadata = pd.read_csv(metadata_path, sep="\t")
@@ -69,7 +69,7 @@ if __name__ == '__main__':
             genome_file.write(line2)
 
         # execute minimap on the genome_path
-        pas_path = output_dir + '/' + updated_sequence_name + '.pas'
+        pas_path = pafs_dir + '/' + updated_sequence_name + '.pas'
         vcf_path = vcfs_dir + '/' + updated_sequence_name + '.vcf'
         res = os.system(
             'minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
