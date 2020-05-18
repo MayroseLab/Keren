@@ -30,7 +30,7 @@ if __name__ == '__main__':
     start_index = int(args.start_index)
     end_index = int(args.end_index)
 
-    merge_cmd = 'bcftools merge -o ' + output_dir + "all.vcf"
+    merge_cmd = 'bcftools concat -o ' + output_dir + "all.vcf"
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
@@ -68,7 +68,7 @@ if __name__ == '__main__':
         res = os.system(
             'minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
         res = os.system(
-            'sort -k6,6 -k8,8n ' + pas_path + ' | paftools.js call -f ' + reference_genome_path + ' -s ' + updated_sequence_name + ' -L10000 -l1000 - > ' + vcf_path)
+            'sort -k6,6 -k8,8n ' + pas_path + ' | paftools.js call -f ' + reference_genome_path + ' -L10000 -l1000 - > ' + vcf_path)
 
         # delete the fasta, pas and vcf files files
         res = os.system('rm -r ' + alternative_genome_path)
