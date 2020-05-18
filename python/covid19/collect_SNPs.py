@@ -58,10 +58,10 @@ if __name__ == '__main__':
         # search for corresponding metadata for sequence name
         sequence_metadata = metadata.loc[(metadata['strain'] == sequence_name)]
         updated_sequence_name = "hCoV-19_" + sequence_name.replace("/", "_") + "_date_" + str(
-            sequence_metadata['date'].values[0]) + "_region_" + str(
-            sequence_metadata['region'].values[0]) + "_country_" + str(
-            sequence_metadata['country'].values[0]) + "_age_" + str(sequence_metadata['age'].values[0]) + "_sex_" + str(
-            sequence_metadata['sex'].values[0])
+            sequence_metadata['date'].values[0]).replace(" ", "_") + "_region_" + str(
+            sequence_metadata['region'].values[0]).replace(" ", "_") + "_country_" + str(
+            sequence_metadata['country'].values[0]).replace(" ", "_") + "_age_" + str(sequence_metadata['age'].values[0]).replace(" ", "_") + "_sex_" + str(
+            sequence_metadata['sex'].values[0]).replace(" ", "_")
         line2 = lines[line + 1]
         alternative_genome_path = output_dir + '/' + updated_sequence_name + '.fa'
         with open(alternative_genome_path, 'w') as genome_file:
