@@ -22,10 +22,10 @@ if __name__ == '__main__':
     total_count = 0
     for record in vcf_reader:
         total_count += 1
-        if (record.CHROM, record.POS, record.REF, record.ALT) not in SNPs_to_frequency:
-            SNPs_to_frequency[(record.CHROM, record.POS, record.REF, record.ALT)] = 1
+        if (str(record.CHROM), str(record.POS), str(record.REF), str(record.ALT)) not in SNPs_to_frequency:
+            SNPs_to_frequency[(str(record.CHROM), str(record.POS), str(record.REF), str(record.ALT))] = 1
         else:
-            SNPs_to_frequency[(record.CHROM, record.POS, record.REF, record.ALT)] += 1
+            SNPs_to_frequency[(str(record.CHROM), str(record.POS), str(record.REF), str(record.ALT))] += 1
     for SNP in SNPs_to_frequency:
         SNPs_to_frequency[SNP] /= total_count
 
@@ -49,19 +49,18 @@ if __name__ == '__main__':
             data[metadata_value] = dict()
             for SNP in frequent_SNPs:
                 data[metadata_value][SNP] = 0
-        if (record.CHROM, record.POS, record.REF, record.ALT) in frequent_SNPs:
-            data[metadata_value][(record.CHROM, record.POS, record.REF, record.ALT)] += 1
+        if (str(record.CHROM), str(record.POS), str(record.REF), str(record.ALT)) in frequent_SNPs:
+            data[metadata_value][(str(record.CHROM), str(record.POS), str(record.REF), str(record.ALT))] += 1
     for metadata_value in  metadata_to_samples_count:
         for SNP in frequent_SNPs:
             data[metadata_value][SNP] /= metadata_to_samples_count[metadata_value]
 
     # insert data to a dataframe
     df = pd.DataFrame(columns=[metadata_to_group_by] + [
-        'chrom_' + str(frequent_SNP[0]) + '_pos_' + str(frequent_SNP[1]) + '_ref_' + str(
-            frequent_SNP[2]) + '_alt_' + str(frequent_SNP[3]) for frequent_SNP in frequent_SNPs])
+        'chrom_' + str(frequent_SNP[0]) + '_pos_' + frequent_SNP[1] + '_ref_' + frequent_SNP[2] + '_alt_' + frequent_SNP[3] for frequent_SNP in frequent_SNPs])
     for metadata_value in metadata_to_samples_count:
         value = {metadata_to_group_by: metadata_value}
         for SNP in frequent_SNPs:
-            value['chrom_' + str(SNP[0]) + '_pos_' + str(SNP[1]) + '_ref_' + str(SNP[2]) + '_alt_' + str(SNP[3])] = data[metadata_value][SNP]
+            value['chrom_' + SNP[0] + '_pos_' + SNP[1] + '_ref_' + SNP[2] + '_alt_' + SNP[3]] = data[metadata_value][SNP]
     df.to_csv(output_path)
 
