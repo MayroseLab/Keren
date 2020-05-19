@@ -1,59 +1,69 @@
 import pandas as pd
-import argparse, re, os
+import argparse, re, os, vcf
 
 if __name__ == '__main__':
 
-    os.chdir(r"C:\Users\ItayMNB7\Google Drive\PhD\ML_Covid19\GISAID")
+    os.chdir(r'C:\Users\ItayMNB7\Google Drive\PhD\ML_Covid19\GISAID')
 
     # process input from command line
     parser = argparse.ArgumentParser(description='Process variation data from a file to produce csv of SNPs frequencies by country')
-    parser.add_argument('--input_path', '-i', help='path to the variation data file', required=False, default="variation_data.xlsx")
-    parser.add_argument('--variants_to_collect', '-a', help='path to a vcf file with the variants that data should be collected for', required=False, default="frequent_variants.tsv")
-    parser.add_argument('--output_path', '-o', help='path to the CSV output', required=False, default="variants_frequencies_by_country.csv")
+    parser.add_argument('--input_path', '-i', help='path to the variation data file in vcf format', required=True)
+    parser.add_argument('--output_path', '-o', help='path to the output collecting SNP frequencies by countries in csv format', required=True)
+    parser.add_argument('--metadata_to_group_by', '-m', help='metadata field to group by the SNPs frequencies by. Options: region, country, age, sex. default is country', required=False, default='country')
 
     args = parser.parse_args()
     input_path = args.input_path
-    variants_to_collect = args.variants_to_collect
     output_path = args.output_path
+    metadata_to_group_by = args.metadata_to_group_by
 
     # read input file
-    df = pd.read_excel(input_path)
+    vcf_reader = vcf.Reader(open(input_path))
 
-    # read varaints of interest
-    variants = []
-    with open(variants_to_collect, "r") as infile:
-        lines = infile.readlines()
-    for line in lines:
-        components = line.split("\t")
-        variants.append((components[0], components[1], components[2].replace("\n", "")))
-    print("variants: ", variants)
+    # collect the SNPs and their frequencies across all the samples
+    SNPs_to_frequency = dict()
+    total_count = 0
+    for record in vcf_reader:
+        total_count += 1
+        if (record.CHROM, record.POS, record.REF, record.ALT) not in SNPs_to_frequency:
+            SNPs_to_frequency[(record.CHROM, record.POS, record.REF, record.ALT)] = 1
+        else:
+            SNPs_to_frequency[(record.CHROM, record.POS, record.REF, record.ALT)] += 1
+    for SNP in SNPs_to_frequency:
+        SNPs_to_frequency[SNP] /= total_count
 
-    # create a new dataframe, in which each entry depicts the frequencies of the 20 variants (named by their positions) across the country
-    countries = []
-    country_regex = re.compile("hCoV-19_(.*?)[_|;]", re.IGNORECASE | re.MULTILINE | re.DOTALL)
-    for index, row in df.iterrows():
-        info = str(row[['INFO']])
-        country = country_regex.search(info).group(1)
-        countries.append(country)
-    df.insert(2, "Country", countries, True)
-    unique_countries = df.Country.unique()
+    # search for SNPs with at least 5% frequency across worldwide population
+    frequent_SNPs = []
+    for SNP in SNPs_to_frequency:
+        if SNPs_to_frequency[SNP] > 0.05:
+            frequent_SNPs.append(SNP)
 
-    # count the number of records per country and position
-    columns = ['Country'] + [variant[0] + ":" + variant[1] + "->" + variant[2] for variant in variants]
-    variants_frequencies = pd.DataFrame(columns=columns)
-    for country in unique_countries:
-        record = {'Country': country}
-        for variant in variants:
-            filtered_df = df.loc[(df['Country'] == country) & (df['POS'] == variant[0])]
-            print(filtered_df.shape[0])
-            frequency = (df.loc[(df['Country'] == country) & (df['POS'] == variant[0]) & (df['REF'] == variant[1]) & (df['ALT'] == variant[2])]).shape[0]
-            record[variant[0] + ":" + variant[1] + "->" + variant[2]] = frequency
-        variants_frequencies = variants_frequencies.append(record, ignore_index=True)
-    variants_frequencies.to_csv(output_path)
+    # now, collect a the frequencies of the filtered SNPs across countries into a dataframe
+    metadata_to_group_by_regex = re.compile('_' + metadata_to_group_by + '_(.*?)[_|;]', re.DOTALL)
+    data = dict()
+    metadata_to_samples_count = dict()
+    for record in vcf_reader:
+        metadata_value = metadata_to_group_by_regex.search(record.INFO)
+        if not metadata_value in metadata_to_samples_count:
+            metadata_to_samples_count[metadata_value] = 1
+        else:
+            metadata_to_samples_count[metadata_value] += 1
+        if not metadata_value in data:
+            data[metadata_value] = dict()
+            for SNP in frequent_SNPs:
+                data[metadata_value][SNP] = 0
+        if (record.CHROM, record.POS, record.REF, record.ALT) in frequent_SNPs:
+            data[metadata_value][(record.CHROM, record.POS, record.REF, record.ALT)] += 1
+    for metadata_value in  metadata_to_samples_count:
+        for SNP in frequent_SNPs:
+            data[metadata_value][SNP] /= metadata_to_samples_count[metadata_value]
 
-
-
-
-
-
+    # insert data to a dataframe
+    df = pd.DataFrame(columns=[metadata_to_group_by] + [
+        'chrom_' + str(frequent_SNP[0]) + '_pos_' + str(frequent_SNP[1]) + '_ref_' + str(
+            frequent_SNP[2]) + '_alt_' + str(frequent_SNP[3]) for frequent_SNP in frequent_SNPs])
+    for metadata_value in metadata_to_samples_count:
+        value = {metadata_to_group_by: metadata_value}
+        for SNP in frequent_SNPs:
+            value['chrom_' + str(SNP[0]) + '_pos_' + str(SNP[1]) + '_ref_' + str(SNP[2]) + '_alt_' + str(SNP[3])] = data[metadata_value][SNP]
+    df.to_csv(output_path)
 
