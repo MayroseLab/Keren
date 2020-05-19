@@ -3,8 +3,6 @@ import argparse, re, os, vcf
 
 if __name__ == '__main__':
 
-    os.chdir(r'C:\Users\ItayMNB7\Google Drive\PhD\ML_Covid19\GISAID')
-
     # process input from command line
     parser = argparse.ArgumentParser(description='Process variation data from a file to produce csv of SNPs frequencies by country')
     parser.add_argument('--input_path', '-i', help='path to the variation data file in vcf format', required=True)
