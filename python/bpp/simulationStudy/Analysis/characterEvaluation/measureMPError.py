@@ -38,11 +38,7 @@ def parse_biopp_history(history_path):
                 node.add_feature("label", "1")
         else:
             node.add_feature("label", "0") # root is always BG
-            if node.name == "":
-                node.name = "root"
-    # for node in history.traverse("postorder"):
-    #     print(node.name)
-    # print("DONE\n\n")
+    history.get_tree_root().name = "root"
     return history
 
 # returns tree with union of nodes from history_1 and history_2, where each node has two features: hist_1_label, hist_2_label
@@ -55,9 +51,6 @@ def parse_union_tree(history_1, history_2, base_tree_path, debug=False):
         index += 1
         if node.name == "":
             node.name = "_baseInternal_" + str(index)
-    # for node in base_tree.traverse("postorder"):
-    #     print(node.name)
-    # print("DONE\n\n")
     united_tree = Tree()
     united_tree.dist = 0  # initialize distance to 0
     united_tree.get_tree_root().name = history_1.get_tree_root().name # set the name of the root
