@@ -2,15 +2,34 @@ import re, argparse, os
 from ete3 import Tree
 import pandas as pd
 
+# add internal node names to base tree
+def create_base_tree(input_tree_path, output_path):
+    print('input_path: ', input_tree_path)
+    tree = Tree(input_tree_path, format=1)
+    for node in tree.traverse():
+        if "mapping" in node.name:
+            node.delete()
+        else:
+            node_name = node.name
+            node_name = node_name.replace("{0}", "")
+            node_name = node_name.replace("{1}", "")
+            node.name = node_name
+    tree.write(outfile=output_path, format=1)
+    return output_path
+
 # parse history in biopp format
 # history path can also be string of the tree
 def parse_biopp_history(history_path):
+    index = 0
     node_data_regex = re.compile("([^(|)]*?)\{(\d)\}")
     # read the tree from the file
     history = Tree(history_path, format=1)
-    for node in history.traverse():
+    for node in history.traverse("postorder"):
+        index += 1
         if node != history.get_tree_root():
             node_name = (node_data_regex.search(node.name)).group(1)
+            if node_name == "missing_node":
+                node_name = "_baseInternal_" + str(index)
             node_state = (node_data_regex.search(node.name)).group(2)
             node.name = node_name
             if node_state == "0":
@@ -21,13 +40,24 @@ def parse_biopp_history(history_path):
             node.add_feature("label", "0") # root is always BG
             if node.name == "":
                 node.name = "root"
+    # for node in history.traverse("postorder"):
+    #     print(node.name)
+    # print("DONE\n\n")
     return history
 
 # returns tree with union of nodes from history_1 and history_2, where each node has two features: hist_1_label, hist_2_label
 def parse_union_tree(history_1, history_2, base_tree_path, debug=False):
     base_tree = Tree(base_tree_path, format=1)
-    # add for debugging
-    # base_tree.get_tree_root().name = "_baseInternal_30"
+    # give names to internal nodes
+    base_tree.get_tree_root().name = "root"
+    index = 0
+    for node in base_tree.traverse("postorder"):
+        index += 1
+        if node.name == "":
+            node.name = "_baseInternal_" + str(index)
+    # for node in base_tree.traverse("postorder"):
+    #     print(node.name)
+    # print("DONE\n\n")
     united_tree = Tree()
     united_tree.dist = 0  # initialize distance to 0
     united_tree.get_tree_root().name = history_1.get_tree_root().name # set the name of the root
@@ -39,10 +69,14 @@ def parse_union_tree(history_1, history_2, base_tree_path, debug=False):
         if original_parent != None:  # will be none only in the case the original node is the root
             if debug:
                 print("handled branch: (", original_node.name, ",", original_parent.name, ")")
+            print("1: original_parent.name: ", original_parent.name) # debug
             curr_union_parent = united_tree.search_nodes(name=original_parent.name)[0]
+            print("sp1")
             hist_1_done = True
             hist_1_curr_child = None
+            print("2: original_parent.name: ", original_parent.name) # debug
             hist_1_parent = history_1.search_nodes(name=original_parent.name)[0]  # need to check names consistency across the 3 trees
+            print("sp2")
             for child in hist_1_parent.children:
                 if len(base_tree.search_nodes(name=child.name)) == 0 and len(child.search_nodes(
                         name=original_node.name)) > 0:  # if the child is a root in a tree that holds the original child node, then this child must be on the branch of interest
@@ -50,12 +84,16 @@ def parse_union_tree(history_1, history_2, base_tree_path, debug=False):
                     hist_1_done = False
                     break
             if hist_1_done:
+                print("3: original_node.name: ", original_node.name)
                 hist_1_curr_child = history_1.search_nodes(name=original_node.name)[0]
+                print("sp3")
             hist_1_current_label = hist_1_curr_child.label
 
             hist_2_done = True
             hist_2_curr_child = None
+            print("4: original_parent.name: ", original_parent.name) # debug
             hist_2_parent = history_2.search_nodes(name=original_parent.name)[0]  # need to check names consistency across the 3 trees
+            print("sp4") # debug
             for child in hist_2_parent.children:
                 if len(base_tree.search_nodes(name=child.name)) == 0 and len(child.search_nodes(
                         name=original_node.name)) > 0:  # if the child is a root in a tree that holds the original child node, then this child must be on the branch of interest
@@ -63,7 +101,9 @@ def parse_union_tree(history_1, history_2, base_tree_path, debug=False):
                     hist_2_done = False
                     break
             if hist_2_done:
+                print("5: original_parent.name: ", original_parent.name) # debug
                 hist_2_curr_child = history_2.search_nodes(name=original_node.name)[0]
+                print("sp5")
             hist_2_current_label = hist_2_curr_child.label
 
             while not hist_1_done or not hist_2_done:
@@ -170,8 +210,9 @@ def compute_distance(history_1, history_2, base_tree_path, debug=False):
     #               we compute the distance as 1-((A+D)/(A+B+C+D))=1-((fraction of tree in disagreement)/(total branch length))
     try:
         united_tree = parse_union_tree(history_1, history_2, base_tree_path, debug=debug)
-    except:
-        print("failed to parse united tree")
+    except Exception as e:
+        print("failed to parse united tree due to error: ", e)
+        print("base_tree_path: ", base_tree_path)
         exit(1)
     # resent departments sizes
     A = B = C = D = 0
@@ -244,19 +285,14 @@ if __name__ == '__main__':
             record = {"tree_length": tree_length, "mu": mu, "#taxa": taxa_num, "expected(#transitions)": expected_transitions_num}
             full_path = input_dir + path
             record["replicate"] = int(replicate_regex.search(full_path).group(1))
-            base_tree_path = base_trees_dir + str(record["replicate"]) + ".nwk"
+            if not os.path.exists(base_trees_dir):
+                res = os.system("mkdir -p " + base_trees_dir)
+            base_tree_path = create_base_tree(full_path + "/character_data/true_history.nwk", base_trees_dir + str(record["replicate"]) + ".nwk")
+            true_history = parse_biopp_history(full_path + "/character_data/true_history.nwk")
             true_history = parse_biopp_history(full_path + "/character_data/true_history.nwk")
             record["simulated(#transitions)"] = count_transitions(true_history)
             mp_history = parse_biopp_history(full_path + "/mp_data/mp_history.nwk")
-            record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path)
+            record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path, debug=True)
             df = df.append(record, ignore_index=True)
 
     df.to_csv(output_path)
-
-
-
-
-
-
-
-
