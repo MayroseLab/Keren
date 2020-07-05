@@ -17,12 +17,16 @@ if __name__ == '__main__':
     parser.add_argument('--metadata_path', '-m',
                         help='path to the metadata file which can be crossed with the sequence names in the genomes path',
                         required=True)
+    parser.add_argument('--start_index', '-s', help='index of sample to start collecting SNPs from', required=False, default=0)
+    parser.add_argument('--end_index', '-e', help='index of sample to end collecting SNPs at', required=True)
 
     args = parser.parse_args()
     reference_genome_path = args.reference_genome_path
     genomes_path = args.genomes_path
     output_dir = args.output_dir
     metadata_path = args.metadata_path
+    start_index = int(args.start_index)
+    end_index = int(args.end_index)
 
     # res = os.system('conda init')
     # res = os.system('conda activate CovidML')
@@ -43,35 +47,37 @@ if __name__ == '__main__':
     # extract the sequences from the start index to the end index to distinct a fasta file, then run minimap on it, and then delete it
     with open(genomes_path, 'r') as input_file:
         lines = input_file.readlines()
-
-    # in intervals of 100
-    start_index = 0
-    while start_index < 27100:
+    # in intervals of 100, which are concatanable by bcftools
+    while start_index < end_index:
         addition = 100
-        if start_index == 27100:
-            addition = 60
+        if start_index + addition > end_index: # total number of samples as per 22.5.20 is 30424
+            addition = end_index - start_index
         concat_cmd = 'bcftools concat -o ' + output_dir + "variants_" + str(start_index) + "_" + str(start_index + addition) + ".vcf"
         temporary_vcfs.append(output_dir + "variants_" + str(start_index) + "_" + str(start_index + addition) + ".vcf")
         for index in range(start_index, start_index + addition):
             line = 2 * index
             line1 = lines[line]
-            sequence_name = line1.replace("\n", "").replace(">", "")
+            sequence_name = line1.replace("\n", "").replace(">", "").replace("NetherlandsL", "Netherlands")
             # search for corresponding metadata for sequence name
             sequence_metadata = metadata.loc[(metadata['strain'] == sequence_name)]
-            updated_sequence_name = "hCoV-19_" + sequence_name.replace("/", "_") + "_date_" + str(
-                sequence_metadata['date'].values[0]).replace(" ", "_") + "_region_" + str(
-                sequence_metadata['region'].values[0]).replace(" ", "_") + "_country_" + str(
-                sequence_metadata['country'].values[0]).replace(" ", "_") + "_age_" + str(sequence_metadata['age'].values[0]).replace(" ", "_") + "_sex_" + str(
-                sequence_metadata['sex'].values[0]).replace(" ", "_")
+            try:
+                updated_sequence_name = "hCoV-19_" + sequence_name.replace("/", "_") + "_sample_id_" + str(sequence_metadata["gisaid_epi_isl"].values[0]).replace(" ", "_") + "_date_" + str(
+                    sequence_metadata['date'].values[0]).replace(" ", "_") + "_region_" + str(
+                    sequence_metadata['region'].values[0]).replace(" ", "_") + "_country_" + str(
+                    sequence_metadata['country'].values[0]).replace(" ", "_") +"_division_" + str(sequence_metadata['division'].values[0]).replace(" ", "_") + "_age_" + str(sequence_metadata['age'].values[0]).replace(" ", "_") + "_sex_" + str(
+                    sequence_metadata['sex'].values[0]).replace(" ", "_")
+            except Exception as e:
+                print("sample: ", sequence_name, "\nindex: ", index, "\nerror: ", e)
+                exit(1)
             line2 = lines[line + 1]
-            alternative_genome_path = output_dir + '/' + updated_sequence_name + '.fa'
+            alternative_genome_path = fasta_dir + updated_sequence_name + '.fa'
             with open(alternative_genome_path, 'w') as genome_file:
                 genome_file.write(">" + updated_sequence_name + "\n")
                 genome_file.write(line2)
 
             # execute minimap on the genome_path
-            pas_path = pafs_dir + '/' + updated_sequence_name + '.pas'
-            vcf_path = vcfs_dir + '/' + updated_sequence_name + '.vcf'
+            pas_path = pafs_dir + updated_sequence_name + '.pas'
+            vcf_path = vcfs_dir + updated_sequence_name + '.vcf'
             res = os.system(
                 'minimap2 -cx asm20 --cs ' + reference_genome_path + ' ' + alternative_genome_path + ' > ' + pas_path)
             res = os.system(

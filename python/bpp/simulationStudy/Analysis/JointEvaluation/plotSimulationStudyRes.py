@@ -731,7 +731,7 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
 
 
     ax.set_xlabel(r"$\mu$", fontdict={'size': 30})
-    # ax.set_ylabel("Null rejected", fontdict={'size': 30})
+    # ax.set_ylabel("Power", fontdict={'size': 30})
 
     handles, labels = ax.get_legend_handles_labels()
     ax.legend(handles, labels, prop={'size': 30}, loc='upper right', frameon=False, bbox_to_anchor=(1.1, 0.88))
@@ -2106,6 +2106,39 @@ def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
 #####################################################################################
 
 
+def plot_research_proposal_figs(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
+                           EmpiricalRELAXLRThresholds, output_path_1, output_path_2):
+
+    # figure 2
+    plt.grid(False)
+    fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58], frameon=True)
+    plot_power_vs_k_across_posnum(32, axis[0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "a\n", # fig 2a
+                                  empirical=True, add_legend=True)
+    plot_power_vs_k_across_taxanum(300, axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "b\n", # fig 2b
+                                   empirical=True, add_legend=True, plot_labels=True)
+    plot_k_distribution_across_k_and_taxanum(600, axis[2], TraitRELAXComboToDf, "c\n") # fig3a
+    fig.subplots_adjust()
+    fig.tight_layout()
+    plt.savefig(output_path_1, bbox_inches='tight') #, transparent=True)
+    plt.clf()
+
+    # fig 3
+    plt.grid(False)
+    fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58], frameon=True)
+    plot_k_distribution_across_k_and_taxanum(600, axis[0], HyPhyMPComboToDf, "a\n") # fig s5a
+    plot_accuracy_vs_mu(axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf, # fig 3b
+                        EmpiricalRELAXLRThresholds, "b\n", add_ylabel=True, add_legend=True,
+                        only_of_significants=True, use_empirical=True, use_boxplot=True)
+    plot_power_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf, # fig 2c
+                        EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds, "c\n")
+    fig.subplots_adjust()
+    fig.tight_layout()
+    plt.savefig(output_path_2, bbox_inches='tight') #, transparent=True)
+    plt.clf()
+
+#####################################################################################
+
+
 if __name__ == '__main__':
 
     matplotlib.rc('xtick', labelsize=22)
@@ -2318,20 +2351,23 @@ if __name__ == '__main__':
 
     print("***********************************************\n\n")
 
-    plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-                                  EmpiricalRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds,
-                                  figures_dir + "power_and_fpr_assessment_for_results.svg",
-                                  figures_dir + "power_and_fpr_assessment_for_supp_1.svg",
-                                  figures_dir + "power_and_fpr_assessment_for_supp_2.svg")
-
-    plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path,
-                           figures_dir + "accuracy_assessment_for_results.svg",
-                           figures_dir + "accuracy_assessment_for_supp_1.svg",
-                           figures_dir + "accuracy_assessment_for_supp_2.svg",
-                           figures_dir + "accuracy_assessment_for_supp_3.svg")
+    # plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
+    #                               EmpiricalRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds,
+    #                               figures_dir + "power_and_fpr_assessment_for_results.svg",
+    #                               figures_dir + "power_and_fpr_assessment_for_supp_1.svg",
+    #                               figures_dir + "power_and_fpr_assessment_for_supp_2.svg")
+    #
+    # plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path,
+    #                        figures_dir + "accuracy_assessment_for_results.svg",
+    #                        figures_dir + "accuracy_assessment_for_supp_1.svg",
+    #                        figures_dir + "accuracy_assessment_for_supp_2.svg",
+    #                        figures_dir + "accuracy_assessment_for_supp_3.svg")
 
     # plot_duration(TraitRELAXComboToDf, figures_dir + "duration_analysis.svg")
 
     # report_power_fpr_comparison(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds)
 
-    plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, figures_dir + "hyphy_comparison_1.svg", figures_dir + "hyphy_comparison_2.svg", figures_dir + "hyphy_comparison_3.svg", figures_dir + "hyphy_comparison_4.svg", figures_dir + "hyphy_comparison_5.svg")
+    # plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, figures_dir + "hyphy_comparison_1.svg", figures_dir + "hyphy_comparison_2.svg", figures_dir + "hyphy_comparison_3.svg", figures_dir + "hyphy_comparison_4.svg", figures_dir + "hyphy_comparison_5.svg")
+
+    plot_research_proposal_figs(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf,
+                                EmpiricalHyPhyMPRELAXLRThresholds, figures_dir+"research_prop_fig2.svg", figures_dir+"research_prop_fig3.svg")
