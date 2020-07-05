@@ -28,9 +28,9 @@ def parse_biopp_history(history_path):
         index += 1
         if node != history.get_tree_root():
             node_name = (node_data_regex.search(node.name)).group(1)
-            if node_name == "missing_node":
-                node_name = "_baseInternal_" + str(index)
             node_state = (node_data_regex.search(node.name)).group(2)
+            if "missing_node" in node_name:
+                node_name = "_baseInternal_" + str(index)
             node.name = node_name
             if node_state == "0":
                 node.add_feature("label", "0")
