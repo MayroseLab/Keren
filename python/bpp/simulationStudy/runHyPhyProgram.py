@@ -25,6 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--priority', '-pr', help='priority for the submitted jobs', required=False, default=0)
     parser.add_argument('--queue', '-q', help='the name of the queue to submit jobs to', required=False, default="itaymr")
     parser.add_argument('--replicates_num', '-rn', help='number of replicates to run jobs on', required=False, default=50)
+    parser.add_argument('--use_true_histories', '-ut', help='boolean indicsting weather true (i.e., simulated) trait histories should be used, or maximum parsimony based solutions. Defalut in maximum parsimony,', required=False, default=0)
 
     args = parser.parse_args()
     input_data_path = args.input_data_path
@@ -34,6 +35,7 @@ if __name__ == '__main__':
     priority = int(args.priority)
     queue = args.queue
     replicates_num = int(args.replicates_num)
+    use_true_histories = bool(int(use_true_histories))
 
 
     set_job_env(job_files_path, error_files_path)
@@ -41,13 +43,16 @@ if __name__ == '__main__':
     jobs_counter = 0
     id_regex = re.compile("(.*?)\.bpp", re.DOTALL)
 
-    # verify that MP histories exist and if not - create them
-    res=os.system(" python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/simulationStudy/DataPreparation/CreateMPHistories.py -t " + trees_dir + ' -c ' + input_data_path + ' -o ' + input_data_path + "mp_param/ -p " + input_data_path + "relax_param/ -u 1")
+    if not use_true_histories:
+        # verify that MP histories exist and if not - create them
+        res=os.system(" python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/simulationStudy/DataPreparation/CreateMPHistories.py -t " + trees_dir + ' -c ' + input_data_path + ' -o ' + input_data_path + "mp_param/ -p " + input_data_path + "relax_param/ -u 1")
 
     for replicate in range(replicates_num):
         replicate_data_path = input_data_path + "replicate_" + str(replicate) + "/"
         sequence_data_path = replicate_data_path + "sequence_data/sequence_data_1.fas"
         labeled_tree_path = replicate_data_path + "mp_data/mp_history.nwk"
+        if use_true_histories:
+            labeled_tree_path = replicate_data_path + "character_data/true_history.nwk"
         test_category_index = 1
         first_category = get_first_state(labeled_tree_path)
         if first_category == 0:
