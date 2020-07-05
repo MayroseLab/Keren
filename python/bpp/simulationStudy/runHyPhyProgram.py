@@ -15,7 +15,7 @@ def get_first_state(tree_path):
 if __name__ == '__main__':
 
     # process input from cmd
-    parser = argparse.ArgumentParser(description='executes RELAX in Bio++ (random effects of restrictive approach) on parameter files in a designated directory')
+    parser = argparse.ArgumentParser(description='executes RELAX in Bio++ (random effects of restrictive approach) on parameter files in a designated directory using either a maximum parsimony based solution or a simulated history')
     parser.add_argument('--input_data_path', '-i', help='directory that holds the input files', required=True)
     parser.add_argument('--trees_dir', '-t', help='directory holding the trees of the data in case that MP histories need to be constructed', required=True)
     parser.add_argument('--job_files_path', '-jd', help='path to hold the RELAX inference jobs and their output',
