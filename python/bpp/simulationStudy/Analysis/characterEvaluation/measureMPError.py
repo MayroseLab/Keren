@@ -239,15 +239,16 @@ if __name__ == '__main__':
     taxa_num = int(taxanum_regex.search(input_dir).group(1))
 
     for path in os.listdir(input_dir):
-        record = {"tree_length": tree_length, "mu": mu, "#taxa": taxa_num, "expected(#transitions)": expected_transitions_num}
-        full_path = input_dir + path
-        record["replicate"] = int(replicate_regex.search(full_path).group(1))
-        base_tree_path = base_trees_dir + str(record["replicate"]) + ".nwk"
-        true_history = parse_biopp_history(full_path + "/character_data/true_history.nwk")
-        record["simulated(#transitions)"] = count_transitions(true_history)
-        mp_history = parse_biopp_history(full_path + "/mp_data/mp_history.nwk")
-        record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path)
-        df = df.append(record, ignore_index=True)
+        if "replicate" in path:
+            record = {"tree_length": tree_length, "mu": mu, "#taxa": taxa_num, "expected(#transitions)": expected_transitions_num}
+            full_path = input_dir + path
+            record["replicate"] = int(replicate_regex.search(full_path).group(1))
+            base_tree_path = base_trees_dir + str(record["replicate"]) + ".nwk"
+            true_history = parse_biopp_history(full_path + "/character_data/true_history.nwk")
+            record["simulated(#transitions)"] = count_transitions(true_history)
+            mp_history = parse_biopp_history(full_path + "/mp_data/mp_history.nwk")
+            record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path)
+            df = df.append(record, ignore_index=True)
 
     df.to_csv(output_path)
 
