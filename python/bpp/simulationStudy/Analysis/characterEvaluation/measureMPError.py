@@ -249,6 +249,7 @@ if __name__ == '__main__':
         record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path)
         df = df.append(record, ignore_index=True)
 
+    df.to_csv(output_path)
 
 
 
