@@ -263,7 +263,7 @@ if __name__ == '__main__':
     tree_length_regex = re.compile("tbl_(.*?)_")
     mu_regex = re.compile("mu_(.*?)_")
     taxanum_regex = re.compile("([^/]*?)_taxa")
-    replicate_regex = re.compile("replicate_([^/].*?)")
+    replicate_regex = re.compile("replicate_(.*?)\/")
 
     tree_length = int(tree_length_regex.search(input_dir).group(1))
     mu = int(mu_regex.search(input_dir).group(1))
