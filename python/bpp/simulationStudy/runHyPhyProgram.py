@@ -53,10 +53,11 @@ if __name__ == '__main__':
         labeled_tree_path = replicate_data_path + "mp_data/mp_history.nwk"
         if use_true_histories:
             labeled_tree_path = replicate_data_path + "character_data/true_history.nwk"
-        test_category_index = 1
-        first_category = get_first_state(labeled_tree_path)
-        if first_category == 0:
-            test_category_index = 2
+        # test_category_index = 1 # compatible with hyphy 2.3.720171228beta(MP) but in 2.5.8 the first state is always 0
+        # first_category = get_first_state(labeled_tree_path)
+        # if first_category == 0:
+        #     test_category_index = 2
+        test_category_index = 2
         job_name = "HyPhy_" + str(replicate)
         file_name = job_name + ".sh"
         cmds = ['source ~/.bashrc' , 'conda activate hyphy' , '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n' + str(test_category_index) + '\\\\n2\\\\n" && cat) | hyphy'] # switched with HYPHYMP
