@@ -275,14 +275,14 @@ if __name__ == '__main__':
     for path in os.listdir(input_dir):
         if "replicate" in path:
             record = {"tree_length": tree_length, "mu": mu, "#taxa": taxa_num, "k": k, "expected(#transitions)": expected_transitions_num}
-            full_path = input_dir + path
+            full_path = input_dir + path + "/"
             record["replicate"] = int(replicate_regex.search(full_path).group(1))
             if not os.path.exists(base_trees_dir):
                 res = os.system("mkdir -p " + base_trees_dir)
-            base_tree_path = create_base_tree(full_path + "/character_data/true_history.nwk", base_trees_dir + str(record["replicate"]) + ".nwk")
-            true_history = parse_biopp_history(full_path + "/character_data/true_history.nwk", base_tree_path)
+            base_tree_path = create_base_tree(full_path + "character_data/true_history.nwk", base_trees_dir + str(record["replicate"]) + ".nwk")
+            true_history = parse_biopp_history(full_path + "character_data/true_history.nwk", base_tree_path)
             record["simulated(#transitions)"] = count_transitions(true_history)
-            mp_history = parse_biopp_history(full_path + "/mp_data/mp_history.nwk", base_tree_path)
+            mp_history = parse_biopp_history(full_path + "mp_data/mp_history.nwk", base_tree_path)
             record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path)
             df = df.append(record, ignore_index=True)
 
