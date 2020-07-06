@@ -259,20 +259,22 @@ if __name__ == '__main__':
     output_path = args.output_path
 
     # initialize an output dataframe
-    df = pd.DataFrame(columns=["tree_length", "mu", "#taxa", "expected(#transitions)", "simulated(#transitions)",  "replicate", "distance(true_history,mp_history)"])
+    df = pd.DataFrame(columns=["tree_length", "mu", "#taxa", "k", "expected(#transitions)", "simulated(#transitions)",  "replicate", "distance(true_history,mp_history)"])
     tree_length_regex = re.compile("tbl_(.*?)_")
     mu_regex = re.compile("mu_(.*?)_")
     taxanum_regex = re.compile("([^/]*?)_taxa")
+    k_regex = re.compile("k_(.*?)\/")
     replicate_regex = re.compile("replicate_(.*?)\/")
 
     tree_length = int(tree_length_regex.search(input_dir).group(1))
     mu = int(mu_regex.search(input_dir).group(1))
     expected_transitions_num = tree_length * mu
     taxa_num = int(taxanum_regex.search(input_dir).group(1))
+    k = float(k_regex.search(input_dir).group(1))
 
     for path in os.listdir(input_dir):
         if "replicate" in path:
-            record = {"tree_length": tree_length, "mu": mu, "#taxa": taxa_num, "expected(#transitions)": expected_transitions_num}
+            record = {"tree_length": tree_length, "mu": mu, "#taxa": taxa_num, "k": k, "expected(#transitions)": expected_transitions_num}
             full_path = input_dir + path
             record["replicate"] = int(replicate_regex.search(full_path).group(1))
             if not os.path.exists(base_trees_dir):
