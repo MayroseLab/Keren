@@ -53,14 +53,17 @@ if __name__ == '__main__':
         labeled_tree_path = replicate_data_path + "mp_data/mp_history.nwk"
         if use_true_histories:
             labeled_tree_path = replicate_data_path + "character_data/true_history.nwk"
-        # test_category_index = 1 # compatible with hyphy 2.3.720171228beta(MP) but in 2.5.8 the first state is always 0
-        # first_category = get_first_state(labeled_tree_path)
-        # if first_category == 0:
-        #     test_category_index = 2
-        test_category_index = 2
+        test_category_index = 1 # compatible with hyphy 2.3.720171228beta(MP) but in 2.5.8 the first state is always 0
+        first_category = get_first_state(labeled_tree_path)
+        if first_category == 0:
+            test_category_index = 2
+        # test_category_index = 2 # compatible with hyphy 2.5.8
         job_name = "HyPhy_" + str(replicate)
         file_name = job_name + ".sh"
-        cmds = ['source ~/.bashrc' , 'conda activate hyphy' , '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n' + str(test_category_index) + '\\\\n2\\\\n" && cat) | hyphy'] # switched with HYPHYMP
+        # for hyphy 2.5.8:
+        # cmds = ['source ~/.bashrc' , 'conda activate hyphy' , '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n' + str(test_category_index) + '\\\\n2\\\\n" && cat) | hyphy'] # switched with HYPHYMP
+        # for hyphy 2.3.720171228beta(MP)
+        cmds = ['module load  hyphy/hyphy-gnu-2.3.8   mpi/openmpi-1.10.4  gcc/gcc-7.2.0', '(printf "1\\\\n7\\\\n1\\\\n' + sequence_data_path + '\\\\n' + labeled_tree_path + '\\\\n' + str(test_category_index) + '\\\\n2\\\\n" && cat) | HYPHYMP']
         touch_file_path = job_name + "_flag_done"
         full_job = create_job_file(job_name, cmds, file_name, error_files_path, job_files_path, priority, 1,
                                                        touch_file_path, limit_nodes=False, python=False,
