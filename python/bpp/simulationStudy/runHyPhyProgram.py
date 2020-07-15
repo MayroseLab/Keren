@@ -43,7 +43,7 @@ if __name__ == '__main__':
     jobs_counter = 0
     id_regex = re.compile("(.*?)\.bpp", re.DOTALL)
 
-    if not use_true_histories:
+    if not use_true_histories and not os.path.exists(input_data_path + "mp_param/"):
         # verify that MP histories exist and if not - create them
         res=os.system(" python /groups/itay_mayrose/halabikeren/myScripts/python/bpp/simulationStudy/DataPreparation/CreateMPHistories.py -t " + trees_dir + ' -c ' + input_data_path + ' -o ' + input_data_path + "mp_param/ -p " + input_data_path + "relax_param/ -u 1")
 
