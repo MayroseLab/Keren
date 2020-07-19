@@ -259,7 +259,7 @@ if __name__ == '__main__':
     output_path = args.output_path
 
     # initialize an output dataframe
-    df = pd.DataFrame(columns=["tree_length", "mu", "#taxa", "k", "expected(#transitions)", "simulated(#transitions)",  "replicate", "distance(true_history,mp_history)"])
+    df = pd.DataFrame(columns=["tree_length", "mu", "#taxa", "k", "replicate", "expected(#transitions)", "simulated(#transitions)",  "mp(#transitions)", "distance(true_history,mp_history)"])
     tree_length_regex = re.compile("tbl_(.*?)_")
     mu_regex = re.compile("mu_(.*?)_")
     taxanum_regex = re.compile("([^/]*?)_taxa")
@@ -282,6 +282,7 @@ if __name__ == '__main__':
             base_tree_path = create_base_tree(full_path + "character_data/true_history.nwk", base_trees_dir + str(record["replicate"]) + ".nwk")
             true_history = parse_biopp_history(full_path + "character_data/true_history.nwk", base_tree_path)
             record["simulated(#transitions)"] = count_transitions(true_history)
+            record["mp(#transitions)"] = count_transitions(mp_history)
             mp_history = parse_biopp_history(full_path + "mp_data/mp_history.nwk", base_tree_path)
             record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path)
             df = df.append(record, ignore_index=True)
