@@ -281,9 +281,9 @@ if __name__ == '__main__':
                 res = os.system("mkdir -p " + base_trees_dir)
             base_tree_path = create_base_tree(full_path + "character_data/true_history.nwk", base_trees_dir + str(record["replicate"]) + ".nwk")
             true_history = parse_biopp_history(full_path + "character_data/true_history.nwk", base_tree_path)
+            mp_history = parse_biopp_history(full_path + "mp_data/mp_history.nwk", base_tree_path)
             record["simulated(#transitions)"] = count_transitions(true_history)
             record["mp(#transitions)"] = count_transitions(mp_history)
-            mp_history = parse_biopp_history(full_path + "mp_data/mp_history.nwk", base_tree_path)
             record["distance(true_history,mp_history)"] = compute_distance(true_history, mp_history, base_tree_path)
             df = df.append(record, ignore_index=True)
 
