@@ -1,6 +1,7 @@
 import re, argparse, os
 from ete3 import Tree
 import pandas as pd
+import numpy as np
 
 # add internal node names to base tree
 def create_base_tree(input_tree_path, output_path):
@@ -39,7 +40,36 @@ def parse_biopp_history(history_path, base_tree_path):
             else:
                 node.add_feature("label", "1")
         else:
-            node.add_feature("label", "0") # root is always BG
+            # check if the root has more than 2 children, and if yes, reroot the tree in accordance with the base tree
+            if len(node.get_children()) > 2:
+                original_children = base_tree.get_tree_root().get_children()
+                current_children = history.get_children()
+                missing_node = original_children[0]
+                missing_children = []
+                in_curr = False
+                for orig_node in original_children:
+                    for curr_node in current_children:
+                        if orig_node.name in curr_node.name:
+                            in_curr = True
+                    if not in_curr:
+                        missing_node = orig_node
+                    in_curr = False
+                apparent_node = [node for node in original_children if not node == missing_node][0]
+                missing_children = [node for node in current_children if not apparent_node.name in node.name]
+                new = history.get_tree_root().add_child(child=None, name=missing_node.name, dist=missing_node.dist, support=None)
+                # now make the two extra children of the current root the children of the new node
+                for child in missing_children:
+                    child.detach()
+                    new.add_child(child=child)
+                # set the label as pwe the mp solution
+                if new.get_children()[0].label == new.get_children()[1].label:
+                    new.add_feature("label", new.get_children()[0].label)
+                else:
+                    apparent_node_in_history = [node for node in history.get_tree_root().get_children() if apparent_node.name in node.name][0]
+                    new.add_feature("label", apparent_node_in_history.label)
+                node.add_feature("label", new.label)  # root is always BG
+            else:
+                node.add_feature("label", node.get_children()[0].label)
     history.get_tree_root().name = "root"
     return history
 
