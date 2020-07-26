@@ -1,9 +1,4 @@
-import os
-for i in range(2001):
-    res=os.system("qsub /groups/itay_mayrose/halabikeren/test.sh")
-
 import sys, re, argparse, os
-from ete3 import Tree
 sys.path.append("/groups/itay_mayrose/halabikeren/myScripts/python/")
 from utils.createJobFile import set_job_env, create_job_file
 
