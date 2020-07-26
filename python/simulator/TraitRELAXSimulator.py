@@ -141,7 +141,7 @@ def fix_tree_str_format(tree_str):
 
 
 # don't stop until you get a simulation with both types of dats
-def simulate_character_data(character_model_mu, character_model_pi0, tree_path, output_dir):
+def simulate_character_data(character_model_mu, character_model_pi0, tree_path, output_dir, biopp_dir="/groups/itay_mayrose/halabikeren/programs/Bio++/"):
     return_res = False
     while not return_res:
         character_output_dir = output_dir + "character_data/"
@@ -162,7 +162,7 @@ def simulate_character_data(character_model_mu, character_model_pi0, tree_path, 
 
         # call to simulator with parameters file
         res = os.system(
-            "/groups/itay_mayrose/halabikeren/biopp/bppsuite/build/bppSuite/traitsimulator param=" + character_simulation_parameters_path)
+            biopp_dir + "bppsuite/build/bppSuite/traitsimulator param=" + character_simulation_parameters_path)
         fix_tree_format(true_history_path)
 
         # write the tree without labels into a file
@@ -759,6 +759,7 @@ if __name__ == '__main__':
     parser.add_argument('--initial_nuc3_theta2', '-in3t2',
                         help='Bio++ parameter 3_Full.theta from which simulation values of codon frequencies will be derived',
                         required=False, default=0.5)
+    parser.add_argument('--biopp_dir', '-bpp', help='directory to the Bio++ libraries in which the character data simulator can be found', required=False, default='/groups/itay_mayrose/halabikeren/programs/Bio++/')
 
     args = parser.parse_args()
     output_dir = args.output_dir
@@ -830,6 +831,8 @@ if __name__ == '__main__':
 
     scaling_factor = float(args.scaling_factor)
 
+    biopp_dir = args.biopp_dir
+
     rep_regex = re.compile("(\d*).nwk", re.MULTILINE | re.DOTALL)
     for tree_filepath in os.listdir(trees_dir):
         tree_path = trees_dir + tree_filepath
@@ -857,7 +860,7 @@ if __name__ == '__main__':
             true_history_path, character_data_path, history_tree_path = simulate_character_data(character_model_mu,
                                                                                                 character_model_pi0,
                                                                                                 tree_path,
-                                                                                                simulation_output_dir)
+                                                                                                simulation_output_dir, biopp_dir=biopp_dir)
         else:
             character_data_path = orig_character_data_path
         if input_tree_path == "":
