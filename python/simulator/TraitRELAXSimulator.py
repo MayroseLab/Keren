@@ -56,7 +56,7 @@ def fix_tree_format(tree_path, base_tree=False):
     format=1
     if base_tree:
         format=5
-    tree = Tree(tree_path, format=format)
+    tree = Tree(tree_path, format=1)
     tree_str = tree.write(outfile=None, format=format)
     bad_format_numbers_regex = re.compile(":(\d*\.?\d*e-\d*)", re.MULTILINE | re.DOTALL)
     for match in bad_format_numbers_regex.finditer(tree_str):
