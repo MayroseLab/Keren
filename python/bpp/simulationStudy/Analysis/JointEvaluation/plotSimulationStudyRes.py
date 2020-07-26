@@ -29,7 +29,8 @@ simulation_study_output_dir = "C:/Users/ItayMNB7/Google Drive/PhD/TraitRELAX/Res
 TR_simulation_study_output_dir = simulation_study_output_dir + "/TraitRELAX"
 R_simulation_study_output_dir = simulation_study_output_dir + "/RELAXWithTrueHistory"
 R_MP_simulation_study_output_dir = simulation_study_output_dir + "/RELAXWithMPHistory"
-R_HyPhy_MP_simulation_study_output_dir = simulation_study_output_dir + "/RELAX_HyPhy"
+R_HyPhy_MP_simulation_study_output_dir = simulation_study_output_dir + "/RELAX_HyPhy_MP_v2.3.7"
+R_HyPhy_TH_simulation_study_output_dir = simulation_study_output_dir + "/RELAX_HyPhy_TH_v2.3.7"
 output_dir = simulation_study_output_dir
 grid_data_path = output_dir + "/grid_data.csv"
 
@@ -104,7 +105,7 @@ def find_empirical_LR_threshold(combo_to_df, tbl, mu, pi0, taxa_num, positions_n
 
 
 #####################################################################################
-
+#v2.37
 def extract_hyphy_data(input_dir):
 
     colname_to_regex = {"replicate": re.compile("replicate_(\d*)", re.MULTILINE | re.DOTALL),
@@ -135,6 +136,7 @@ def extract_hyphy_data(input_dir):
     for path in os.listdir(input_dir):
         if not "power8" in path:
             continue
+        print("input=", input_dir+path)
         record = dict()
         record["job_id"] = colname_to_regex["job_id"].search(path).group(1)
         with open(input_dir+path, "r") as infile:
@@ -182,6 +184,130 @@ def extract_hyphy_data(input_dir):
         df = df.append(record, ignore_index=True)
     return df
 
+#####################################################################################
+
+#v.2.5.8
+def _extract_hyphy_data(input_dir):
+
+    colname_to_regex = {"replicate": re.compile("replicate_(\d*)", re.MULTILINE | re.DOTALL),
+                                      "null_logl": re.compile("Fitting the null \(K \:= 1\) model.*?Log\(L\)\s*=\s*(-\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "alternative_logl": re.compile("Fitting the alternative model.*Log\(L\)\s*=\s*(-\d*\.?\d*).*?Fitting the null.*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "pvalue" : re.compile("Likelihood ratio test\s*\*\*p\s*=\s*(\d*\.?\d*)\*\*", re.MULTILINE | re.DOTALL),
+                                      "simulated_omega0" : re.compile("_p_(\d*\.?\d*)_omega1_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                                      "simulated_omega1" : re.compile("_omega1_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                                      "simulated_omega2": re.compile("_omega2_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                                      "simulated_p0" : re.compile("_theta1_(\d*\.?\d*)_", re.MULTILINE | re.DOTALL),
+                                      "simulated_p1" : re.compile("_theta1_(\d*\.?\d*)_theta2_(\d*\.?\d*)", re.MULTILINE | re.DOTALL),
+                                      "simulated_k" : re.compile("\/k_(\d*\.?\d*)\/", re.MULTILINE | re.DOTALL),
+                                      "null_omega0": re.compile("Fitting the null(.*?\|){12}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "null_omega1": re.compile("Fitting the null(.*?\|){17}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "null_omega2": re.compile("Fitting the null(.*?\|){22}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "null_p0": re.compile("Fitting the null(.*?\|){13}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "null_p1": re.compile("Fitting the null(.*?\|){18}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "alternative_omega0": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){12}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "alternative_omega1": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){17}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "alternative_omega2": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){22}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "alternative_p0": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){13}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "alternative_p1": re.compile("Fitting the alternative model.*?The following rate distribution was inferred for \*\*reference\*\* branches(.*?\|){18}\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "alternative_k": re.compile("Relaxation\/intensification parameter\s*\(K\)\s*=\s*(\d*\.?\d*).*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL),
+                                      "job_id" : re.compile("(\d*)\.power8", re.MULTILINE | re.DOTALL)}
+    colnames = list(colname_to_regex.keys()) + ["LR", "significant", "correctDirection", "job_id"]
+    df = pd.DataFrame(columns=colnames)
+
+    for path in os.listdir(input_dir):
+        # print("input=", input_dir + path)
+        if not "power8" in path:
+            continue
+        record = dict()
+        record["job_id"] = colname_to_regex["job_id"].search(path).group(1)
+        with open(input_dir+path, "r") as infile:
+            content = infile.read()
+        if content.count("Fitting the partitioned descriptive model") > 1:
+            print("two fittings of partitioned descriptive")
+            exit(1)
+        for colname in list(colname_to_regex.keys()):
+            test_regex = re.compile("The following rate distribution for test/reference branches was inferred(.*?)----\n.*?[Fitting the partitioned descriptive model]*", re.MULTILINE | re.DOTALL)
+            test_content = test_regex.search(content).group(1)
+            if colname == "simulated_omega0":
+                match = colname_to_regex[colname].search(content)
+                p = match.group(1)
+                omega1 = match.group(2)
+                record[colname] = float(p) * float(omega1)
+            elif colname == "simulated_p1":
+                match = colname_to_regex[colname].search(content)
+                theta1 = match.group(1)
+                theta2 = match.group(2)
+                record[colname] = (1-float(theta1))*float(theta2)
+            elif not "simulated" in colname and "omega" in colname: # 6.7.20 - problem with the omegas: hyphy can return only w0 and w2 (in which case I assume w1 was close to w0?)
+                if test_content.count('|') == 25: # cond of 3 omegas:
+                    matches = [match for match in colname_to_regex[colname].finditer(content)]
+                    try:
+                        record[colname] = float(matches[-1].group(2))
+                    except Exception as e:
+                        print("test content: ", test_content)
+                        print("error: ", e)
+                        print("matches[-1].group(0)", matches[-1].group(0))
+                        print("regex: ", colname_to_regex[colname].pattern)
+                        exit(1)
+                else:
+                    relevant_colname = colname
+                    if "omega1" in colname:
+                        relevant_colname = colname.replace("omega1", "omega0")
+                    elif "omega2" in colname:
+                        relevant_colname = colname.replace("omega2", "omega1")
+                    matches = [match for match in colname_to_regex[relevant_colname].finditer(content)]
+                    record[colname] = float(matches[-1].group(2))
+            elif not "simulated" in colname and ("p0" in colname or "p1" in colname):
+                if test_content.count('|') == 25: # cond of 3 omegas:
+                    matches = [match for match in colname_to_regex[colname].finditer(content)]
+                    record[colname] = float(matches[-1].group(2)) / 100
+                else:
+                    relevant_colname = colname
+                    if "omega1" in colname:
+                        relevant_colname = colname.replace("omega1", "omega0")
+                    elif "omega2" in colname:
+                        relevant_colname = colname.replace("omega2", "omega1")
+                    matches = [match for match in colname_to_regex[relevant_colname].finditer(content)]
+                    record[colname] = float(matches[-1].group(2)) / 100
+
+            elif colname != "job_id":
+                # print("colname: ", colname, "\nregex: ", colname_to_regex[colname].pattern, "\npath: ", input_dir+path)
+                matches = [match for match in colname_to_regex[colname].finditer(content)]
+                try:
+                    record[colname] = float(matches[-1].group(1))
+                except Exception as e:
+                    print("colname: ", colname)
+                    print("regex: ", colname_to_regex[colname].pattern)
+                    print("matches[-1]: ", matches[-1].group(0))
+                    print("error: ", e)
+                    exit(1)
+
+        record["LR"] = 2 * (record["alternative_logl"] - record["null_logl"])
+        pvalue = doLRT(record["null_logl"], record["alternative_logl"])
+        if abs(pvalue - record["pvalue"]) > 0.5:
+            # record["pvalue"] = pvalue
+            # print("error! computed pvalue is different than the one reported by hyhphy!")
+            # print("input path: ", input_dir + path)
+            print("replicate: ", record["replicate"])
+            print("null logl: ", record["null_logl"])
+            print("alternative logl: ", record["alternative_logl"])
+            print("input: ", input_dir+path)
+            print("computed pvalue: ", pvalue)
+            print("reported pvalue: ", record["pvalue"], "\n")
+            # exit(1)
+        if pvalue < 0.05:
+            record["significant"] = 1
+        else:
+            record["significant"] = 0
+        if (record["simulated_k"] < 1 and record["alternative_k"] < 1) or (record["simulated_k"] > 1 and record["alternative_k"] > 1) or (record["simulated_k"] == 1 and record["alternative_k"] == 1):
+            record["correctDirection"] = 1
+        else:
+            record["correctDirection"] = 0
+
+        df = df.append(record, ignore_index=True)
+    return df
+
+#####################################################################################
 
 # extract data from TraitRELAX execution output files in input_dir return a dataframe
 def extract_TraitRELAX_data(input_dir):
@@ -685,7 +811,7 @@ def plot_power_vs_k_across_taxanum(positions_num, ax, TraitRELAXComboToDf, Empir
 # y axis: power
 # 2 curves: one for TraitRELAX standard execution (full), another for TraitRELAX given the true history (dashed)
 def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
-                     EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPThresholds, title):
+                     EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPThresholds, title, use_empirical_in_real=True):
     # gather the data
     tbl = 4
     pi0 = 0.5
@@ -709,7 +835,10 @@ def plot_power_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, R
         LR_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
         sig_fraction_standard_execution.append(
             standard_df.loc[(standard_df["LR"] >= LR_threshold)].shape[0] / standard_df.shape[0])
-        LR_threshold = EmpiricalRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+        if use_empirical_in_real:
+            LR_threshold = EmpiricalRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+        else:
+            LR_threshold = 3.84
         sig_fraction_given_true_history.append(
             given_true_history_df.loc[(given_true_history_df["LR"] >= LR_threshold)].shape[0] / given_true_history_df.shape[0])
         given_mp_history_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
@@ -881,7 +1010,7 @@ def plot_empirical_LRs_vs_tbl(ax, EmpiricalTraitRELAXLRThresholds, EmpiricalRELA
 # figure 1: same as plots 1 + 2 above for 16 and 64 taxa + power vs. tbl and empirical LR vs. tbl
 def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
                                   EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds,
-                                  output_path_res, output_path_supp_1, output_path_supp_2):
+                                  output_path_res, output_path_supp_1, output_path_supp_2, use_empirical_in_real=True):
     # figure 0 (for results)
     plt.grid(False)
     fig, axis = plt.subplots(nrows=1, ncols=3, sharex="none", sharey="none", figsize=[3 * 8.2 + 2, 7.58], frameon=True)
@@ -889,7 +1018,7 @@ def plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThre
                                   empirical=True, add_legend=True)
     plot_power_vs_k_across_taxanum(300, axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, "b\n",
                                    empirical=True, add_legend=True, plot_labels=True)
-    plot_power_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf, EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds, "c\n")
+    plot_power_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf, EmpiricalRELAXLRThresholds, MPComboToDf, EmpiricalMPRELAXLRThresholds, "c\n", use_empirical_in_real=use_empirical_in_real)
     fig.subplots_adjust()
     fig.tight_layout()
     plt.savefig(output_path_res, bbox_inches='tight') #, transparent=True)
@@ -983,21 +1112,22 @@ def global_accuracy(df, debug=False):
 
     return error
 
-def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalMPLRThresholds, title, add_legend=False, add_ylabel=True, use_global_accuracy=False, only_of_significants=False, use_empirical=False):
+def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalMPLRThresholds, THComboToDf, EmpiricalTHLRThresholds, title, add_legend=False, add_ylabel=True, use_global_accuracy=False, only_of_significants=False, use_empirical=False, add_th=False):
     # declare fixed parameters
     tbl = 4
     mu = 8 # 4 - just a test
     pi0 = 0.5
     taxa_num = 32
-    positions_num = 300
+    positions_num = 600 #300
 
     ax.grid(False)
     rel_error_sim_vs_standard = []
     rel_error_given_mp_history_vs_standard = []
+    rel_error_given_th_history_vs_standard = []
     for k in k_values_options:
         standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
         if only_of_significants and use_empirical:
-            empirical_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]  
+            empirical_threshold = EmpiricalTraitRELAXLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
             standard_df = standard_df.loc[(standard_df["LR"] >= empirical_threshold)]
         elif only_of_significants:
             standard_df = standard_df.loc[(standard_df["significant"] == 1)]
@@ -1007,19 +1137,35 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds,
             given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["LR"] >= empirical_threshold)]
         elif only_of_significants:
             given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["significant"] == 1)]
+        given_th_history_df = THComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
+        if only_of_significants and use_empirical:
+            empirical_threshold = EmpiricalTHLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+            given_th_history_df = given_th_history_df.loc[(given_th_history_df["LR"] >= empirical_threshold)]
+        elif only_of_significants:
+            given_th_history_df = given_th_history_df.loc[(given_th_history_df["significant"] == 1)]
         if use_global_accuracy:
             rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
             rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df))) #, debug=True)))
+            rel_error_given_th_history_vs_standard.append(
+                np.mean(global_accuracy(given_th_history_df)))  # , debug=True)))
         else:
             rel_error_sim_vs_standard.append((abs(
                 np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
             rel_error_given_mp_history_vs_standard.append(abs(
                 np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
                     given_mp_history_df["simulated_k"] + 0.000001)).mean())
+            rel_error_given_th_history_vs_standard.append(abs(
+                np.log(given_th_history_df["alternative_k"] + 0.000001) - np.log(
+                    given_th_history_df["simulated_k"] + 0.000001)).mean())
 
     ax.plot(k_values_options, rel_error_sim_vs_standard, color='black', linestyle='solid', label="TraitRELAX", lw=2.5)
+    relax_label = "RELAX"
+    if add_th:
+        relax_label = "RELAX+MP"
+        ax.plot(k_values_options, rel_error_given_th_history_vs_standard, color='black', linestyle="dotted",
+                label="RELAX+TH", lw=2.5)
     ax.plot(k_values_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dashed",
-            label="RELAX", lw=2.5)
+            label=relax_label, lw=2.5)
 
     ax.set_xticks(k_values_options)
     ax.set_xlabel(r"$k$", fontdict={'size': 30})
@@ -1031,7 +1177,7 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds,
     if use_global_accuracy:
         ax.set_yticks([0, 1, 2, 3, 4, 5, 6])
     else:
-        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
+        ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6])
 
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
@@ -1046,8 +1192,8 @@ def plot_accuracy_vs_k(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds,
 # y axis: mean relative error of k = abs(simulated_k-inferred_k)/simulated_k (over all alternative datasets)
 # 2 curves: one for TraitRELAX standard execution (full),
 #           another for TraitRELAX given the true history (dashed),
-def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalMPLRThresholds, title, add_legend=False, add_ylabel=False,
-                        use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False, add_mp=False, use_boxplot=True):
+def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalMPLRThresholds, THComboToDf, EmpiricalTHLRThresholds, title, add_legend=False, add_ylabel=False,
+                        use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False, add_mp=False, use_boxplot=True, add_th=False):
     # gather the data
     tbl = 4
     pi0 = 0.5
@@ -1059,6 +1205,7 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds
     if not use_boxplot:
         rel_error_sim_vs_standard = []
         rel_error_given_mp_history_vs_standard = []
+        rel_error_given_th_history_vs_standard = []
         for mu in mu_local_options:
             standard_df = TraitRELAXComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
             if aggregate_k:
@@ -1077,20 +1224,39 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds
             elif only_of_significants:
                 given_mp_history_df = given_mp_history_df.loc[(given_mp_history_df["significant"] == 1)]
 
+            given_th_history_df = THComboToDf[(tbl, mu, pi0, taxa_num, positions_num, 0.5)]
+            if aggregate_k:
+                given_th_history_df = pd.concat([THComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)] for k in k_values_options  if (tbl, mu, pi0, taxa_num, positions_num, k) in MPComboToDf])
+            if only_of_significants and use_empirical:
+                empirical_threshold = EmpiricalTHLRThresholds[(tbl, mu, pi0, taxa_num, positions_num)]
+                given_th_history_df = given_th_history_df.loc[(given_th_history_df["LR"] >= empirical_threshold)]
+            elif only_of_significants:
+                given_th_history_df = given_th_history_df.loc[(given_th_history_df["significant"] == 1)]
+
             if use_global_accuracy:
                 rel_error_sim_vs_standard.append(np.mean(global_accuracy(standard_df)))
                 rel_error_given_mp_history_vs_standard.append(np.mean(global_accuracy(given_mp_history_df)))
+                rel_error_given_th_history_vs_standard.append(np.mean(global_accuracy(given_th_history_df)))
             else:
                 rel_error_sim_vs_standard.append((abs(
                     np.log(standard_df["alternative_k"] + 0.000001) - np.log(standard_df["simulated_k"] + 0.000001))).mean())
                 rel_error_given_mp_history_vs_standard.append(abs(
                     np.log(given_mp_history_df["alternative_k"] + 0.000001) - np.log(
                         given_mp_history_df["simulated_k"] + 0.000001)).mean())
+                rel_error_given_th_history_vs_standard.append(abs(
+                    np.log(given_th_history_df["alternative_k"] + 0.000001) - np.log(
+                        given_th_history_df["simulated_k"] + 0.000001)).mean())
 
         ax.plot(mu_local_options, rel_error_sim_vs_standard, color='black', label="TraitRELAX", linestyle='solid', lw=2.5)
+        relax_label = "RELAX"
+        if add_th:
+            relax_label = relax_label + "+MP"
+            ax.plot(mu_local_options, rel_error_given_th_history_vs_standard, color='black', linestyle="dotted",
+                label="RELAX_TH", lw=2.5)
         if add_mp:
             ax.plot(mu_local_options, rel_error_given_mp_history_vs_standard, color='black', linestyle="dashed",
-                label="RELAX", lw=2.5)
+                label=relax_label, lw=2.5)
+
 
     else:
         mu_and_method_to_combo = {(1, 'TraitRELAX'): 0, (1, 'RELAX'): 1.6, (2, 'TraitRELAX'): 4.8, (2, 'RELAX'): 6.4, (4, 'TraitRELAX'): 8.0,
@@ -1136,8 +1302,9 @@ def plot_accuracy_vs_mu(ax, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds
     else:
         if use_boxplot:
             ax.set_yticks([0, 0.2, 0.4, 0.6, 0.8, 1])
+            #ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6, 6.5, 7])
         else:
-            ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
+            ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 5.5, 6])
     ax.yaxis.set_major_formatter(FormatStrFormatter('%.1f'))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
@@ -1413,7 +1580,6 @@ def plot_accuracy_vs_k_across_taxa_num(positions_num, ax, TraitRELAXComboToDf, E
         handles, labels = ax.get_legend_handles_labels()
         ax.legend(handles, labels, loc='best', prop={'size': 30}, frameon=False)
 
-
 def plot_2d_grid(ax, grid_data_path, title, dist):
     # collect data
     grid_data = pd.read_csv(grid_data_path, header=1)
@@ -1673,12 +1839,75 @@ def plot_k_distribution_across_k_and_taxanum(positions_num, ax, comboToDf, title
     ax.grid(False)
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
     ax.set_xticklabels(["", "0.2", "", "", "1", "", "", "2", ""])
-    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5])
+    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+    ax.set_xlabel(r"$k$", fontdict={'size': 30})
+    ax.set_ylabel(r"$\^k$", fontdict={'size': 30})
+
+def plot_k_distribution_comp_across_k_and_taxanum(positions_num, ax, MPComboToDf, THComboToDf, title):
+    # declare fixed parameters
+    tbl = 4
+    mu = 8
+    pi0 = 0.5
+    zorder_index = 1
+
+    # collect the  data
+    k_values_to_plot = [0.2, 1, 2]
+    taxanum_to_combo = {(0.2, 16, 0): 0, (0.2, 16, 1): 0.3, (0.2, 32, 0): 0.6, (0.2, 32, 1): 0.8, (0.2, 64, 0): 1.1, (0.2, 64, 1): 1.4,
+                        (1, 16, 0): 2, (1, 16, 1): 2.3, (1, 32, 0): 2.6, (1, 32, 1): 2.9,(1, 64, 0): 3.2, (1, 64, 1): 3.5, (2, 16, 0): 4.1,
+                        (2, 16, 1): 4.4, (2,32,0): 4.7, (2,32,1): 5, (2,64,0): 5.3, (2, 64, 1): 5.6}
+    for k in k_values_to_plot:
+        boxplots = []
+        for taxa_num in taxa_num_options:
+            mp_df = MPComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
+            th_df = THComboToDf[(tbl, mu, pi0, taxa_num, positions_num, k)]
+            filetred_mp_df = mp_df.loc[(df["alternative_k"] < 3)]
+            filetred_th_df = th_df.loc[(df["alternative_k"] < 3)]
+            mp_k_values = filetred_mp_df["alternative_k"]
+            th_k_values = filetred_th_df["alternative_k"]
+            boxplots.append(ax.boxplot(mp_k_values, widths=0.2, whis=[5, 95], showfliers=False, patch_artist=True,
+                                       positions=[taxanum_to_combo[(k, taxa_num, 0)]],
+                                       zorder=zorder_index, medianprops=dict(linewidth=6, color='k')))  # , color=colors[codon_positions_num_options.index[positions_num]]
+            # TO DO: set here different boxprops
+            boxplots.append(ax.boxplot(th_k_values, widths=0.2, whis=[5, 95], showfliers=False, patch_artist=True,
+                                       positions=[taxanum_to_combo[(k, taxa_num, 1)]],
+                                       zorder=zorder_index, medianprops=dict(linewidth=6,
+                                                                             color='k')))  # , color=colors[codon_positions_num_options.index[positions_num]]
+            zorder_index += 1
+        for boxplot in boxplots:
+            box = boxplot['boxes'][0]
+            box.set(edgecolor = 'white')
+            box.set(linewidth = 0.75)
+            box.set(facecolor  = pretty_colors[boxplots.index(boxplot)])
+            median = boxplot['medians'][0]
+            median.set(color='k', linewidth=2,)
+
+    x_for_scatter = [0, 0.3, 0.6, 1.2, 1.5, 1.8, 2.4, 2.7, 3]
+    ax.scatter(x=x_for_scatter, y=[0.2, 0.2, 0.2, 1, 1, 1, 2, 2, 2], label="Simulated value", edgecolors=None,
+               color="k", marker="s", zorder=zorder_index, linewidths=6)
+
+    # add legend
+    # create custom legend
+    # custom_lines = []
+    # custom_names = []
+    # for taxa_num in taxa_num_options:
+    #     custom_lines.append(Line2D([0], [0], color=colors[taxa_num_options.index(taxa_num)], lw=6))
+    #     custom_names.append(str(taxa_num) + " taxa")
+    # ax.legend(custom_lines, custom_names, loc='best', prop={'size': 30}, frameon=False)
+    a_val = 0.6
+    circ1 = mpatches.Patch(facecolor=pretty_colors[0], label='16 taxa') # ,alpha=a_val)
+    circ2 = mpatches.Patch(facecolor=pretty_colors[1], label='32 taxa') # ,alpha=a_val)
+    circ3 = mpatches.Patch(facecolor=pretty_colors[2], label='64 taxa') # ,alpha=a_val)
+    ax.legend(handles=[circ1, circ2, circ3], loc='best', prop={'size': 30}, frameon=False)
+
+    ax.grid(False)
+    ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
+    ax.set_xticklabels(["", "0.2", "", "", "1", "", "", "2", ""])
+    ax.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
     ax.set_xlabel(r"$k$", fontdict={'size': 30})
     ax.set_ylabel(r"$\^k$", fontdict={'size': 30})
 
 
-def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path, res_output_path,
+def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, THComboToDf, grid_data_path, res_output_path,
                            supp_output_path_1, supp_output_path_2, supp_output_path_3):
 
 
@@ -1688,7 +1917,7 @@ def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, gri
     ax1 = fig.add_subplot(1, 3, 1)
     plot_k_distribution_across_k_and_taxanum(600, ax1, TraitRELAXComboToDf, "a\n")
     ax2 = fig.add_subplot(1, 3, 2)
-    plot_accuracy_vs_mu(ax2, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n", add_ylabel=True, add_legend=True, only_of_significants=True, use_empirical=True, use_boxplot=True)
+    plot_accuracy_vs_mu(ax2, TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, HyPhyTHComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, "b\n", add_ylabel=True, add_legend=True, only_of_significants=True, use_empirical=True, use_boxplot=True, add_th=False)
     ax3 = fig.add_subplot(1, 3, 3, projection='3d')
     plot_2d_grid(ax3, grid_data_path, "c\n", 9)
     # Rotate angle
@@ -1704,11 +1933,11 @@ def plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, gri
     # figure 1 (for supp materials)
     plt.grid(False)
     fig, axis = plt.subplots(nrows=2, ncols=2, sharey='none', sharex='none', figsize=[2 * 8.2 + 2, 2 * 7.58 + 2], frameon=True)
-    plot_accuracy_vs_mu(axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "a\n", add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_mu(axis[0][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, THComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, "a\n", add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
     plot_accuracy_vs_pi0(axis[0][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n", add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
     plot_accuracy_vs_tbl(axis[1][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n", add_legend=False,
                          add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_k(axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "d\n", add_legend=True, add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
+    plot_accuracy_vs_k(axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, MPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, THComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, "d\n", add_legend=True, add_ylabel=False, use_global_accuracy=False) #, only_of_significants=True, use_empirical=True)
     fig.text(-0.02, 0.5, "Mean error(k)", va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
@@ -2004,7 +2233,7 @@ def plot_correct_direction_distribution(ax, title, TraitRELAXComboToDf, Empirica
     ax.yaxis.set_major_formatter(FuncFormatter(convertToPercent))
     ax.set_title(title, fontdict={'family': 'sans-serif', 'size': 30}, loc='left')
 
-def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, output_path_1, output_path_2, output_path_3, output_path_4, output_path_5):
+def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, HyPhyTHComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, output_path_1, output_path_2, output_path_3, output_path_4, output_path_5):
 
     # figure 0 (for results)
     plt.grid(False)
@@ -2040,30 +2269,17 @@ def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
     plt.savefig(output_path_2, bbox_inches='tight') #, transparent=True)
     plt.clf()
 
-    # # figure 2: 2 histograms: in one the x-axis is the #taxa for 300 positions and in another it is #positions for 32 taxa
-    # #           in each histogram, we plot the fraction of correct directions of TraitREAX and HyPhy
-    # #           two options are enabled: aggregation across all the k values (except 1) and focus on a single k. This is done by passing a list argument of "k options"
-    # plt.grid(False)
-    # fig, axis = plt.subplots(nrows=2, ncols=1, sharey='none', sharex='none', figsize=[2 * 8.2 + 4, 1 * 7.58], frameon=True)
-    # plot_correct_direction_distribution(axis[0], "a\n", TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, by_taxa=1, add_legend=True, out_of_all=1)
-    # plot_correct_direction_distribution(axis[1], "b\n", TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, by_taxa=0, add_legend=False, out_of_all=1)
-    # # plot custom legend
-    # circ1 = mpatches.Patch(facecolor='lightgrey', label='TraitRELAX')
-    # circ2 = mpatches.Patch(facecolor='k', label='RELAX')
-    # axis[0].legend(handles=[circ1, circ2], loc='right', prop={'size': 26}, frameon=False, bbox_to_anchor=(1, 1.35))
-    #
-    # fig.text(-0.015, 0.5, 'Null rejected in correct direction', va='center', rotation='vertical', fontdict={'size': 30})
-    # fig.subplots_adjust()
-    # fig.tight_layout()
-    # plt.savefig(output_path_2, bbox_inches='tight', transparent=True)
-    # plt.clf()
-
     # figure 3: accuracy comparison between TraitRELAX and HyPhy
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=1, ncols=3, sharey='none', sharex='none', figsize=[3 * 8.2 + 4, 1 * 7.58], frameon=True)
-    plot_k_distribution_across_k_and_taxanum(600, axis[0], HyPhyMPComboToDf, "a\n")
-    plot_accuracy_vs_k(axis[1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n", add_legend=False, add_ylabel=True, use_global_accuracy=False, only_of_significants=True, use_empirical=True)
-    plot_accuracy_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n", add_legend=True, add_ylabel=True, use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False, add_mp=True, use_boxplot=False)
+    fig, axis = plt.subplots(nrows=2, ncols=2, sharey='none', sharex='none', figsize=[2 * 8.2 + 4, 2 * 7.58], frameon=True)
+    plot_k_distribution_across_k_and_taxanum(600, axis[0][0], HyPhyMPComboToDf, "a\n")
+    plot_k_distribution_across_k_and_taxanum(600, axis[0][1], HyPhyTHComboToDf, "b\n")
+    plot_accuracy_vs_k(axis[1][0], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, HyPhyTHComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, "c\n", add_legend=False, add_ylabel=True, use_global_accuracy=False, only_of_significants=True, use_empirical=True, add_th=True)
+    # plot_accuracy_vs_mu(axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, HyPhyTHComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, "d\n", add_legend=True, add_ylabel=True, use_global_accuracy=False, only_of_significants=True, use_empirical=False, aggregate_k=False, add_mp=True, use_boxplot=False, add_th=False)
+    plot_accuracy_vs_mu(axis[1][1], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf,
+                        EmpiricalHyPhyMPRELAXLRThresholds, HyPhyTHComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, "d\n", add_legend=True, add_ylabel=True,
+                        use_global_accuracy=False, only_of_significants=False, use_empirical=False, aggregate_k=False,
+                        add_mp=True, use_boxplot=False, add_th=True)
     fig.subplots_adjust()
     fig.tight_layout()
     plt.savefig(output_path_3, bbox_inches='tight') #, transparent=True)
@@ -2083,9 +2299,8 @@ def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
     plot_accuracy_vs_k_across_positions_num(64, axis[2][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "f\n", add_legend=True,
                                             plot_labels=False) #, only_of_significants=True, use_empirical=True)
 
-    # fig.text(0.53, -0.02, r"$k$", ha='center', fontdict={'size': 30})
-    # fig.text(-0.02, 0.5, "Mean(" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
-    # fig.text(, 0.25, "Mean error (" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
+    fig.text(0.53, -0.02, r"$k$", ha='center', fontdict={'size': 30})
+    fig.text(-0.02, 0.5, "Mean(" + r"$\^k$" + ")", va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout(pad=1)
     plt.savefig(output_path_4, bbox_inches='tight') #, transparent=True)
@@ -2093,11 +2308,18 @@ def plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThreshold
 
     # figure s4 - power of hyphy
     plt.grid(False)
-    fig, axis = plt.subplots(nrows=1, ncols=2, sharex="all", sharey="all", figsize=[2 * 8.2 + 2, 7.58], frameon=True)
-    plot_power_vs_k_across_posnum(32, axis[0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "a\n",
-                                  empirical=False, add_legend=True, linestyle='dashed')
-    plot_power_vs_k_across_taxanum(300, axis[1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n",
-                                   empirical=False, add_legend=True, plot_labels=True, linestyle='dashed')
+    fig, axis = plt.subplots(nrows=2, ncols=2, sharex="all", sharey="all", figsize=[2 * 8.2 + 2, 2* 7.58], frameon=True)
+    plot_power_vs_k_across_posnum(32, axis[0][0], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "a\n",
+                                  empirical=False, add_legend=True, plot_labels=False, linestyle='dashed')
+    plot_power_vs_k_across_taxanum(300, axis[0][1], HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "b\n",
+                                   empirical=False, add_legend=True, plot_labels=False, linestyle='dashed')
+    plot_power_vs_k_across_posnum(32, axis[1][0], HyPhyTHComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "c\n",
+                                  empirical=False, add_legend=False, plot_labels=False, linestyle='dashed')
+    plot_power_vs_k_across_taxanum(300, axis[1][1], HyPhyTHComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, "d\n",
+                                   empirical=False, add_legend=False, plot_labels=False, linestyle='dashed')
+
+    fig.text(0.53, -0.02, r"$\^k$", ha='center', fontdict={'size': 30})
+    fig.text(-0.02, 0.5, "Null rejected", va='center', rotation='vertical', fontdict={'size': 30})
     fig.subplots_adjust()
     fig.tight_layout()
     plt.savefig(output_path_5, bbox_inches='tight') #, transparent=True)
@@ -2287,7 +2509,7 @@ if __name__ == '__main__':
                             if not os.path.exists(input_dir + "full_analysis.csv") or not os.path.exists(
                                             input_dir + "clean_analysis.csv"):
                                 df, full_df = extract_RELAX_data(input_dir, tbl, mu, pi0, taxa_num, codon_positions_num,
-                                                                 k_value)
+                                                             k_value)
                                 full_df.to_csv(input_dir + "full_analysis.csv")
                                 df.to_csv(input_dir + "clean_analysis.csv")
                             else:
@@ -2308,7 +2530,7 @@ if __name__ == '__main__':
 
     print("***********************************************\n\n")
 
-    # extract the data from RELAX + simulated character histories executions
+    # extract the data from RELAX + maximum parsimony histories executions
     print("**** Processing RELAX (HyPhy) executions given the maximum parsimony history ****")
     HyPhyMPComboToDf = dict()
     EmpiricalHyPhyMPRELAXLRThresholds = dict()
@@ -2351,23 +2573,83 @@ if __name__ == '__main__':
 
     print("***********************************************\n\n")
 
+    # extract the data from RELAX + true histories executions
+    print("**** Processing RELAX (HyPhy) executions given the true history ****")
+    HyPhyTHComboToDf = dict()
+    EmpiricalHyPhyTHRELAXLRThresholds = dict()
+    for tbl in tbl_options:
+        for mu in mu_options:
+            for pi0 in pi0_options:
+                for taxa_num in taxa_num_options:
+                    for codon_positions_num in codon_positions_num_options:
+                        skip_combo = False
+                        for k_value in k_values_options:
+                            # declare the visited combo
+                            input_dir = R_HyPhy_TH_simulation_study_output_dir + "/tbl_" + str(tbl) + "_mu_" + str(
+                                mu) + "_pi0_" + str(
+                                pi0) + "_kappa_2_p_0.125_omega1_0.8_omega2_2_theta1_0.5_theta2_0.8/" + str(
+                                taxa_num) + "_taxa/" + str(codon_positions_num) + "_codons/k_" + str(k_value) + "/"
+                            if not os.path.exists(input_dir):
+                                if k_value == 1:
+                                    skip_combo = True
+                                continue
+
+                            # extract the results
+                            if not os.path.exists(input_dir + "clean_analysis.csv"):
+                                df = extract_hyphy_data(input_dir)
+                                df.to_csv(input_dir + "clean_analysis.csv")
+                            else:
+                                df = pd.read_csv(input_dir + "clean_analysis.csv")
+                            # df = extract_hyphy_data(input_dir)
+                            # df.to_csv(input_dir + "clean_analysis.csv")
+
+                            # insert the dataframe into a dictionary
+                            HyPhyTHComboToDf[(tbl, mu, pi0, taxa_num, codon_positions_num, k_value)] = df
+
+                        # report theoretical and empirical results
+                        if not skip_combo:
+                            print("combo: (tbl=", tbl, ", mu=", mu, ", pi0=", pi0, ", taxa_num=",
+                                  taxa_num, ", positions_num=", codon_positions_num, ")")
+                            report_theoretical_test_result(HyPhyTHComboToDf, tbl, mu, pi0, taxa_num, codon_positions_num)
+                            EmpiricalHyPhyTHRELAXLRThresholds[ (tbl, mu, pi0, taxa_num, codon_positions_num)] = find_empirical_LR_threshold(
+                                HyPhyTHComboToDf, tbl, mu, pi0, taxa_num, codon_positions_num)
+
+    print("***********************************************\n\n")
+
     # plot_power_and_FPR_assessment(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, RELAXComboToDf,
     #                               EmpiricalRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds,
     #                               figures_dir + "power_and_fpr_assessment_for_results.svg",
     #                               figures_dir + "power_and_fpr_assessment_for_supp_1.svg",
     #                               figures_dir + "power_and_fpr_assessment_for_supp_2.svg")
-    #
-    # plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, grid_data_path,
-    #                        figures_dir + "accuracy_assessment_for_results.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_1.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_2.svg",
-    #                        figures_dir + "accuracy_assessment_for_supp_3.svg")
+
+    print("MPComboToDf keys = ", MPComboToDf.keys())
+
+    plot_accuracy_analysis(TraitRELAXComboToDf, RELAXComboToDf, MPComboToDf, HyPhyTHComboToDf, grid_data_path,
+                           figures_dir + "accuracy_assessment_for_results.svg",
+                           figures_dir + "accuracy_assessment_for_supp_1.svg",
+                           figures_dir + "accuracy_assessment_for_supp_2.svg",
+                           figures_dir + "accuracy_assessment_for_supp_3.svg")
 
     # plot_duration(TraitRELAXComboToDf, figures_dir + "duration_analysis.svg")
 
     # report_power_fpr_comparison(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds)
 
-    # plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, figures_dir + "hyphy_comparison_1.svg", figures_dir + "hyphy_comparison_2.svg", figures_dir + "hyphy_comparison_3.svg", figures_dir + "hyphy_comparison_4.svg", figures_dir + "hyphy_comparison_5.svg")
+    plot_comparison_to_hyphy(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf, EmpiricalHyPhyMPRELAXLRThresholds, HyPhyTHComboToDf, EmpiricalHyPhyTHRELAXLRThresholds, figures_dir + "hyphy_comparison_mp_1.svg", figures_dir + "hyphy_comparison_mp_2.svg", figures_dir + "hyphy_comparison_mp_3.svg", figures_dir + "hyphy_comparison_mp_4.svg", figures_dir + "hyphy_comparison_mp_5.svg")
 
-    plot_research_proposal_figs(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf,
-                                EmpiricalHyPhyMPRELAXLRThresholds, figures_dir+"research_prop_fig2.svg", figures_dir+"research_prop_fig3.svg")
+    # plot_research_proposal_figs(TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf,
+    #                             EmpiricalHyPhyMPRELAXLRThresholds, figures_dir+"research_prop_fig2.svg", figures_dir+"research_prop_fig3.svg")
+
+    # check the new mp
+    plt.grid(False)
+    fig, axis = plt.subplots(nrows=1, ncols=3, sharey='none', sharex='none', figsize=[3 * 8.2 + 4, 1 * 7.58],
+                             frameon=True)
+    plot_k_distribution_across_k_and_taxanum(600, axis[0], TraitRELAXComboToDf, "TraitRELAX\n")
+    plot_k_distribution_across_k_and_taxanum(600, axis[1], HyPhyTHComboToDf, "RELAX+TH\n")
+    plot_k_distribution_across_k_and_taxanum(600, axis[2], HyPhyMPComboToDf, "RELAX+MP\n")
+    # plot_accuracy_vs_mu(axis[2], TraitRELAXComboToDf, EmpiricalTraitRELAXLRThresholds, HyPhyMPComboToDf,
+    #                     EmpiricalHyPhyTHRELAXLRThresholds, "c\n", add_ylabel=True, add_legend=True,
+    #                     only_of_significants=False, use_empirical=True, use_boxplot=True)
+    fig.subplots_adjust()
+    fig.tight_layout()
+    plt.savefig(figures_dir+"hyphy_th_vs_traitrelax.svg", bbox_inches='tight')  # , transparent=True)
+    plt.clf()

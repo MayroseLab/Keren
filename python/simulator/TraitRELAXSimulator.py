@@ -52,9 +52,12 @@ def getTreeStr(root):
     return tree_str
 
 
-def fix_tree_format(tree_path):
-    tree = Tree(tree_path, format=1)
-    tree_str = tree.write(outfile=None, format=1)
+def fix_tree_format(tree_path, base_tree=False):
+    format=1
+    if base_tree:
+        format=5
+    tree = Tree(tree_path, format=format)
+    tree_str = tree.write(outfile=None, format=format)
     bad_format_numbers_regex = re.compile(":(\d*\.?\d*e-\d*)", re.MULTILINE | re.DOTALL)
     for match in bad_format_numbers_regex.finditer(tree_str):
         bad_format = match.group(1)
@@ -841,7 +844,7 @@ if __name__ == '__main__':
         rep = int(rep_regex.search(tree_filepath).group(1))
         if int(rep) >= num_of_replicates:
             continue
-        fix_tree_format(tree_path)
+        fix_tree_format(tree_path, base_tree=True)
         if scaling_factor == 1:
             scaled_tree_path = tree_path
         else:
