@@ -606,6 +606,10 @@ if __name__ == '__main__':
         simulation_output_log = replicate_output_dir + "simulator_log.txt"
         res = os.system(simulator_path + " param=" + simulation_parameters_path + " > " + simulation_output_log)
 
+        # re-write the history path without internal nodes names
+        history_tree = Tree(history_tree_path, format=1)
+        history_tree.write(outfile=history_tree_path,format=1)
+
         # extract the labeling of nodes in the trait history for relax parameters and traitrelax debugging
         labels_str_regex = re.compile("\#* assignment of nodes to model in the simulated trait history is: \#*\n\n(.*?)\n\n\#*", re.MULTILINE | re.DOTALL)
         with open(simulation_output_log, "r") as infile:
