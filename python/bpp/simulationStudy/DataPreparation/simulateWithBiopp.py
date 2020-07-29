@@ -622,12 +622,12 @@ if __name__ == '__main__':
                 node_label = label_regex.search(node.name).group(1)
                 label_to_nodes[node_label].append(node_id)
         labels_str = "model1.nodes_id="
-        for i in range(len(label_to_nodes[0])-1):
-            labels_str += label_to_nodes[0][i] + ","
-        labels_str += label_to_nodes[0][-1] + "\nmodel2.nodes_id="
-        for i in range(len(label_to_nodes[1]) - 1):
-            labels_str += label_to_nodes[0][i] + ","
-        labels_str += label_to_nodes[1][-1]
+        for i in range(len(label_to_nodes["0"])-1):
+            labels_str += label_to_nodes["0"][i] + ","
+        labels_str += label_to_nodes["0"][-1] + "\nmodel2.nodes_id="
+        for i in range(len(label_to_nodes["1"]) - 1):
+            labels_str += label_to_nodes["1"][i] + ","
+        labels_str += label_to_nodes["1"][-1]
 
         # set the parameters file for RELAX
         set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, history_tree_path,
