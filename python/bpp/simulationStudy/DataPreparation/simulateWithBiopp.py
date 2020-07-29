@@ -124,7 +124,7 @@ sequence_model.frequencies.codon_pos3 = <nuc3_theta>, <nuc3_theta1>, <nuc3_theta
 character.data_path = <character_data_path>
 character.unlabeled_history_path = <history_tree_path>
 character.labeled_history_path = <true_history_path>
-sequence.data_path = <sequence_daa_path>
+sequence.data_path = <sequence_data_path>
 output.sequence.format = Fasta
 output.tree.format = Newick
 '''
@@ -576,7 +576,7 @@ if __name__ == '__main__':
         print("**** simulating replicate " + str(rep) + " ****")
 
         # simulate data with Bio++
-        replicate_output_dir = output_dir + "/replicate_" + str(rep) + "/"
+        replicate_output_dir = output_dir + "replicate_" + str(rep) + "/"
         if not os.path.exists(replicate_output_dir):
             res = os.system("mkdir -p " + replicate_output_dir)
         simulation_parameters_path = replicate_output_dir + "simulation_params.bpp"
@@ -604,6 +604,8 @@ if __name__ == '__main__':
         true_history_path = replicate_output_dir + "labeled_trait_history.nwk"
         write_simulation_parameters(tree_path, model_parameters, sequence_data_path, character_data_path, history_tree_path, true_history_path, aln_len, simulation_parameters_path)
         simulation_output_log = replicate_output_dir + "simulator_log.txt"
+        print("simulation_parameters_path: ", simulation_parameters_path)
+        print("cmd=", simulator_path + " param=" + simulation_parameters_path + " > " + simulation_output_log)
         res = os.system(simulator_path + " param=" + simulation_parameters_path + " > " + simulation_output_log)
 
         # extract the labeling of nodes in the trait history for relax parameters and traitrelax debugging
