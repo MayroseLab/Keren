@@ -613,7 +613,7 @@ if __name__ == '__main__':
         labels_str = labels_str_regex.search(content).group(1)
 
         # set the parameters file for RELAX
-        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path,
+        set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, history_tree_path,
                              initial_kappa, initial_omega0, initial_omega1, initial_omega2, initial_omega0_weight,
                              initial_omega1_weight, initial_selection_intensity_parameter, initial_nuc1_theta,
                              initial_nuc1_theta1, initial_nuc1_theta2, initial_nuc2_theta, initial_nuc2_theta1,
