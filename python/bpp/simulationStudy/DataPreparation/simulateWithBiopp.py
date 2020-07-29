@@ -608,13 +608,26 @@ if __name__ == '__main__':
 
         # re-write the history path without internal nodes names
         history_tree = Tree(history_tree_path, format=1)
-        history_tree.write(outfile=history_tree_path,format=1)
+        history_tree.write(outfile=history_tree_path,format=5)
 
         # extract the labeling of nodes in the trait history for relax parameters and traitrelax debugging
-        labels_str_regex = re.compile("\#* assignment of nodes to model in the simulated trait history is: \#*\n\n(.*?)\n\n\#*", re.MULTILINE | re.DOTALL)
-        with open(simulation_output_log, "r") as infile:
-            content = infile.read()
-        labels_str = labels_str_regex.search(content).group(1)
+        label_to_nodes = {0: [], 1: []}
+        true_history = Tree(true_history_path,format=1)
+        node_index = 0
+        label_regex = re.compile("{(.*?)}")
+        for node in true_history.traverse("postorder"):
+            if not node.is_root():
+                node_id = node_index
+                node_index += 1
+                node_label = label_regex.search(node.name).group(1)
+                label_to_nodes[int(node_label)].append(node_id)
+        labels_str = "model1.nodes_id="
+        for i in range(len(label_to_nodes[0])-1):
+            labels_str += label_to_nodes[0][i] + ","
+        labels_str += label_to_nodes[0][-1] + "\nmodel2.nodes_id="
+        for i in range(len(label_to_nodes[1]) - 1):
+            labels_str += label_to_nodes[0][i] + ","
+        labels_str += label_to_nodes[1][-1]
 
         # set the parameters file for RELAX
         set_relax_param_file(relax_param_dir + str(rep) + ".bpp", sequence_data_path, history_tree_path,
