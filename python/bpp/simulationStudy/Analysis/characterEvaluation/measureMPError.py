@@ -307,6 +307,7 @@ if __name__ == '__main__':
             record = {"tree_length": tree_length, "mu": mu, "#taxa": taxa_num, "k": k, "expected(#transitions)": expected_transitions_num}
             full_path = input_dir + path + "/"
             record["replicate"] = int(replicate_regex.search(full_path).group(1))
+            print("replicate=", record["replicate"])
             if not os.path.exists(base_trees_dir):
                 res = os.system("mkdir -p " + base_trees_dir)
             base_tree_path = create_base_tree(full_path + "character_data/true_history.nwk", base_trees_dir + str(record["replicate"]) + ".nwk")
