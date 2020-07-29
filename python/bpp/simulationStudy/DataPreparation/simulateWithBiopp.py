@@ -611,7 +611,7 @@ if __name__ == '__main__':
         history_tree.write(outfile=history_tree_path,format=5)
 
         # extract the labeling of nodes in the trait history for relax parameters and traitrelax debugging
-        label_to_nodes = {0: [], 1: []}
+        label_to_nodes = {"0": [], "1": []}
         true_history = Tree(true_history_path,format=1)
         node_index = 0
         label_regex = re.compile("{(.*?)}")
@@ -620,7 +620,7 @@ if __name__ == '__main__':
                 node_id = node_index
                 node_index += 1
                 node_label = label_regex.search(node.name).group(1)
-                label_to_nodes[int(node_label)].append(node_id)
+                label_to_nodes[node_label].append(node_id)
         labels_str = "model1.nodes_id="
         for i in range(len(label_to_nodes[0])-1):
             labels_str += label_to_nodes[0][i] + ","
