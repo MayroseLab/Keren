@@ -604,8 +604,6 @@ if __name__ == '__main__':
         true_history_path = replicate_output_dir + "labeled_trait_history.nwk"
         write_simulation_parameters(tree_path, model_parameters, sequence_data_path, character_data_path, history_tree_path, true_history_path, aln_len, simulation_parameters_path)
         simulation_output_log = replicate_output_dir + "simulator_log.txt"
-        print("simulation_parameters_path: ", simulation_parameters_path)
-        print("cmd=", simulator_path + " param=" + simulation_parameters_path + " > " + simulation_output_log)
         res = os.system(simulator_path + " param=" + simulation_parameters_path + " > " + simulation_output_log)
 
         # extract the labeling of nodes in the trait history for relax parameters and traitrelax debugging
