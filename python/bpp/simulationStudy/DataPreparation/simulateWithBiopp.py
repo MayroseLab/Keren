@@ -621,7 +621,6 @@ if __name__ == '__main__':
                              labels_str)
 
         # set parameters file for TraitRELAX
-        print("character_data_path: ", character_data_path)
         set_traitrelax_param_file(replicate_output_dir + "traitrelax_result/",
                                   traitrelax_param_dir + str(rep) + ".bpp", sequence_data_path, scaled_tree_path,
                                   character_data_path, initial_kappa, initial_omega0, initial_omega1,
