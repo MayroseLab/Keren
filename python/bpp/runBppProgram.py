@@ -66,27 +66,7 @@ if __name__ == '__main__':
                 touch_file_path =  job_name + "_flag_done"
                 full_job = create_job_file(job_name, commands, file_name, error_files_path, job_files_path, priority, 1,
                                                    touch_file_path, allowed_nodes=["compute-0-246", "compute-0-247", "compute-0-248", "compute-0-249"], limit_nodes=False, python=False,
-                                                   openmpi=False, language="bash", queue=queue)
+                                                   openmpi=False, language="bash", queue=queue, mem_alloc="4gb")
                 res=os.system("qsub -p " + str(priority) + " " + full_job)
                 jobs_counter += 1
-
-
-import re, os, os.path
-def add_to_file(dir):
-    rep_regex = re.compile("(\d*)\.bpp", re.MULTILINE | re.DOTALL)
-    bg_labels_regex = re.compile("model1.nodes_id\s*=\s*(.*?)\n", re.MULTILINE | re.DOTALL)
-    fg_labels_regex = re.compile("model2.nodes_id\s*=\s*(.*?)\n", re.MULTILINE | re.DOTALL)
-    relax_parameters_dir = dir.replace("traitrelax", "relax")
-    upper_dir = os.path.abspath(os.path.join(dir, os.pardir))
-    for path in os.listdir(dir):
-        rep = rep_regex.search(path).group(1)
-        true_history_path = upper_dir + "replicate_" + rep + "/character_data/history_tree.nwk"
-        relax_parameters_path = relax_parameters_dir + path
-        with open(relax_parameters_path, "r") as help:
-            help_content = help.read()
-        bg_labels = bg_labels_regex.search(help_content).group(1)
-        fg_labels = fg_labels_regex.search(help_content).group(1)
-        with open(dir+path, "a") as file:
-            file.write("\ntrue_history.tree.file = " + true_history_path + "\ntrue_history.model1.nodes_id = " + bg_labels + "\ntrue_history.model2.nodes_id = " + fg_labels + "\n")
-
 
