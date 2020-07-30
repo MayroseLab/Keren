@@ -17,6 +17,7 @@ if __name__ == '__main__':
     parser.add_argument('--queue', '-q', help='the name of the queue to submit jobs to', required=False, default="itaymr")
     parser.add_argument('--replicates_num', '-rn', help='number of replicates to run jobs on', required=False, default=50)
     parser.add_argument('--replicates_range', '-rr', help='min id of replicate and max id of replicates. If provided, the script will submit jobs for the ids in between only', required=False, default=None)
+    parser.add_argument('--memory_alloc', '-mem', help='memory allocation per execution', required=False, default="4gb")
 
     args = parser.parse_args()
     param_files_dir = args.param_files_dir
@@ -34,6 +35,7 @@ if __name__ == '__main__':
     if not replicates_range == None and not type(replicates_range) == list:
         str_lst = replicates_range.split(",")
         replicates_range = [int(i) for i in str_lst]
+    memory_alloc = args.memory_alloc
 
     print("\n\nreplicates num: ", replicates_num, "\n\n")
     set_job_env(job_files_path, error_files_path)
@@ -66,7 +68,7 @@ if __name__ == '__main__':
                 touch_file_path =  job_name + "_flag_done"
                 full_job = create_job_file(job_name, commands, file_name, error_files_path, job_files_path, priority, 1,
                                                    touch_file_path, allowed_nodes=["compute-0-246", "compute-0-247", "compute-0-248", "compute-0-249"], limit_nodes=False, python=False,
-                                                   openmpi=False, language="bash", queue=queue, mem_alloc="4gb")
+                                                   openmpi=False, language="bash", queue=queue, mem_alloc=memory_alloc)
                 res=os.system("qsub -p " + str(priority) + " " + full_job)
                 jobs_counter += 1
 
