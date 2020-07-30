@@ -14,7 +14,7 @@ def set_job_env(job_files_path = "/groups/itay_mayrose/halabikeren/jobs/", error
 
 # creates a standard job file with a single command, with multi-threading option
 def create_job_file(job_name, commands, file_name, error_files_path, job_files_path, priority, threads_number, touch_file_path, forbidden_nodes="compute-0-246", allowed_nodes=None,
-                    limit_nodes=True, python=True, openmpi=True, language="tcsh", queue="itaym"):
+                    limit_nodes=True, python=True, openmpi=True, language="tcsh", queue="itaymr", mem_alloc="2gb"):
     hostname = socket.gethostname()
     with open(job_files_path + "/" + file_name, "w") as handle:
         if language == "tcsh":
@@ -54,7 +54,7 @@ def create_job_file(job_name, commands, file_name, error_files_path, job_files_p
             if limit_nodes:
                 handle.write("#PBS -l nodes=" + allowed_nodes[0] + "\n")
             else:
-                handle.write("#PBS -l select=ncpus=1:mem=2gb\n")
+                handle.write("#PBS -l select=ncpus=1:mem=" + mem_alloc + "\n")
         for command in commands:
             if "python" not in command and "cd" not in command and threads_number > 1:
                 handle.write("mpiexec -np " + str(threads_number) + " " + command + "\n")
