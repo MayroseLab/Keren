@@ -646,7 +646,7 @@ if __name__ == '__main__':
     parser.add_argument('--tree_dir', '-t', help='path to the hold the simulated input trees',
                         required=True)
     parser.add_argument('--character_model_mu', '-mu', help='character substitution rate to simulate with',
-                        required=False, default=10.)
+                        required=False, default=8)
     parser.add_argument('--character_model_pi0', '-pi0', help='character state 0 frequency ot simulate with',
                         required=False, default=0.5)
     parser.add_argument('--kappa', '-kappa', help='nucleotide substitution rate parameter kappa', required=False,
@@ -654,7 +654,7 @@ if __name__ == '__main__':
     parser.add_argument('--omega0', '-omega0', help='purifying selection omega to simulate with', required=False,
                         default=0.1)
     parser.add_argument('--omega1', '-omega1', help='neutral selection omega to simulate with', required=False,
-                        default=1)
+                        default=0.8)
     parser.add_argument('--omega2', '-omega2', help='positive selection omega to simulate with', required=False,
                         default=2)
     parser.add_argument('--omega0_weight', '-p0', help='probability of purifying selection omega to simulate with',
@@ -663,7 +663,7 @@ if __name__ == '__main__':
                         required=False, default=0.4)
     parser.add_argument('--selection_intensity_parameter', '-k',
                         help='selection intensity parameter value under the alternative model', required=False,
-                        default=0.5)
+                        default=1)
     parser.add_argument('--num_of_replicates', '-rep', help="number of codon MSAs to simulate", required=False,
                         default=30)
     parser.add_argument('--aln_len', '-al', help='number of codon positions to simulated', required=False, default=1000)
@@ -689,7 +689,7 @@ if __name__ == '__main__':
                         default=0.1)
     parser.add_argument('--initial_omega1', '-iomega1',
                         help='neutral selection omega to initialize parameters file with', required=False,
-                        default=1)
+                        default=0.8)
     parser.add_argument('--initial_omega2', '-iomega2',
                         help='positive selection omega to initialize parameters file with', required=False,
                         default=2)
@@ -702,7 +702,7 @@ if __name__ == '__main__':
     parser.add_argument('--initial_selection_intensity_parameter', '-ik',
                         help='selection intensity parameter value under the alternative model to initialize parameters file with',
                         required=False,
-                        default=0.5)
+                        default=1)
 
     parser.add_argument('--character_data_path', '-cd',
                         help='path to the character data file to be given as input to traitrelax', required=False,
