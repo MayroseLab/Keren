@@ -89,17 +89,19 @@ def extract_logl_values(mu, taxa_num, positions_num, k, data_dir, output_path):
                         regex_str = mappings_data_regex_str.replace("MAPPINGS_NUM", str(num_of_mappings))
                         regex = re.compile(regex_str, re.MULTILINE | re.DOTALL)
                         mappings_data = regex.findall(content)[0]
-                        # print("sp2")
                         values["mappings_num"] = num_of_mappings
                         logls = []
                         for match in mapping_sequence_logl_regex.finditer(mappings_data):
-                            logls.append(float(match.group(1)))
+                            try:
+                              logls.append(float(match.group(1)))
+                            except:
+                              pass
                         order = 1
                         if len(logls) == 0:
                             print("no logl of mapping caught")
                             exit(1)
                         values["sampling_based_expected_history_logl"] = character_logl + float(sampling_based_expected_sequence_logl_regex.search(mappings_data).group(1))
-                        values["analytic_expected_history_logl"] = character_logl + float(analytic_expected_sequence_logl_regex.search(mappings_data).group(1))
+                        values["analytic_expected_history_logl"] = character_logl + float(analytic_expected_sequence_logl_regex.search(content).group(1))
                         # compute the exhaustive based logl
                         max_sequence_logl = np.max(logls)
                         exhaustive_sequence_computation_logl = max_sequence_logl + math.log(np.sum([math.exp(mapping_logl - max_sequence_logl) for mapping_logl in logls])) - math.log(len(logls))
@@ -116,6 +118,7 @@ def extract_logl_values(mu, taxa_num, positions_num, k, data_dir, output_path):
                         print("failed to extract logl data data for mu=", mu, ", replicate=", rep)
                         print("input path: ", fullpath)
                         print("error: ", e)
+                        print("regex_str: ", analytic_expected_sequence_logl_regex.pattern)
                         exit(1)
                         continue
     # print("output_path: ", output_path)
