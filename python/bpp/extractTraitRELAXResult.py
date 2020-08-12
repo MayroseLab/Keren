@@ -56,7 +56,7 @@ def extract_traitrelax_parameters(input_path):
             print("failed to extract ", field, " for dataset ", dictionary["dataset_id"])
             print("regex: ", regex_strings[field])
             print("function: extract_traitrelax_parameters")
-            return 1
+            exit(1)
     # compute the induced parameters
     dictionary["null_omega0"] = str(float(dictionary["null_p"]) * float(dictionary["null_omega1"]))
     dictionary["null_p0"] = dictionary["null_theta1"]
