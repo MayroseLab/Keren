@@ -285,7 +285,7 @@ def plot_mappings_logl_diff_from_true_distribution(ax, df, title, mu, mu_options
 
     if mu == mu_options[0]:
         ax.set_ylabel('Density', fontdict={'family': 'sans-serif', 'size': 20})
-    if mu == mu_options[1]:
+    if mu == mu_options[2]:
         ax.set_xlabel('Difference in log likelihood\n(true-approximated)', fontdict={'family': 'sans-serif', 'size': 20})
 
 
@@ -366,13 +366,19 @@ def plot_alternative_figure(distances_df, logl_df, mu_options, output_path):
     # c
     plot_mappings_logl_diff_from_true_distribution(axis[2], logl_df, "c\n", mu_options[2], mu_options)
 
+    # d
+    plot_mappings_logl_diff_from_true_distribution(axis[3], logl_df, "d\n", mu_options[3], mu_options)
+
+    # e
+    plot_mappings_logl_diff_from_true_distribution(axis[4], logl_df, "e\n", mu_options[4], mu_options)
+
     custom_lines = []
     custom_names = []
     custom_lines.append(Line2D([0], [0], color="steelblue", lw=3))
     custom_names.append("Exhaustive approximation")
     custom_lines.append(Line2D([0], [0], color='g', lw=3))
     custom_names.append("Expected history approximation")
-    lgd = axis[2].legend(custom_lines, custom_names, loc='right', bbox_to_anchor=(1, 0.9), prop={'size': 20}, frameon=False)
+    lgd = axis[4].legend(custom_lines, custom_names, loc='right', bbox_to_anchor=(1, 0.9), prop={'size': 20}, frameon=False)
     fig.subplots_adjust()
     fig.tight_layout()
     plt.draw()  # necessary to render figure before saving
@@ -468,7 +474,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
     description='Analyses the estimated expected histories based on the multiple histories approximation and the true history based computation')
     parser.add_argument('--input_dir', '-i', help='directory that holds the stdout of the histories evaluation jobs', required=True)
-    parser.add_argument('--mu_options', '-mu', help='list of values of mu to include in the analysis', required=False, default=[1, 2, 4]) #, 8])
+    parser.add_argument('--mu_options', '-mu', help='list of values of mu to include in the analysis', required=False, default=[1, 2, 4, 8, 16])
     parser.add_argument('--taxa_num_options', '-tn', help='list of taxa number values to include in the analysis', required=False, default=[32])
     parser.add_argument('--positions_num_options', '-pn', help='list of positions number values to include in the analysis', required=False, default=[300])
     parser.add_argument('--k_options', '-ko', help='list of k values to include in the analysis', required=False, default=[0.5])
