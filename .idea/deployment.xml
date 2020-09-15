@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="halabikeren@powerlogin.tau.ac.il:22" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="halabikeren@powerlogin.tau.ac.il:22">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/groups/itay_mayrose/halabikeren/myScripts/" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="powerlogin">
+        <serverdata>
+          <mappings>
+            <mapping deploy="./myScripts/" local="$PROJECT_DIR$" web="./myScripts/" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

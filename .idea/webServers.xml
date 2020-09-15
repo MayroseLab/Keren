@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="d0e82f44-3224-4977-b59f-1c96fbf9e403" name="powerlogin">
+        <fileTransfer rootFolder="/groups/itay_mayrose/halabikeren/" accessType="SFTP" host="powerlogin.tau.ac.il" port="22" sshConfigId="22ae74ac-4873-4ad1-92a2-09154630c3c4" sshConfig="halabikeren@powerlogin.tau.ac.il:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
