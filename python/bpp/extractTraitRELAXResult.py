@@ -26,27 +26,26 @@ def extract_traitrelax_parameters(input_path):
     print("input_path: ", input_path)
     print("dataset: ", dictionary["dataset_id"])
 
-    regex_strings = {"null_logl": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?Overall Log likelihood\.*\:\s*(-\d*\.?\d*)",
-                     "null_kappa": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?model 2.*?RELAX\.kappa\.*\:\s*(\d*\.?\d*)",
-                     "null_p": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?model 2.*?RELAX\.p\.*\:\s*(\d*\.?\d*)",
-                     "null_omega1": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?model 2.*?RELAX\.omega1\.*\:\s*(\d*\.?\d*)",
-                     "null_omega2": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?model 2.*?RELAX\.omega2\.*\:\s*(\d*\.?\d*)",
-                     "null_theta1": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?model 2.*?RELAX\.theta1\.*\:\s*(\d*\.?\d*)",
-                     "null_theta2": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?model 2.*?RELAX\.theta2\.*\:\s*(\d*\.?\d*)",
-                     "null_k": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?model 2.*?RELAX\.k\.*\:\s*(\d*\.?\d*)",
-                     "null_mu": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?mu\.*\:\s*(\d*\.?\d*)",
-                     "null_pi0": "\*\*\*\*\s*Null model fitting\s*\*\*\*\*.*?\*\*\s*Model parameters after sequence model optimizaiton\s*\*\*.*?pi0\.*\:\s*(\d*\.?\d*)",
-                     "alternative_logl": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?Overall Log likelihood\.*\:\s*(-\d*\.?\d*)",
-                     "alternative_kappa": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?\.kappa_1\.*\:\s*(\d*\.?\d*)",
-                     "alternative_p": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?\.p_1\.*\:\s*(\d*\.?\d*)",
-                     "alternative_omega1": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?\.omega1_1\.*\:\s*(\d*\.?\d*)",
-                     "alternative_omega2": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?\.omega2_1\.*\:\s*(\d*\.?\d*)",
-                     "alternative_theta1": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?RELAX\.theta1_1\.*\:\s*(\d*\.?\d*)",
-                     "alternative_theta2": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?RELAX\.theta2_1\.*\:\s*(\d*\.?\d*)",
-                     "alternative_k": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?\.k_2\.*\:\s*(\d*\.?\d*)",
-                     "alternative_mu": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?\.mu\.*\:\s*(\d*\.?\d*)",
-                     "alternative_pi0": "\*\*\*\*\s*Alternative model likelihood after optimization\s*\*\*\*\*.*?\.pi0\.*\:\s*(\d*\.?\d*)"}
-
+    regex_strings = {"null_logl": "Null model fitting.*?Overall Log likelihood\.*?\s*\:\s*(-\d*\.?\d*)",
+                     "null_kappa": "Null model fitting.*?RELAX.kappa_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_p": "Null model fitting.*?RELAX.p_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_omega1": "Null model fitting.*?RELAX.omega1_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_omega2": "Null model fitting.*?RELAX.omega2_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_theta1": "Null model fitting.*?RELAX.theta1_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_theta2": "Null model fitting.*?RELAX.theta2_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_k": "Null model fitting.*?RELAX.k_2\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_mu": "Null model fitting.*?TwoParameterBinary\.mu\.*?\s*\:\s*(\d*\.?\d*)",
+                     "null_pi0": "Null model fitting.*?TwoParameterBinary\.pi0\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_logl": "Alternative model fitting.*Overall Log likelihood\.*?\s*\:\s*(-\d*\.?\d*)",
+                     "alternative_kappa": "Alternative model fitting.*RELAX.kappa_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_p": "Null model fitting.*?RELAX.p_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_omega1": "Alternative model fitting.*RELAX.omega1_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_omega2": "Alternative model fitting.*RELAX.omega2_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_theta1": "Alternative model fitting.*RELAX.theta1_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_theta2": "Alternative model fitting.*RELAX.theta2_1\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_k": "Alternative model fitting.*RELAX.k_2\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_mu": "Alternative model fitting.*TwoParameterBinary\.mu\.*?\s*\:\s*(\d*\.?\d*)",
+                     "alternative_pi0": "Alternative model fitting.*TwoParameterBinary\.pi0\.*?\s*\:\s*(\d*\.?\d*)"}
     # extract the basic field
     for field in regex_strings.keys():
         try:
