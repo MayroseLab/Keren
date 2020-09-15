@@ -21,7 +21,6 @@ def parse_biopp_history(history_path):
                 node.add_feature("label", "1")
         else:
             node.add_feature("label", "0") # root is always BG
-        # history.get_tree_root().name = "_baseInternal_30"
     return history
 
 # returns tree with union of nodes from history_1 and history_2, where each node has two features: hist_1_label, hist_2_label
